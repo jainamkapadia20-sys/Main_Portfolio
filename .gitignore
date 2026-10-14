@@ -1,0 +1,15 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+*.swp
+
+# Design source files (keep heavy working files out of the repo)
+*.psd
+*.ai
+*.fig
+*.sketch
+*.xd
