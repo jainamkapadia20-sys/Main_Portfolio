@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A · Drawing Sheet — concept</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400&display=swap">
+<link rel="stylesheet" href="base.css">
+<style>
+@layer page {
+  :root { --font-text: "Geist", system-ui, sans-serif; --font-mono: "Geist Mono", ui-monospace, monospace; }
+
+  /* Hero: a complete drawing sheet that ends in a title block — the false bottom */
+  .hero { min-height: 100svh; display: grid; grid-template-rows: 1fr auto auto; padding-top: 96px; }
+  .name { font-weight: 600; letter-spacing: -.055em; line-height: .82; font-size: clamp(4rem, 16vw, 18rem); }
+  .name span { display: block; }
+  .name .last { text-align: right; color: var(--graphite); padding-right: .055em; }
+  .intro { padding-block: 40px 32px; align-items: end; }
+  .intro .role { grid-column: 1 / span 4; }
+  .intro p:not(.role) { grid-column: 7 / span 5; font-size: 1.125rem; max-width: 46ch; }
+  @media (max-width: 720px) { .intro { row-gap: 24px; } .intro > * { grid-column: 1 / -1 !important; } }
+
+  /* Title block, like the corner of a technical drawing (ref: 01, 03) */
+  .titleblock { display: grid; grid-template-columns: 2fr repeat(5, 1fr); border-top: 1px solid var(--ink); margin-bottom: 72px; }
+  .titleblock > div { padding: 10px 12px; border-left: 1px solid var(--rule); }
+  .titleblock > div:first-child { border-left: 0; padding-left: 0; }
+  .titleblock small { display: block; color: var(--graphite); }
+  @media (max-width: 720px) { .titleblock { grid-template-columns: 1fr 1fr; } .titleblock > div:nth-child(n+5) { display: none; } }
+
+  /* Work: sticky stacking sheets (ref: 04-gatzara) */
+  .work { padding-top: 160px; z-index: 1; }
+  .work > header { padding-bottom: 48px; }
+  .work h2 { font-size: clamp(2rem, 5vw, 4rem); font-weight: 500; letter-spacing: -.03em; grid-column: 1 / span 6; }
+  .card { position: sticky; top: calc(64px + var(--i) * 40px); min-height: 78svh; background: var(--paper);
+    border-top: 1px solid var(--ink); padding-block: 16px 40px; display: grid; grid-template-columns: repeat(var(--cols), 1fr);
+    column-gap: var(--gutter); row-gap: 24px; align-content: start; }
+  .card .count { grid-column: 1 / span 2; }
+  .card h3 { grid-column: 3 / span 7; font-size: clamp(1.75rem, 4vw, 3.5rem); font-weight: 500; letter-spacing: -.03em; line-height: 1; }
+  .card .cat { grid-column: 10 / span 3; text-align: right; }
+  .card .spec { grid-column: 1 / span 3; align-self: end; }
+  .card .ph { grid-column: 4 / span 9; aspect-ratio: 16 / 9; }
+  .card:hover h3 { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 6px; }
+  @media (max-width: 720px) {
+    .card > * { grid-column: 1 / -1 !important; text-align: left !important; }
+    .card .spec { order: 3; }
+  }
+
+  /* Off the clock: the car, as one quiet clickable row */
+  .car { margin-top: 200px; padding-block: 24px 160px; z-index: 1; }
+  .car a { display: grid; grid-template-columns: repeat(var(--cols), 1fr); column-gap: var(--gutter); row-gap: 24px; border-top: 1px solid var(--rule); padding-top: 16px; }
+  .car .lbl { grid-column: 1 / span 3; }
+  .car figure { grid-column: 4 / span 3; aspect-ratio: 4 / 5; overflow: hidden; }
+  .car figure img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.05); transition: filter .4s var(--ease-out-quart); }
+  .car a:hover img, .car a:focus-visible img { filter: none; }
+  .car .txt { grid-column: 8 / span 5; display: grid; gap: 24px; align-content: start; }
+  .car h2 { font-size: clamp(1.5rem, 3vw, 2.5rem); font-weight: 500; letter-spacing: -.02em; line-height: 1.1; }
+  @media (max-width: 720px) { .car a > * { grid-column: 1 / -1 !important; } }
+
+  /* About + skills readout */
+  .about { padding-block: 120px; row-gap: 48px; z-index: 1; }
+  .about .lbl { grid-column: 1 / span 3; }
+  .about .bio { grid-column: 4 / span 7; font-size: clamp(1.25rem, 2.2vw, 1.75rem); line-height: 1.35; letter-spacing: -.01em; }
+  .skills { grid-column: 4 / span 9; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0 var(--gutter); }
+  .skills div { border-top: 1px solid var(--rule); padding-top: 12px; }
+  .skills dt { margin-bottom: 8px; }
+  .skills dd { color: var(--graphite); }
+  @media (max-width: 720px) { .about > * { grid-column: 1 / -1 !important; } }
+
+  /* Contact: giant stacked CTA (ref: 01) on an inverted sheet */
+  .contact { background: var(--ink); color: var(--paper); padding-block: 120px 160px; z-index: 1; }
+  .contact .big { font-size: clamp(4rem, 14vw, 15rem); font-weight: 600; letter-spacing: -.05em; line-height: .85; grid-column: 1 / -1; }
+  .contact .meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 16px 40px; margin-top: 48px; }
+  .contact .pill { border-color: var(--paper); }
+  .contact .pill:hover { background: var(--paper); color: var(--ink); }
+
+  main { position: relative; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<svg width="0" height="0" style="position:absolute"><symbol id="jk" viewBox="0 0 40 40"><path d="M18 4V27a9 9 0 0 1-9 9H5M18 22 35 4M24.6 15.1 36 36" fill="none" stroke="currentColor" stroke-width="3.4"/></symbol></svg>
+
+<div class="chrome">
+  <a class="tl" href="#" aria-label="Jainam Kapadia, home"><svg aria-hidden="true"><use href="#jk"/></svg><span>Jainam Kapadia</span></a>
+  <div class="tr"><nav aria-label="Main"><a href="#" aria-current="page">Index</a>, <a href="#work">Work</a>, <a href="#about">About</a>, <a href="#contact">Contact</a></nav><button class="theme" type="button"></button></div>
+  <div class="bl"><a href="https://instagram.com/jainam05">IG</a> / <a href="#">LI</a></div>
+  <div class="bc muted">Sheet 01 — Index</div>
+  <div class="br muted">Student · Open to internships</div>
+</div>
+
+<main id="main">
+  <!-- Racing line: one continuous line through the page; apex ticks in red. ref: 02-lusion#ribbon, as SVG -->
+  <svg class="line" viewBox="0 0 100 1000" preserveAspectRatio="none" aria-hidden="true">
+    <path class="draw" pathLength="1" d="M60 93 C 60 140, 96 150, 96 200 S 4 260, 4 330 S 92 420, 92 470 S 50 520, 30 560 S 6 640, 50 700 S 96 780, 70 860 S 20 940, 20 1000"/>
+    <path class="marks" d="M95 198h2M3 330h2M91 470h2M5 655h2"/>
+  </svg>
+
+  <section class="hero wrap" aria-labelledby="name">
+    <h1 class="name" id="name"><span>Jainam</span><span class="last">Kapadia</span></h1>
+    <div class="intro grid">
+      <p class="role mono">Experience designer<br><span class="muted">Automotive HMI</span></p>
+      <p>Student experience designer working where people meet machines: the screens, controls and split-second moments that make a car feel intuitive at speed.</p>
+    </div>
+    <div class="titleblock mono" aria-label="Sheet details">
+      <div><small>Drawn by</small>Jainam Kapadia</div>
+      <div><small>Discipline</small>HMI / UX</div>
+      <div><small>Sheet</small>01 / 05</div>
+      <div><small>Scale</small>1 : 1</div>
+      <div><small>Date</small>2026</div>
+      <div><small>Rev</small>A</div>
+    </div>
+  </section>
+
+  <section class="work wrap" id="work" aria-labelledby="work-h">
+    <header class="grid"><h2 id="work-h">Selected work</h2></header>
+    <article class="card" style="--i:0">
+      <span class="count mono muted">[01—04]</span><h3>EV Cluster Concept</h3><span class="cat mono muted">HMI · 2026</span>
+      <dl class="spec"><dt><b>A</b><span>Type</span></dt><dd>Cluster UI</dd><dt><b>B</b><span>Role</span></dt><dd>Research, UI</dd><dt><b>C</b><span>Tools</span></dt><dd>Figma, Protopie</dd></dl>
+      <div class="ph"><span>Placeholder · 16:9 · 1920×1080</span></div>
+    </article>
+    <article class="card" style="--i:1">
+      <span class="count mono muted">[02—04]</span><h3>Infotainment Voice Flow</h3><span class="cat mono muted">UX/UI · 2025</span>
+      <dl class="spec"><dt><b>A</b><span>Type</span></dt><dd>Voice + touch</dd><dt><b>B</b><span>Role</span></dt><dd>UX research</dd><dt><b>C</b><span>Tools</span></dt><dd>Figma, Voiceflow</dd></dl>
+      <div class="ph"><span>Placeholder · 16:9 · 1920×1080</span></div>
+    </article>
+    <article class="card" style="--i:2">
+      <span class="count mono muted">[03—04]</span><h3>Ride-Share Driver App</h3><span class="cat mono muted">Product · 2025</span>
+      <dl class="spec"><dt><b>A</b><span>Type</span></dt><dd>Mobile app</dd><dt><b>B</b><span>Role</span></dt><dd>UX, UI</dd><dt><b>C</b><span>Tools</span></dt><dd>Figma</dd></dl>
+      <div class="ph"><span>Placeholder · 16:9 · 1920×1080</span></div>
+    </article>
+    <article class="card" style="--i:3">
+      <span class="count mono muted">[04—04]</span><h3>Brand System 01</h3><span class="cat mono muted">Visual · 2024</span>
+      <dl class="spec"><dt><b>A</b><span>Type</span></dt><dd>Identity</dd><dt><b>B</b><span>Role</span></dt><dd>Visual design</dd><dt><b>C</b><span>Tools</span></dt><dd>Illustrator</dd></dl>
+      <div class="ph"><span>Placeholder · 16:9 · 1920×1080</span></div>
+    </article>
+  </section>
+
+  <section class="car wrap" aria-labelledby="car-h">
+    <a href="#">
+      <span class="lbl mono muted">Off the clock</span>
+      <figure><img src="../references/car/07-rear-34-taillights.jpg" alt="Rear three-quarter view of a grey 2016 Honda City with a Mugen wing and lit taillights"></figure>
+      <div class="txt">
+        <h2 id="car-h">A 2016 Honda City that I keep designing, one part at a time.</h2>
+        <dl class="spec"><dt><b>A</b><span>Make</span></dt><dd>Honda</dd><dt><b>B</b><span>Model</span></dt><dd>City, 4th gen</dd><dt><b>C</b><span>Year</span></dt><dd>2016</dd><dt><b>D</b><span>Paint</span></dt><dd>Sonic Grey Pearl</dd></dl>
+        <span class="pill">See the build</span>
+      </div>
+    </a>
+  </section>
+
+  <section class="about wrap grid" id="about" aria-labelledby="about-h">
+    <h2 class="lbl mono muted" id="about-h">About</h2>
+    <p class="bio">I'm an experience design student focused on automotive HMI: clusters, controls and the moments between a driver's glance and the road. I design for attention that's already busy.</p>
+    <dl class="skills mono">
+      <div><dt>Research</dt><dd>Interviews, contextual inquiry, task analysis</dd></div>
+      <div><dt>UX / UI</dt><dd>Flows, wireframes, design systems</dd></div>
+      <div><dt>HMI</dt><dd>Cluster, centre display, voice</dd></div>
+      <div><dt>Prototyping</dt><dd>Figma, Protopie</dd></div>
+      <div><dt>3D / Visual</dt><dd>Blender, Illustrator</dd></div>
+    </dl>
+  </section>
+
+  <section class="contact wrap grid" id="contact" aria-labelledby="contact-h">
+    <h2 class="big" id="contact-h">Let's<br>talk</h2>
+    <div class="meta"><a class="pill" href="mailto:jainamkapadia20@gmail.com">jainamkapadia20@gmail.com</a><a class="pill" href="https://instagram.com/jainam05">Instagram</a><a class="pill" href="#">LinkedIn</a></div>
+  </section>
+</main>
+<script src="theme.js"></script>
+</body>
+</html>

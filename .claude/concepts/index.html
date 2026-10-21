@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phase 1 concepts</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono&family=Archivo:wdth,wght@62..125,800&family=Newsreader:opsz,wght@6..72,300&family=JetBrains+Mono&family=IBM+Plex+Mono&display=swap">
+<link rel="stylesheet" href="base.css">
+<style>
+@layer page {
+  :root { --font-text: "Geist", system-ui, sans-serif; --font-mono: "Geist Mono", monospace; }
+  main { padding: 96px var(--gutter) 120px; display: grid; gap: 96px; }
+  h1 { font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 500; letter-spacing: -.04em; line-height: 1; }
+  .dirs { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--gutter); }
+  .dir { border-top: 1px solid var(--ink); padding-top: 16px; display: grid; gap: 16px; align-content: start; }
+  .dir h2 { font-size: 2.5rem; line-height: 1; letter-spacing: -.02em; }
+  .dir:nth-child(1) h2 { font-family: "Geist"; font-weight: 600; letter-spacing: -.05em; }
+  .dir:nth-child(2) h2 { font-family: "Archivo"; font-stretch: 62%; font-weight: 800; text-transform: uppercase; }
+  .dir:nth-child(3) h2 { font-family: "Newsreader"; font-weight: 300; }
+  .sw { display: flex; gap: 0; }
+  .sw i { width: 40px; height: 40px; border: 1px solid var(--rule); }
+  .marks { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--gutter); }
+  .mark { border: 1px solid var(--rule); aspect-ratio: 1; display: grid; place-items: center; position: relative; }
+  .mark svg { width: 45%; height: 45%; }
+  .mark .mono { position: absolute; left: 12px; bottom: 10px; color: var(--graphite); }
+  .mark.inv { background: var(--ink); color: var(--paper); }
+  .small { display: flex; gap: 24px; align-items: center; }
+  .small svg { width: 16px; height: 16px; } .small svg + svg { width: 32px; height: 32px; }
+}
+</style>
+</head>
+<body>
+<div class="chrome"><div class="tr"><button class="theme" type="button"></button></div></div>
+<main>
+  <h1>Phase 1 — three directions</h1>
+
+  <a class="pill" href="ab-home.html" style="justify-self:start">Open the current direction: A + B</a>
+  <p class="mono muted">Earlier directions, kept for reference:</p>
+  <div class="dirs">
+    <a class="dir" href="a-drawing-sheet.html">
+      <span class="mono muted">Direction A</span><h2>Drawing Sheet</h2>
+      <p>Geist + Geist Mono. The hero is a drawing sheet ending in a title block, the false bottom. Sticky stacking work sheets. A racing line runs through the page.</p>
+      <div class="sw"><i style="background:#F5F4F0"></i><i style="background:#0E0E0E"></i><i style="background:#6B6B6B"></i><i style="background:#C81E17"></i><i style="background:#131517"></i><i style="background:#8E969C"></i></div>
+      <span class="pill">Open A</span>
+    </a>
+    <a class="dir" href="b-instrument.html">
+      <span class="mono muted">Direction B</span><h2>Instrument</h2>
+      <p>Archivo Condensed + JetBrains Mono. Full name on one line, scrubbable slats in the hero, the false bottom. Work as panel rows. Scroll telemetry in the chrome. Cyan/teal accent.</p>
+      <div class="sw"><i style="background:#F5F4F0"></i><i style="background:#0E0E0E"></i><i style="background:#6B6B6B"></i><i style="background:#00798C"></i><i style="background:#131517"></i><i style="background:#2FD3EE"></i></div>
+      <span class="pill">Open B</span>
+    </a>
+    <a class="dir" href="c-editorial.html">
+      <span class="mono muted">Direction C</span><h2>Editorial Grid</h2>
+      <p>Newsreader + IBM Plex Mono, the serif option. A grid of cells around the name. Editorial spreads with titles that fill as you scroll. The City's roofline draws itself above the car section.</p>
+      <div class="sw"><i style="background:#F5F4F0"></i><i style="background:#0E0E0E"></i><i style="background:#6B6B6B"></i><i style="background:#C81E17"></i><i style="background:#131517"></i><i style="background:#8E969C"></i></div>
+      <span class="pill">Open C</span>
+    </a>
+  </div>
+
+  <section>
+    <p class="mono muted" style="margin-bottom:24px">JK monogram — three options</p>
+    <div class="marks">
+      <div class="mark"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M18 4V27a9 9 0 0 1-9 9H5M18 22 35 4M24.6 15.1 36 36" fill="none" stroke="currentColor" stroke-width="3.4"/></svg><span class="mono">1 · Shared stem</span></div>
+      <div class="mark"><svg viewBox="0 0 48 48" aria-hidden="true"><g fill="none" stroke="currentColor"><path d="M8 8h32v32H8z" stroke-width="1"/><path d="M8 2v4M2 8h4M40 2v4M46 8h-4M8 46v-4M2 40h4M40 46v-4M46 40h-4" stroke-width="1"/><path d="M21 14V34H14V29M27 14V34M27 26 35 14M30 21.5 35 34" stroke-width="3"/></g></svg><span class="mono">2 · Stamp</span></div>
+      <div class="mark inv"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M18 4V27a9 9 0 0 1-9 9H5M18 22 35 4M24.6 15.1 36 36" fill="none" stroke="currentColor" stroke-width="6"/><path d="M0 20.5H40" stroke="var(--ink)" stroke-width="1.6"/></svg><span class="mono">3 · Stencil, heavy</span></div>
+    </div>
+    <div class="small" style="margin-top:24px"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M18 4V27a9 9 0 0 1-9 9H5M18 22 35 4M24.6 15.1 36 36" fill="none" stroke="currentColor" stroke-width="4"/></svg><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M18 4V27a9 9 0 0 1-9 9H5M18 22 35 4M24.6 15.1 36 36" fill="none" stroke="currentColor" stroke-width="3.4"/></svg><span class="mono muted">Favicon 16px / chrome 32px</span></div>
+  </section>
+</main>
+<script src="theme.js"></script>
+</body>
+</html>

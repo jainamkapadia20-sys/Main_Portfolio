@@ -1,0 +1,119 @@
+---
+// Living design-system sheet (Phase 2). Not linked from the nav, and kept out of search results.
+import Base from '../layouts/Base.astro';
+import Monogram from '../components/Monogram.astro';
+import RollText from '../components/RollText.astro';
+import Pill from '../components/Pill.astro';
+import Counter from '../components/Counter.astro';
+import Tach from '../components/Tach.astro';
+import Dial from '../components/Dial.astro';
+import TickRuler from '../components/TickRuler.astro';
+import SpecSheet from '../components/SpecSheet.astro';
+import MediaBlock from '../components/MediaBlock.astro';
+import BigWord from '../components/BigWord.astro';
+import ThemeToggle from '../components/ThemeToggle.astro';
+
+// Contrast ratios were computed for both themes (see BUILD_LOG.md, Phase 2).
+const colours = [
+  { token: '--paper', role: 'Page', light: '#F3F2EE', dark: '#121416', ratio: '' },
+  { token: '--ink', role: 'Text', light: '#0E0E0E', dark: '#E9EAE6', ratio: '17.2 / 15.3' },
+  { token: '--graphite', role: 'Secondary text', light: '#5F6368', dark: '#8E969C', ratio: '5.4 / 6.2' },
+  { token: '--accent', role: 'Focus, active, one CTA', light: '#C81E17', dark: '#FF3B30', ratio: '5.1 / 5.2' },
+  { token: '--surface', role: 'Placeholders, stage', light: '#E9E8E3', dark: '#1A1D20', ratio: '' },
+  { token: '--rule', role: 'Hairlines', light: 'ink 11%', dark: 'ink 12%', ratio: '' },
+];
+const type = [
+  { token: '--t-hero', use: 'Hero name', size: 'clamp(3.25rem, 15.6vw, 19rem)', cls: 'display', sample: 'Jainam' },
+  { token: '--t-h2', use: 'Section titles', size: 'clamp(3rem, 1rem + 8vw, 9rem)', cls: 'display', sample: 'Selected work' },
+  { token: '--t-h3', use: 'Card titles', size: 'clamp(1.75rem, 1rem + 3vw, 3.25rem)', cls: 'display', sample: 'EV Cluster' },
+  { token: '--t-lead', use: 'Lead text', size: 'clamp(1.125rem, 1rem + .5vw, 1.375rem)', cls: '', sample: 'Screens that survive a glance.' },
+  { token: '--t-body', use: 'Body', size: '1.0625rem (17px)', cls: '', sample: 'Body text, at least 16px, stays readable at speed.' },
+  { token: '--t-label', use: 'Mono labels', size: '.75rem (12px), +6% tracking', cls: 'mono', sample: 'Experience designer' },
+];
+const space = [8, 16, 24, 32, 48, 64, 96, 128, 160];
+const motion = [
+  { token: '--d-fast', value: '150ms', use: 'Hover, press' }, { token: '--d-ui', value: '300ms', use: 'UI state changes' },
+  { token: '--d-page', value: '800ms', use: 'Page and hero transitions' }, { token: '--ease-out-expo', value: 'cubic-bezier(.19,1,.22,1)', use: 'Reveals' },
+  { token: '--ease-out-quart', value: 'cubic-bezier(.165,.84,.44,1)', use: 'UI' }, { token: '--ease-in-out-expo', value: 'cubic-bezier(1,0,0,1)', use: 'Page swaps' },
+];
+---
+<Base title="System" section="System" noindex description="The design system behind this site: tokens and components.">
+  <div class="page wrap">
+    <header class="head">
+      <h1 class="display">System</h1>
+      <p class="mono muted">Tokens and components, in their resting state. Press G for the grid overlay. <ThemeToggle /></p>
+    </header>
+
+    <section aria-labelledby="c-h"><h2 class="mono muted" id="c-h">01 Colour</h2>
+      <ul class="swatches">
+        {colours.map((c) => (
+          <li><span class="chip" style={`background:var(${c.token})`}></span>
+            <span class="mono">{c.token}</span><span class="muted">{c.role}</span>
+            <span class="mono muted">{c.light} / {c.dark}{c.ratio && <><br />contrast {c.ratio}</>}</span></li>
+        ))}
+      </ul>
+    </section>
+
+    <section aria-labelledby="t-h"><h2 class="mono muted" id="t-h">02 Type</h2>
+      <p class="muted">Archivo (variable, width 62–125%, weight 100–900) for display and text; Geist Mono for labels, metadata and numbers.</p>
+      <ul class="types">
+        {type.map((t) => <li><span class="mono muted">{t.token}<br />{t.use}<br />{t.size}</span><span class={t.cls} style={`font-size:var(${t.token})`}>{t.sample}</span></li>)}
+      </ul>
+    </section>
+
+    <section aria-labelledby="s-h"><h2 class="mono muted" id="s-h">03 Space, 8px unit</h2>
+      <ul class="space">{space.map((s) => <li><span class="bar" style={`width:${s}px`}></span><span class="mono muted">{s}</span></li>)}</ul>
+    </section>
+
+    <section aria-labelledby="m-h"><h2 class="mono muted" id="m-h">04 Motion tokens</h2>
+      <dl class="motion mono">{motion.map((m) => <div><dt>{m.token}</dt><dd>{m.value}</dd><dd class="muted">{m.use}</dd></div>)}</dl>
+    </section>
+
+    <section aria-labelledby="g-h"><h2 class="mono muted" id="g-h">05 Grid</h2>
+      <p class="muted">12 columns on desktop, 4 under 720px, gutter clamp(16px, 2.5vw, 32px). Press G anywhere to overlay it.</p>
+      <div class="cols grid">{Array.from({ length: 12 }, (_, i) => <span class="mono">{String(i + 1).padStart(2, '0')}</span>)}</div>
+    </section>
+
+    <section aria-labelledby="k-h"><h2 class="mono muted" id="k-h">06 Components</h2>
+      <div class="comp"><p class="mono muted">Monogram</p><div class="row"><Monogram size={16} /><Monogram size={32} /><Monogram size={64} /></div></div>
+      <div class="comp"><p class="mono muted">RollText (letters split, real text kept)</p><p class="mono"><RollText text="Work" /></p></div>
+      <div class="comp"><p class="mono muted">Pill</p><div class="row"><Pill label="Send an email" tone="accent" /><Pill label="Reset view" /><Pill href="/work" label="All work" /></div></div>
+      <div class="comp"><p class="mono muted">Counter</p><Counter current={4} total={12} /></div>
+      <div class="comp"><p class="mono muted">TickRuler</p><TickRuler ticks={40} value={.35} /></div>
+      <div class="comp"><p class="mono muted">SpecSheet</p><SpecSheet items={[{ label: 'Year', value: '2026' }, { label: 'Type', value: 'HMI concept' }, { label: 'Role', value: 'UX research, UI, prototyping' }]} /></div>
+      <div class="comp"><p class="mono muted">Placeholder / MediaBlock</p><div class="two"><MediaBlock ratio="16 / 9" label="Wide UI" size="2400 × 1350" caption="Caption text" /><MediaBlock ratio="4 / 5" label="Photo" size="1600 × 2000" /></div></div>
+      <div class="comp"><p class="mono muted">Dial</p><div class="two"><Dial value={119} max={200} label="Power" unit="PS" /><Dial value={145} max={200} label="Torque" unit="Nm" /></div></div>
+      <div class="comp"><p class="mono muted">Tach (home hero)</p><div style="max-width:360px"><Tach /></div></div>
+      <div class="comp"><p class="mono muted">BigWord</p><BigWord text="Next" /></div>
+      <div class="comp"><p class="mono muted">Toast</p><Pill href="mailto:jainamkapadia20@gmail.com" label="Copy email (shows the toast)" attrs={{ 'data-copy-email': 'jainamkapadia20@gmail.com' }} /></div>
+      <div class="comp"><p class="mono muted">Not built: StackCard (sticky stacking was dropped in Phase 1 feedback)</p></div>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .page { padding-top: 120px; padding-bottom: var(--s12); }
+  .head h1 { font-size: var(--t-h2); }
+  .head p { margin-top: var(--s2); display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; max-width: none; }
+  section { margin-top: var(--s12); padding-top: var(--s3); border-top: 1px solid var(--ink); display: grid; gap: var(--s3); }
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--gutter); }
+  .swatches li { display: grid; gap: 6px; font-size: var(--t-small); }
+  .chip { aspect-ratio: 3 / 2; border: 1px solid var(--rule-strong); }
+  .types li { display: grid; grid-template-columns: 16em minmax(0, 1fr); gap: var(--gutter); align-items: baseline; padding-block: var(--s2); border-bottom: 1px solid var(--rule); overflow: hidden; }
+  .types li > :last-child { white-space: nowrap; overflow: hidden; }
+  .space li { display: flex; align-items: center; gap: var(--s2); padding-block: 4px; }
+  .bar { height: 8px; background: var(--ink); }
+  .motion div { display: grid; grid-template-columns: 14em 18em minmax(0, 1fr); gap: var(--s2); padding-block: 8px; border-bottom: 1px solid var(--rule); }
+  .cols span { padding: 8px 4px; border: 1px solid var(--rule); text-align: center; }
+  .comp { display: grid; gap: var(--s2); padding-block: var(--s3); border-bottom: 1px solid var(--rule); }
+  .row { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gutter); align-items: start; }
+  .slats { display: flex; gap: var(--gutter); }
+  @media (max-width: 720px) {
+    .page { padding-top: 96px; }
+    .types li, .motion div { grid-template-columns: minmax(0, 1fr); }
+    .motion dd { overflow-wrap: anywhere; }
+    .two { grid-template-columns: 1fr; }
+    .cols span:nth-child(n+5) { display: none; }
+  }
+</style>

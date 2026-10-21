@@ -1,0 +1,1 @@
+Your dashboard shows everything, so the alert that matters gets buried. Adaptive Cluster is my HMI concept for an instrument cluster that changes with the drive: exit guidance that counts down, a blind-spot lane that turns amber, a proximity ring that goes green to red, park assist in one tap, and an emergency brake you can't miss.

@@ -1,0 +1,50 @@
+# Builds the Astro site in CodeFiles/ and publishes it to GitHub Pages on every push to main.
+# The site is served under /Main_Portfolio/, so the build gets SITE/BASE and rebase.mjs prefixes hand-written links.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: CodeFiles
+    env:
+      SITE: https://jainamkapadia20-sys.github.io
+      BASE: /Main_Portfolio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: CodeFiles/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: node scripts/rebase.mjs
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: CodeFiles/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,18 @@
+---
+// Stand-in image: grid paper (ref: 04-gatzara) with a label stating the ratio and size the real image should be.
+// It reserves its space through aspect-ratio, so nothing shifts when real images replace it.
+interface Props { ratio?: string; label?: string; size?: string; name?: string; decorative?: boolean }
+const { ratio = '4 / 3', label = 'Image', size = '1600 × 1200', name, decorative = false } = Astro.props;
+---
+<div class="ph" style={`aspect-ratio:${ratio};${name ? `view-transition-name:${name}` : ''}`} role={decorative ? undefined : 'img'} aria-label={decorative ? undefined : `Placeholder image: ${label}`} aria-hidden={decorative ? 'true' : undefined}>
+  <span class="mono">{label}<br /><span class="muted">{ratio.replace(/\s/g, '')}, {size}</span></span>
+</div>
+<style>
+  .ph { position: relative; width: 100%; overflow: hidden; background-color: var(--surface);
+    background-image: linear-gradient(var(--rule) 1px, transparent 1px), linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+    background-size: 24px 24px; background-position: -1px -1px; }
+  .ph::before, .ph::after { content: ""; position: absolute; inset: 0;
+    background: linear-gradient(to top right, transparent calc(50% - .5px), var(--rule-strong) 50%, transparent calc(50% + .5px)); }
+  .ph::after { transform: scaleX(-1); }
+  .ph > span { position: absolute; left: 12px; top: 10px; z-index: 1; line-height: 1.5; background: var(--surface); padding: 2px 4px; }
+</style>

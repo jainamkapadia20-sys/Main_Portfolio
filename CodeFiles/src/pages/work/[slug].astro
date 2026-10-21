@@ -1,0 +1,204 @@
+---
+// Case study, result first (ref: richardmattka.com/work/ozworld, 03-aristide-benoist): the finished work framed
+// under a giant title with a lettered spec line, then the outcome, then the process chapter by chapter beside a
+// sticky rail that tracks how far through the story you are. Blocks sit after the section they name.
+// ← / → step through projects.
+import type { CollectionEntry } from 'astro:content';
+import { createMarkdownProcessor } from '@astrojs/markdown-remark';
+import Base from '../../layouts/Base.astro';
+import MediaBlock from '../../components/MediaBlock.astro';
+import BigWord from '../../components/BigWord.astro';
+import CaseBlock from '../../components/CaseBlock.astro';
+import { sortedProjects } from '../../lib/projects';
+
+export async function getStaticPaths() {
+  const all = await sortedProjects();
+  return all.map((project, i) => ({
+    params: { slug: project.id },
+    props: { project, prev: all[(i - 1 + all.length) % all.length], next: all[(i + 1) % all.length], index: i, total: all.length },
+  }));
+}
+type P = CollectionEntry<'projects'>;
+interface Props { project: P; prev: P; next: P; index: number; total: number }
+const { project, prev, next, index, total } = Astro.props;
+const p = project.data;
+const pad = (n: number) => String(n).padStart(2, '0');
+
+// Split the Markdown body at its "## " headings so blocks can sit between sections
+const md = await createMarkdownProcessor();
+const body = (project.body ?? '').trim();
+const parts = body.split(/^## /m);
+const sections: { title: string; html: string }[] = [];
+if (!body.startsWith('## ') && parts[0].trim()) sections.push({ title: '', html: (await md.render(parts[0])).code });   // text before the first heading
+for (const chunk of parts.slice(1)) {
+  const [heading, ...rest] = chunk.split('\n');
+  sections.push({ title: heading.trim(), html: (await md.render(rest.join('\n'))).code });
+}
+// The outcome leads, right under the hero; everything else becomes a process chapter
+const isResult = (t: string) => /^(outcome|results?)$/i.test(t);
+const result = sections.find((s) => isResult(s.title));
+const chapters = sections.filter((s) => s !== result);
+const after = (t: string) => !t ? [] : p.blocks.filter((b) => (b.after ?? '').toLowerCase() === t.toLowerCase());
+const loose = p.blocks.filter((b) => !b.after || !sections.some((s) => s.title.toLowerCase() === b.after!.toLowerCase()));
+const spec = [
+  { k: 'A', label: 'Year', value: String(p.year) },
+  { k: 'B', label: 'Type', value: p.type },
+  { k: 'C', label: 'Role', value: p.role.join(', ') },
+  { k: 'D', label: 'Tools', value: p.tools.join(', ') },
+  { k: 'E', label: 'Duration', value: p.duration },
+];
+let n = 0;
+---
+<Base title={p.title} section={`Work ${pad(index + 1)} / ${pad(total)}`} description={p.summary}>
+  <link slot="head" rel="prev" href={`/work/${prev.id}`} />
+  <link slot="head" rel="next" href={`/work/${next.id}`} />
+  <article class="case" data-prev={`/work/${prev.id}`} data-next={`/work/${next.id}`}>
+    <!-- 1. The result -->
+    <header class="hero wrap">
+      <p class="crumb mono muted" data-hero-line><a href="/work">Work</a> / {pad(index + 1)} of {pad(total)} / {p.category}</p>
+      <h1 class="title display" data-hero-line style="--i:1">{p.title}</h1>
+      <div class="frame">
+        <MediaBlock video={p.preview} src={p.cover} alt={p.coverAlt} ratio="16 / 9" label={p.title} size="2400 × 1350" name={`p-${project.id}`} eager sizes="(min-width: 720px) 72vw, 100vw" />
+        <span class="corners" aria-hidden="true"></span>
+      </div>
+      <dl class="spec mono" data-hero-line style="--i:2">
+        {spec.map((s) => <div><dt><span class="k" aria-hidden="true">{s.k}</span>{s.label}</dt><dd>{s.value}</dd></div>)}
+      </dl>
+      <p class="lead" data-hero-line style="--i:3">{p.summary}</p>
+    </header>
+
+    {result && (
+      <section class="result wrap" aria-labelledby="result-h">
+        <h2 class="mono" id="result-h" data-reveal><span class="dot" aria-hidden="true"></span>The result</h2>
+        <div class="result-text" data-fill set:html={result.html} />
+        {after(result.title).map((b) => <CaseBlock block={b} title={p.title} n={++n} />)}
+      </section>
+    )}
+
+    <!-- 2. How it got there -->
+    <div class="process wrap" data-process>
+      <nav class="rail mono" aria-label="Chapters">
+        <p class="muted" data-scramble>How I got there</p>
+        <ol>{chapters.map((s, i) => <li><a href={`#ch-${i + 1}`} data-ch-link><span class="num">{pad(i + 1)}</span>{s.title || 'Introduction'}</a></li>)}</ol>
+        <div class="line" aria-hidden="true"><i></i></div>
+      </nav>
+      <div class="flow">
+        {chapters.map((s, i) => (
+          <section class="chapter" id={`ch-${i + 1}`} aria-labelledby={`ch-${i + 1}-h`} data-chapter>
+            <header class="ch-head">
+              <span class="num mono">{pad(i + 1)}</span>
+              <h2 class="display" id={`ch-${i + 1}-h`} data-split>{s.title || 'Introduction'}</h2>
+            </header>
+            <div class="prose" data-reveal set:html={s.html} />
+            {after(s.title).map((b) => <CaseBlock block={b} title={p.title} n={++n} />)}
+          </section>
+        ))}
+        {loose.map((b) => <CaseBlock block={b} title={p.title} n={++n} />)}
+      </div>
+    </div>
+
+    <nav class="next wrap" aria-label="More projects">
+      <div class="row mono">
+        <a href={`/work/${prev.id}`} rel="prev"><span class="muted">Previous</span>&nbsp;{prev.data.title}</a>
+        <p class="keys muted" aria-hidden="true"><kbd>←</kbd> <kbd>→</kbd> projects</p>
+        <span class="muted">Next project</span>
+      </div>
+      <BigWord text={next.data.title} href={`/work/${next.id}`} fill />
+    </nav>
+  </article>
+</Base>
+
+<script>
+  import { onDrive } from '../../scripts/drive';
+  // ← / → move between projects (not while typing or with modifier keys)
+  const article = document.querySelector<HTMLElement>('.case')!;
+  addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey || (e.target as HTMLElement).closest('input, textarea, [contenteditable], video, model-viewer')) return;
+    if (e.key === 'ArrowLeft') location.href = article.dataset.prev!;
+    if (e.key === 'ArrowRight') location.href = article.dataset.next!;
+  });
+
+  // Chapter rail: the line fills as you read through the process; the chapter in view is marked current
+  const proc = document.querySelector<HTMLElement>('[data-process]');
+  if (proc) {
+    const links = [...proc.querySelectorAll<HTMLAnchorElement>('[data-ch-link]')];
+    const chapters = [...proc.querySelectorAll<HTMLElement>('[data-chapter]')];
+    const line = proc.querySelector<HTMLElement>('.line')!;
+    onDrive(() => {
+      const r = proc.getBoundingClientRect();
+      const f = Math.min(1, Math.max(0, (innerHeight * 0.5 - r.top) / r.height));
+      line.style.setProperty('--f', f.toFixed(4));
+      let cur = 0;
+      chapters.forEach((c, i) => { if (c.getBoundingClientRect().top < innerHeight * 0.5) cur = i; });
+      links.forEach((a, i) => (i === cur ? a.setAttribute('aria-current', 'step') : a.removeAttribute('aria-current')));
+    });
+  }
+</script>
+
+<style>
+  /* ---------- Result hero ---------- */
+  .hero { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); padding-top: 104px; }
+  .crumb { grid-column: 1 / -1; margin-bottom: var(--s3); }
+  .crumb a:hover { color: var(--ink); }
+  .title { grid-column: 1 / -1; font-size: clamp(3.25rem, 9.5vw, 12rem); position: relative; z-index: 2; text-wrap: balance; pointer-events: none; text-shadow: 0 4px 40px color-mix(in srgb, var(--paper) 70%, transparent); }
+  .frame { grid-column: 4 / span 8; position: relative; z-index: 1; margin-top: -2.6vw; }
+  .corners { position: absolute; inset: -12px; pointer-events: none; --c: var(--ink); --l: 18px;
+    background:
+      linear-gradient(var(--c), var(--c)) 0 0 / var(--l) 1px, linear-gradient(var(--c), var(--c)) 0 0 / 1px var(--l),
+      linear-gradient(var(--c), var(--c)) 100% 0 / var(--l) 1px, linear-gradient(var(--c), var(--c)) 100% 0 / 1px var(--l),
+      linear-gradient(var(--c), var(--c)) 0 100% / var(--l) 1px, linear-gradient(var(--c), var(--c)) 0 100% / 1px var(--l),
+      linear-gradient(var(--c), var(--c)) 100% 100% / var(--l) 1px, linear-gradient(var(--c), var(--c)) 100% 100% / 1px var(--l);
+    background-repeat: no-repeat; }
+  .spec { grid-column: 1 / span 7; display: grid; grid-template-columns: repeat(5, auto); gap: var(--s2) var(--s3); margin-top: var(--s6); align-content: start; }
+  .spec dt { color: var(--graphite); display: flex; gap: 8px; }
+  .spec .k { color: var(--accent); }
+  .spec dd { margin-top: 6px; }
+  .lead { grid-column: 9 / -1; margin-top: var(--s6); font-size: var(--t-lead); line-height: 1.45; }
+
+  /* ---------- Result ---------- */
+  .result { margin-top: var(--s16); display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); }
+  .result h2 { grid-column: 1 / span 3; display: flex; gap: 10px; align-items: center; color: var(--dusk); padding-top: var(--s2); border-top: 1px solid var(--dusk); align-self: start; }
+  .dot { width: 7px; height: 7px; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+  .result-text { grid-column: 4 / -1; font-size: clamp(1.5rem, 1rem + 1.6vw, 2.5rem); line-height: 1.2; font-weight: 600; letter-spacing: -.01em; padding-top: var(--s2); border-top: 1px solid var(--rule); }
+  .result-text :global(p) { max-width: 30ch; }
+  .result :global(.block) { grid-column: 4 / -1; padding-inline: 0; }
+  .result :global(.cp), .result :global(.block.video) { grid-column: 1 / -1; padding-inline: 0; }
+
+  /* ---------- Process: rail + chapters ---------- */
+  .process { margin-top: var(--s16); display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); }
+  .rail { grid-column: 1 / span 3; position: sticky; top: 104px; align-self: start; display: grid; grid-template-columns: auto 1fr; column-gap: var(--s2); }
+  .rail > p { grid-column: 1 / -1; margin-bottom: var(--s3); }
+  .rail ol { grid-column: 2; display: grid; gap: 4px; }
+  .rail a { display: flex; gap: 12px; min-height: 36px; align-items: center; color: var(--graphite); transition: color 200ms var(--ease-smooth-out); }
+  .rail a:hover, .rail a[aria-current] { color: var(--ink); }
+  .rail a[aria-current] .num { color: var(--accent); }
+  .line { grid-column: 1; grid-row: 2; width: 2px; background: var(--rule); position: relative; overflow: hidden; }
+  .line i { position: absolute; inset: 0; background: linear-gradient(var(--dusk), var(--accent)); transform-origin: 50% 0; scale: 1 var(--f, 0); box-shadow: 0 0 8px var(--accent); }
+  .flow { grid-column: 4 / -1; display: grid; gap: var(--s16); }
+  .ch-head { display: flex; gap: var(--s2); align-items: baseline; padding-top: var(--s2); border-top: 1px solid var(--rule-strong); }
+  .ch-head .num { color: var(--accent); }
+  .ch-head h2 { font-size: clamp(2.25rem, 1rem + 3.4vw, 4.5rem); }
+  .prose { margin-top: var(--s4); max-width: 62ch; }
+  .prose :global(p) { font-size: var(--t-lead); line-height: 1.5; }
+  .prose :global(p + p) { margin-top: 1em; }
+  .flow :global(.block) { padding-inline: 0; margin-top: var(--s8); }
+
+  /* ---------- Next ---------- */
+  .next { margin-top: var(--s16); padding-block: var(--s8) var(--s12); border-top: 1px solid var(--rule); }
+  .row { display: flex; justify-content: space-between; gap: var(--s2); flex-wrap: wrap; align-items: center; }
+  .row a { min-height: 44px; display: inline-flex; align-items: center; }
+  .row a:hover { color: var(--accent); }
+  kbd { font: inherit; display: inline-block; min-width: 1.8em; padding: 2px 6px; border: 1px solid var(--rule-strong); text-align: center; }
+  .next :global(.big) { margin-top: var(--s2); font-size: clamp(3rem, 9vw, 10rem); }
+
+  @media (max-width: 960px) {
+    .frame { grid-column: 1 / -1; margin-top: var(--s3); }
+    .spec { grid-column: 1 / -1; grid-template-columns: repeat(2, auto); }
+    .lead { grid-column: 1 / -1; margin-top: var(--s4); }
+    .result h2, .result-text, .result :global(.block) { grid-column: 1 / -1; }
+    .result-text { margin-top: var(--s3); }
+    .rail { display: none; }
+    .flow { grid-column: 1 / -1; }
+    .keys { display: none; }
+  }
+</style>

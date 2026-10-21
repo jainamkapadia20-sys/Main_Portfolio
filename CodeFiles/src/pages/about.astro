@@ -1,0 +1,87 @@
+---
+import Base from '../layouts/Base.astro';
+import Pill from '../components/Pill.astro';
+import { site } from '../site';
+
+const principles = [
+  { title: 'Design for the glance', text: 'A driver gives a screen a second, not a minute. Every layout has to survive that second.' },
+  { title: 'Prototype at speed', text: 'Ideas get tested in motion, on a real screen, as early as possible, not argued over in stills.' },
+  { title: 'Quiet by default', text: 'The interface stays out of the way until it matters, then it is impossible to miss.' },
+];
+const skills = [
+  { group: 'Research', tools: 'Interviews, contextual inquiry, task analysis, usability testing' },
+  { group: 'UX / UI', tools: 'User flows, wireframes, interface design, design systems' },
+  { group: 'HMI', tools: 'Instrument clusters, centre displays, voice interaction' },
+  { group: 'Prototyping', tools: 'Figma, ProtoPie' },
+  { group: '3D / Visual', tools: 'Blender, Illustrator' },
+];
+const timeline = [
+  { when: '20XX to now', what: 'Placeholder. Degree, school' },
+  { when: '20XX', what: 'Placeholder. Internship or project' },
+];
+---
+<Base title="About" section="About" description="About Jainam Kapadia: experience design student focused on automotive HMI. Approach, skills and background.">
+  <div class="page wrap">
+    <h1 class="display" data-split>About</h1>
+
+    <section data-reveal class="grid bio" aria-label="Bio">
+      <p class="mono muted lbl" data-scramble>Bio</p>
+      <p class="text">Upcoming experience designer working where people meet machines. I'm drawn to automotive HMI: the screens, controls and split-second moments that make a car feel intuitive at speed. Car enthusiast first, designer always.</p>
+    </section>
+
+    <section data-reveal class="grid approach" aria-labelledby="approach-h">
+      <h2 class="mono muted lbl" data-scramble id="approach-h">Approach</h2>
+      <ol class="principles">
+        {principles.map((p, i) => <li><span class="mono muted">{String(i + 1).padStart(2, '0')}</span><h3>{p.title}</h3><p>{p.text}</p></li>)}
+      </ol>
+    </section>
+
+    <section data-reveal class="grid" id="skills" aria-labelledby="skills-h">
+      <h2 class="mono muted lbl" data-scramble id="skills-h">Skills</h2>
+      <dl class="readout">
+        {skills.map((s) => <div><dt class="mono">{s.group}</dt><dd>{s.tools}</dd></div>)}
+      </dl>
+    </section>
+
+    <section data-reveal class="grid" aria-labelledby="interests-h">
+      <h2 class="mono muted lbl" data-scramble id="interests-h">Interests</h2>
+      <p class="text-sm">Automotive HMI and the way cars talk to the people driving them, motorsport, and the small craft details that make an interface feel engineered. Off the clock I work on my own car.</p>
+    </section>
+
+    <section data-reveal class="grid" aria-labelledby="timeline-h">
+      <h2 class="mono muted lbl" data-scramble id="timeline-h">Timeline</h2>
+      <dl class="timeline">
+        {timeline.map((t) => <div><dt class="mono muted">{t.when}</dt><dd>{t.what}</dd></div>)}
+      </dl>
+    </section>
+
+    <section data-reveal class="grid" aria-labelledby="cv-h">
+      <h2 class="mono muted lbl" data-scramble id="cv-h">CV</h2>
+      <p class="cv"><span class="mono muted">The CV download goes here once it's ready.</span> <Pill href={`mailto:${site.email}?subject=CV`} label="Ask for my CV" /></p>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .page { padding-top: 120px; padding-bottom: var(--s12); }
+  h1 { font-size: var(--t-h2); margin-bottom: var(--s12); }
+  section { row-gap: var(--s3); padding-block: var(--s6); border-top: 1px solid var(--rule); }
+  .lbl { grid-column: 1 / span 3; }
+  .text { grid-column: 4 / span 8; font-size: clamp(1.5rem, 2.6vw, 2.5rem); line-height: 1.15; font-weight: 600; max-width: none; }
+  .text-sm { grid-column: 4 / span 6; font-size: var(--t-lead); }
+  .principles { grid-column: 4 / -1; display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gutter); }
+  .principles h3 { font-size: var(--t-lead); font-weight: 700; margin: var(--s2) 0 var(--s1); }
+  .principles p { color: var(--graphite); }
+  .readout { grid-column: 4 / -1; }
+  .readout div, .timeline div { display: grid; grid-template-columns: 12em 1fr; gap: var(--s2); padding: 12px 0; border-bottom: 1px solid var(--rule); }
+  .readout div:first-child, .timeline div:first-child { border-top: 1px solid var(--ink); }
+  .readout dd { color: var(--graphite); }
+  .timeline { grid-column: 4 / -1; }
+  .cv { grid-column: 4 / -1; display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; max-width: none; }
+  @media (max-width: 720px) {
+    .page { padding-top: 96px; }
+    section > * { grid-column: 1 / -1 !important; }
+    .principles { grid-template-columns: 1fr; }
+    .readout div, .timeline div { grid-template-columns: 1fr; gap: 4px; }
+  }
+</style>

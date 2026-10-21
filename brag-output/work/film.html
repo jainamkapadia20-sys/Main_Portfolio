@@ -1,0 +1,258 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Adaptive Cluster — film</title>
+<style>
+  @font-face { font-family: "Archivo"; src: url("fonts/archivo-var.woff2") format("woff2-variations"); font-weight: 400 800; font-stretch: 62% 100%; }
+  @font-face { font-family: "Geist Mono"; src: url("fonts/geist-mono-400.woff2") format("woff2"); }
+  @font-face { font-family: "Barlow C"; src: url("fonts/BarlowCondensed-SemiBold.ttf"); font-weight: 600; }
+  @font-face { font-family: "Barlow C"; src: url("fonts/BarlowCondensed-Regular.ttf"); font-weight: 400; }
+  * { margin: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: #04050a; color: #EEF0F2; font-family: "Archivo", sans-serif; }
+  .abs { position: absolute; }
+  #bg { inset: 0; background: radial-gradient(1300px 700px at 50% 40%, #121a33 0%, #070912 55%, #030409 100%); }
+  #floor { left: 0; right: 0; top: 760px; height: 320px; background: radial-gradient(900px 160px at 50% 0%, #1b2547aa, transparent 70%); }
+  #stage { inset: 0; perspective: 2600px; perspective-origin: 960px 520px; }
+  #cluster { left: 0; top: 0; width: 2000px; height: 1000px; transform-origin: 0 0; border-radius: 46px; overflow: hidden;
+    -webkit-box-reflect: below 6px linear-gradient(transparent 72%, rgba(255,255,255,.16)); }
+  #cluster img, #cluster canvas, #cluster .el { position: absolute; }
+  .plate { left: 0; top: 0; width: 2000px; height: 1000px; }
+  #glass { inset: 0; position: absolute; pointer-events: none; mix-blend-mode: screen;
+    background: linear-gradient(105deg, transparent 0%, transparent var(--g0), rgba(255,255,255,.14) var(--g1), transparent var(--g2), transparent 100%); }
+  .ring { width: 474px; height: 474px; border-radius: 50%; }
+  .arc { -webkit-mask: radial-gradient(circle, transparent 231px, #000 233px, #000 270px, transparent 272px); mask: radial-gradient(circle, transparent 231px, #000 233px, #000 270px, transparent 272px); }
+  .needle { width: 6px; height: 142px; margin-left: -3px; transform-origin: 3px 274px; border-radius: 3px;
+    background: linear-gradient(#ff2d55, #ff2d55cc); box-shadow: 0 0 14px #ff2d55, 0 0 4px #ff8aa0; }
+  .digits { font-family: "Barlow C"; font-weight: 600; font-size: 146px; line-height: 1; width: 400px; text-align: center; margin-left: -200px; color: #fff;
+    text-shadow: 0 0 18px rgba(160,180,255,.35); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+  .dim { background: #0b0d18; border-radius: 12px; }
+  #cardtxt { font-family: "Archivo"; font-weight: 400; font-size: 42px; color: #d8deea; letter-spacing: .01em; }
+  #flash { inset: 0; background: #ff2a2a; mix-blend-mode: screen; opacity: 0; }
+  #scrim { left: 0; right: 0; bottom: 0; height: 330px; background: linear-gradient(transparent, rgba(3,4,9,.92) 70%); }
+  #lt { left: 96px; bottom: 74px; width: 1100px; }
+  #lt .idx { font-family: "Geist Mono"; font-size: 22px; letter-spacing: .12em; color: #FFB38A; display: flex; gap: 16px; align-items: center; }
+  #lt .idx i { display: inline-block; width: 46px; height: 2px; background: #FF3B30; box-shadow: 0 0 10px #FF3B30; }
+  #lt h2 { font-weight: 800; font-stretch: 72%; font-size: 96px; letter-spacing: -.03em; line-height: .92; margin-top: 14px; }
+  #lt p { font-size: 34px; color: #C6CCD6; margin-top: 16px; }
+  #title { left: 0; right: 0; text-align: center; }
+  #title .k { font-family: "Geist Mono"; font-size: 22px; letter-spacing: .3em; color: #FFB38A; }
+  #title h1 { font-weight: 800; font-stretch: 72%; font-size: 150px; letter-spacing: -.035em; line-height: .9; margin-top: 18px; }
+  #title p { font-size: 36px; color: #C6CCD6; margin-top: 22px; }
+  #line { left: 960px; top: 540px; height: 2px; width: 0; background: linear-gradient(90deg, transparent, #9fb4ff, #fff, #9fb4ff, transparent); box-shadow: 0 0 24px #8aa2ff; }
+  #scan { top: 0; width: 6px; height: 1000px; background: linear-gradient(transparent, #bfe7ff, transparent); box-shadow: 0 0 40px 12px #5fb6ff88; }
+  #ripple { width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; border: 4px solid #8cff7a; }
+  #jk { width: 64px; height: 64px; }
+</style></head>
+<body>
+<div id="bg" class="abs"></div><div id="floor" class="abs"></div>
+<div id="line" class="abs"></div>
+<div id="stage" class="abs">
+  <div id="cluster" class="abs">
+    <img id="hw" class="plate" src="assets/hw-plate.png">
+    <img id="tr" class="plate" src="assets/tr-plate.png">
+    <img id="pk" class="plate" src="assets/pk-plate.png">
+    <canvas id="road" width="2000" height="1000" class="plate"></canvas>
+    <div id="sprites"></div>
+    <div id="dials"></div>
+    <div id="card" class="el" style="left:555px;top:145px;width:860px;height:295px;transform-origin:430px 0">
+      <img src="assets/exit-card.png" style="left:0;top:0;width:860px;height:295px"><span id="cardtxt" class="el" style="left:194px;top:128px">2.4 km</span>
+    </div>
+    <div id="dimL" class="el dim" style="left:44px;top:36px;width:92px;height:86px"></div>
+    <div id="dimR" class="el dim" style="left:1862px;top:36px;width:92px;height:86px"></div>
+    <img id="crash" class="plate" src="assets/crash-full.png">
+    <div id="ripple" class="el"></div>
+    <img id="manual" class="plate" src="assets/pk-manual.png">
+    <div id="glass"></div>
+  </div>
+  <div id="scan" class="abs"></div>
+</div>
+<div id="flash" class="abs"></div>
+<div id="scrim" class="abs"></div>
+<div id="lt" class="abs"><p class="idx"><i></i><span></span></p><h2></h2><p class="sub"></p></div>
+<div id="title" class="abs"><p class="k">HMI concept</p><h1>Adaptive Cluster</h1><p class="sub">An instrument cluster that changes with the drive.</p></div>
+<svg id="jk" class="abs" viewBox="0 0 40 40"><path d="M18 4V27a9 9 0 0 1-9 9H5M18 22 35 4M24.6 15.1 36 36" fill="none" stroke="#EEF0F2" stroke-width="3" stroke-linecap="square"/></svg>
+<script>
+const $ = (s) => document.querySelector(s);
+const cl = (x) => Math.max(0, Math.min(1, x)), seg = (t, a, b) => cl((t - a) / (b - a)), lerp = (a, b, x) => a + (b - a) * x;
+const eo = (x) => 1 - Math.pow(1 - x, 4), eio = (x) => x < .5 ? 8 * x ** 4 : 1 - Math.pow(-2 * x + 2, 4) / 2;
+const back = (x) => { const c1 = 1.9, c3 = c1 + 1; return x <= 0 ? 0 : x >= 1 ? 1 : 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const win = (t, a, b, i = .3, o = .3) => Math.min(eo(seg(t, a, a + i)), 1 - eio(seg(t, b - o, b)));   // in at a, out by b
+const blink = (t, a, b, hz = 1.6) => t >= a && t < b && ((t - a) * hz) % 1 < .55;
+
+// ---------- sprites (cluster coordinates from assets/meta.json) ----------
+const META = {"hw-sign":[585,155,175,225],"tr-sign":[585,155,165,200],"bs-warn":[840,110,330,330],"bs-lane":[420,420,560,515],"crash-warn":[670,120,650,265],"crash-lead":[880,370,210,230],
+  "ring-traffic":[21,195,625,625],"ring-pw":[21,195,625,625],"ring-pa":[21,195,625,625],"ring-bt":[21,195,625,625],"ring-pd":[21,195,625,625],
+  "ell-pw":[690,590,620,280],"ell-pa":[690,590,620,280],"ell-bt":[690,590,620,280],"ell-pd":[690,590,620,280],"pw-car-ahead":[800,385,190,140],"pw-car-back":[1245,780,245,155],
+  "pa-zone":[1080,400,520,535],"pa-warn":[880,105,240,230],"bt-lane":[290,420,700,515],"bt-warn":[840,105,330,335],"pd-zone":[800,335,460,235],"pd-warn":[830,105,340,243],
+  "pk-prompt":[815,200,350,105],"pk-bay":[1090,470,300,295]};
+const S = {};
+for (const [k, [x, y, w, h]] of Object.entries(META)) {
+  const im = new Image(); im.src = `assets/${k}.png`; im.className = 'el'; Object.assign(im.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px', opacity: 0 });
+  $('#sprites').append(im); S[k] = im;
+}
+// z-order: lanes/zones low, then ellipses, rings, cars, signs, warnings high
+['bs-lane','bt-lane','pa-zone','pd-zone','pk-bay','ell-pw','ell-pa','ell-bt','ell-pd','ring-traffic','ring-pw','ring-pa','ring-bt','ring-pd','pw-car-ahead','pw-car-back','hw-sign','tr-sign','bs-warn','pa-warn','bt-warn','pd-warn','pk-prompt','crash-lead']
+  .forEach((k, i) => (S[k].style.zIndex = i + 1));
+$('#cluster').insertBefore(S['crash-warn'], $('#ripple'));   // above the red crash plate
+
+// ---------- dials: value arc + needle + digits, drawn live ----------
+const DIAL = { L: { c: [333, 507], ref: 94, refA: 81, max: 260 }, R: { c: [1633, 507], ref: 1500, refA: 82.5, max: 8000 } };
+for (const k of ['L', 'R']) {
+  const [cx, cy] = DIAL[k].c, d = $('#dials');
+  d.insertAdjacentHTML('beforeend', `<div id="arc${k}" class="el ring arc" style="left:${cx - 272}px;top:${cy - 272}px;width:544px;height:544px"></div>
+    <div id="nd${k}" class="el needle" style="left:${cx}px;top:${cy - 274}px"></div>
+    <div id="dg${k}" class="el digits" style="left:${cx}px;top:${cy - 84}px">0</div>`);
+}
+const setDial = (k, v, op) => {
+  const D = DIAL[k], a = v <= D.ref ? (v / D.ref) * D.refA : D.refA + ((v - D.ref) / (D.max - D.ref)) * (240 - D.refA);
+  $(`#arc${k}`).style.background = `conic-gradient(from 241deg, rgba(200,16,64,0) 0deg, rgba(200,16,64,.55) ${a * .6}deg, rgba(255,40,80,.95) ${a}deg, transparent ${a + .3}deg)`;
+  $(`#nd${k}`).style.transform = `rotate(${241 + a}deg)`;
+  $(`#dg${k}`).textContent = k === 'R' ? Math.round(v / 10) * 10 : Math.round(v);
+  for (const id of ['arc', 'nd', 'dg']) $(`#${id}${k}`).style.opacity = op;
+};
+
+// ---------- road light streaks along the lane markings (vanishing point 984,319) ----------
+const ctx = $('#road').getContext('2d');
+const LINES = [[863, 1105]];   // x at y=440 for left/right lines; x = x440 -/+ (y - 440)
+function road(t, speedK, op) {
+  ctx.clearRect(0, 0, 2000, 1000); if (op <= 0 || speedK <= 0) return;
+  ctx.globalAlpha = op;
+  const phase = t * speedK * .55;
+  for (let i = 0; i < 7; i++) {
+    const u = ((i / 7 + phase) % 1);                 // 0 at the horizon, 1 near the bottom
+    const y0 = 446 + 440 * u * u, y1 = 446 + 440 * Math.min(1, (u + .05) ** 2), w = 2 + 9 * u;
+    for (const side of [-1, 1]) {
+      const x = (y) => (side < 0 ? 863 - (y - 440) : 1105 + (y - 440));
+      const g = ctx.createLinearGradient(x(y0), y0, x(y1), y1);
+      g.addColorStop(0, 'rgba(160,210,255,0)'); g.addColorStop(1, `rgba(220,240,255,${.25 + .6 * u})`);
+      ctx.strokeStyle = g; ctx.lineWidth = w; ctx.lineCap = 'round'; ctx.shadowColor = '#7fc4ff'; ctx.shadowBlur = 12 * u;
+      ctx.beginPath(); ctx.moveTo(x(y0), y0); ctx.lineTo(x(y1), y1); ctx.stroke();
+    }
+  }
+  ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+}
+
+// ---------- lower thirds ----------
+const LT = [[4.6, 8.4, '01', 'Highway mode', 'Speed, the limit, cruise. Nothing else.'],
+  [8.8, 12.8, '02', 'Exit guidance', 'Shows up early, counts down to the turn.'],
+  [13.2, 17.4, '03', 'Blind spot', 'Side radar finds the car. Your lane turns amber.'],
+  [17.9, 20.4, '04', 'Traffic mode', 'The rev counter gives way to a live map.'],
+  [20.7, 25.4, '05', 'Proximity', 'The ring goes green, amber, red as the gap closes.'],
+  [25.8, 28.4, '06', 'Pedestrian', 'Spotted early, flagged where it is.'],
+  [28.8, 33.6, '07', 'Park assist', 'One tap to confirm. Cameras for the last metre.'],
+  [34.0, 36.5, '08', 'Emergency braking', 'The whole cluster turns red. Impossible to miss.']];
+
+// ---------- camera: focus point (cluster coords) -> screen point, scale, tilt ----------
+const CAM = [ // [time, fx, fy, s, ox, oy, rx, ry]
+  [0, 1000, 500, .62, 960, 470, 26, 0], [1.2, 1000, 500, .64, 960, 470, 22, 0], [4.2, 1000, 500, .74, 960, 455, 6, 0], [8.4, 1000, 500, .8, 960, 440, 0, 0],
+  [9.4, 985, 330, 1.08, 960, 380, 0, 0], [12.8, 985, 340, 1.12, 960, 380, 0, 0], [13.8, 640, 560, 1.06, 900, 420, 0, -3], [17.2, 660, 560, 1.1, 900, 420, 0, -3],
+  [18.2, 1000, 500, .8, 960, 440, 0, 2], [20.4, 1000, 500, .82, 960, 440, 0, 0], [21.2, 1040, 520, .92, 960, 500, 0, 0], [25.4, 1040, 520, .95, 960, 500, 0, 0],
+  [26.0, 1000, 500, .92, 960, 480, 0, 0], [28.4, 1000, 500, .95, 960, 480, 0, 0], [29.2, 1050, 470, .95, 960, 430, 0, 0], [33.6, 1000, 500, .9, 960, 440, 0, 0],
+  [34.1, 1000, 470, .9, 960, 450, 0, 0], [36.5, 1000, 470, .93, 960, 450, 0, 0], [38.0, 1000, 500, .56, 960, 320, 16, 0], [40.5, 1000, 500, .54, 960, 315, 18, 0]];
+function camAt(t) {
+  let i = 0; while (i < CAM.length - 2 && t > CAM[i + 1][0]) i++;
+  const a = CAM[i], b = CAM[i + 1], x = eio(seg(t, a[0], b[0]));
+  return a.map((v, k) => (k === 0 ? t : lerp(v, b[k], x)));
+}
+
+window.render = (t) => {
+  const [, fx, fy, s, ox, oy, rx, ry] = camAt(t);
+  const shake = t > 34.1 && t < 34.8 ? (1 - seg(t, 34.1, 34.8)) * 9 : 0;
+  const sx = shake * Math.sin(t * 90), sy = shake * Math.cos(t * 77);
+  $('#cluster').style.transform = `translate(${ox + sx}px, ${oy + sy}px) rotateX(${rx}deg) rotateY(${ry}deg) scale(${s}) translate(${-fx}px, ${-fy}px)`;
+
+  // ignition: a light line opens into the cluster
+  const ln = seg(t, .2, 1.0), open = eo(seg(t, .9, 1.9));
+  $('#line').style.width = `${1400 * eo(ln)}px`; $('#line').style.marginLeft = `${-700 * eo(ln)}px`; $('#line').style.opacity = 1 - seg(t, 1.6, 2.1);
+  $('#cluster').style.clipPath = `inset(${50 * (1 - open)}% 0 ${50 * (1 - open)}% 0 round 46px)`;
+  $('#cluster').style.filter = `brightness(${lerp(.35, 1, eo(seg(t, 1.0, 2.6)))}) ${t > 38.6 ? `brightness(${1 - .0 * t})` : ''}`;
+  $('#glass').style.setProperty('--g0', `${lerp(-30, 110, seg(t, 1.6, 3.4)) - 12}%`);
+  $('#glass').style.setProperty('--g1', `${lerp(-30, 110, seg(t, 1.6, 3.4))}%`);
+  $('#glass').style.setProperty('--g2', `${lerp(-30, 110, seg(t, 1.6, 3.4)) + 12}%`);
+
+  // plates
+  const trOn = seg(t, 17.9, 19.0), pkOn = win(t, 28.7, 34.0, .6, .25);
+  const scanX = lerp(-40, 2040, seg(t, 17.9, 19.0));
+  $('#tr').style.clipPath = `inset(0 ${2000 - Math.max(0, scanX)}px 0 0)`; $('#tr').style.opacity = t < 33.9 ? (trOn > 0 ? 1 : 0) : 0;
+  $('#scan').style.opacity = trOn > 0 && trOn < 1 ? 1 : 0;
+  $('#pk').style.opacity = pkOn;
+  const man = seg(t, 31.4, 32.1), manOut = seg(t, 33.4, 33.9);
+  $('#manual').style.transform = `translateX(${(1 - eio(man)) * 2000 + eio(manOut) * 0}px)`; $('#manual').style.opacity = man > 0 ? 1 - manOut : 0;
+  // scan line in screen space follows the clip edge (approximate: through the camera)
+  { const cs = s; $('#scan').style.left = `${ox + (scanX - fx) * cs}px`; $('#scan').style.top = `${oy - fy * cs}px`; $('#scan').style.height = `${1000 * cs}px`; }
+
+  // speeds
+  const sweep = seg(t, 1.6, 3.4), up = eo(seg(t, 4.4, 6.4));
+  const sw = sweep < .5 ? eio(sweep * 2) : 1 - eio((sweep - .5) * 2);
+  const kmh = t < 4.4 ? sw * 260 : lerp(0, 94, up), rpm = t < 4.4 ? sw * 8000 : lerp(0, 1500, up) + Math.sin(t * 7) * 30 * up;
+  const dialOp = cl(eo(seg(t, 1.4, 2.0)) - pkOn - (t > 34.0 && t < 36.4 ? 1 : 0) + (t > 36.4 ? 1 : 0));
+  setDial('L', kmh, dialOp);
+  setDial('R', rpm, Math.min(dialOp, t < 17.9 ? 1 : 1 - seg(scanX, 1380, 1700) + (t > 33.8 ? 1 : 0)));
+  road(t, t < 4.4 ? 0 : (pkOn > .5 ? .25 : 1) * up, eo(seg(t, 4.4, 5.4)) * (1 - seg(t, 31.4, 31.8) + seg(t, 33.4, 33.9)));
+
+  // signs
+  const pop = (k, a, b) => { const p = back(seg(t, a, a + .45)), o = win(t, a, b, .2, .3); S[k].style.opacity = o; S[k].style.transform = `scale(${lerp(.55, 1, p)})`; };
+  pop('hw-sign', 5.6, 8.95); if (t > 12.9 && t < 34) pop('hw-sign', 13.1, 18.6); if (t > 34) pop('hw-sign', 36.4, 99);
+  pop('tr-sign', 18.6, 28.8);
+  // exit card: drops in, distance counts down, then slides up and away
+  const ci = eo(seg(t, 8.9, 9.6)), co = eio(seg(t, 12.9, 13.4));
+  $('#card').style.opacity = Math.min(ci, 1 - co); $('#card').style.transform = `translate(${0}px, ${(1 - ci) * -40 - co * 60}px) scale(.85)`;
+  $('#card').style.filter = `blur(${(1 - ci) * 10 + co * 8}px)`;
+  $('#cardtxt').textContent = `${lerp(2.4, .6, seg(t, 9.8, 12.6)).toFixed(1)} km`;
+  // indicators: right blinks for the exit, left for the lane change
+  $('#dimR').style.opacity = blink(t, 10.8, 12.9) ? 0 : (t > 1.2 ? .82 : 0);
+  $('#dimL').style.opacity = blink(t, 13.3, 17.4) ? 0 : (t > 1.2 ? .82 : 0);
+  // blind spot (highway): lane wipes up from the bottom, warning pops
+  const bl = eo(seg(t, 13.9, 14.7)), blo = win(t, 13.9, 17.5, .05, .35);
+  S['bs-lane'].style.opacity = blo; S['bs-lane'].style.clipPath = `inset(${(1 - bl) * 100}% 0 0 0)`;
+  pop('bs-warn', 14.3, 17.5);
+  // traffic: ring states, cars, zones
+  const rp = (k, a, b) => (S[k].style.opacity = win(t, a, b, .45, .45));
+  S['ring-traffic'].style.opacity = 0;
+  rp('ring-pw', 21.4, 23.3); rp('ell-pw', 21.4, 23.3);
+  rp('ring-pa', 23.0, 25.3); rp('ell-pa', 23.0, 25.3);
+  rp('ring-pd', 26.0, 28.5); rp('ell-pd', 26.0, 28.5);
+  const ca = eo(seg(t, 20.8, 22.4)), cb = eo(seg(t, 21.0, 22.2));
+  S['pw-car-ahead'].style.opacity = win(t, 20.8, 25.4, .4, .4); S['pw-car-ahead'].style.transform = `translate(${(1 - ca) * 70}px, ${(1 - ca) * -80}px) scale(${lerp(.55, 1, ca)})`;
+  S['pw-car-back'].style.opacity = win(t, 21.0, 25.4, .4, .4); S['pw-car-back'].style.transform = `translate(${(1 - cb) * 90}px, ${(1 - cb) * 120}px)`;
+  const zn = eo(seg(t, 23.1, 23.8));
+  S['pa-zone'].style.opacity = win(t, 23.1, 25.3, .05, .35); S['pa-zone'].style.clipPath = `inset(${(1 - zn) * 100}% 0 0 0)`;
+  pop('pa-warn', 23.4, 25.3);
+  const pz = eo(seg(t, 26.0, 26.7));
+  S['pd-zone'].style.opacity = win(t, 26.0, 28.5, .3, .35); S['pd-zone'].style.clipPath = `inset(0 0 ${(1 - pz) * 100}% 0)`;
+  pop('pd-warn', 26.3, 28.5);
+  // park: prompt pops, OK is tapped (ripple), the bay fills from far to near
+  pop('pk-prompt', 29.4, 31.6);
+  const tap = seg(t, 30.3, 30.9);
+  Object.assign($('#ripple').style, { left: '1102px', top: '252px', opacity: tap > 0 && tap < 1 ? 1 - tap : 0, transform: `scale(${lerp(.3, 1.6, eo(tap))})` });
+  S['pk-prompt'].style.filter = tap > 0 && tap < .3 ? 'brightness(1.4)' : '';
+  const bay = eo(seg(t, 30.6, 31.3));
+  S['pk-bay'].style.opacity = win(t, 30.6, 31.9, .05, .3); S['pk-bay'].style.clipPath = `inset(0 0 ${(1 - bay) * 100}% 0)`;
+  // emergency braking: red takes the whole cluster, pulses, warning pops
+  const cr = win(t, 34.05, 36.5, .12, .5);
+  $('#crash').style.opacity = cr;
+  $('#flash').style.opacity = (t > 34.05 && t < 36.5 ? (.22 + .16 * Math.sin((t - 34.05) * 9)) * cr : 0) * .9;
+  pop('crash-warn', 34.15, 36.5);
+
+  // lower third
+  const cur = LT.find(([a, b]) => t >= a && t < b);
+  const lt = $('#lt');
+  if (cur) {
+    const [a, b, n, h, p] = cur, o = win(t, a, b, .45, .35), y = (1 - eo(seg(t, a, a + .5))) * 26;
+    lt.style.opacity = o; lt.style.transform = `translateY(${y}px)`; lt.style.filter = `blur(${(1 - eo(seg(t, a, a + .4))) * 8}px)`;
+    lt.querySelector('span').textContent = `${n} / 08`; lt.querySelector('h2').textContent = h; lt.querySelector('.sub').textContent = p;
+  } else lt.style.opacity = 0;
+  $('#scrim').style.opacity = cur ? 1 : 0.0 + seg(t, 37.8, 38.6);
+
+  // titles: opening and closing
+  const ti = win(t, 2.2, 4.3, .5, .4), to = eo(seg(t, 38.2, 39.0));
+  const T = $('#title');
+  if (t < 10) { T.style.top = '850px'; T.style.opacity = ti; T.style.transform = `translateY(${(1 - eo(seg(t, 2.2, 2.8))) * 24}px)`; T.querySelector('.sub').style.display = 'none'; }
+  else { T.style.top = '745px'; T.style.opacity = to * (1 - seg(t, 40.1, 40.5)); T.style.transform = `translateY(${(1 - to) * 26}px)`; T.querySelector('.sub').style.display = ''; T.querySelector('.sub').textContent = 'HMI concept by Jainam Kapadia'; T.querySelector('.k').textContent = 'Highway mode / Traffic mode'; }
+  Object.assign($('#jk').style, { left: '928px', top: '660px', opacity: eo(seg(t, 38.6, 39.2)) * (1 - seg(t, 40.1, 40.5)) });
+  $('#stage').style.opacity = 1 - seg(t, 40.1, 40.5);
+};
+// ?clean: no captions or titles (used for the looping preview on the website)
+if (location.search.includes('clean')) for (const id of ['#lt', '#scrim', '#title', '#jk']) $(id).style.display = 'none';
+window.ready = Promise.all([document.fonts.ready, ...[...document.images].map((i) => i.decode().catch(() => {}))]);
+render(0);
+</script>
+</body></html>

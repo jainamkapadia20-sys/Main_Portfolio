@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>City '16 — model preview</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono&display=swap">
+<link rel="stylesheet" href="base.css">
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js"></script>
+<style>
+@layer page {
+  :root { --font-text: system-ui, sans-serif; --font-mono: "Geist Mono", monospace; }
+  body { min-height: 100svh; display: grid; grid-template-rows: auto 1fr; }
+  header { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: var(--gutter); flex-wrap: wrap; }
+  .tabs { display: flex; gap: 8px; }
+  .tabs button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  model-viewer { width: 100%; height: 100%; min-height: 70svh; --poster-color: transparent;
+    background-image: linear-gradient(var(--rule) 1px, transparent 1px), linear-gradient(90deg, var(--rule) 1px, transparent 1px); background-size: 48px 48px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <span class="mono">City '16 · model preview <span class="muted">(reloads when the model is rebuilt)</span></span>
+  <div class="tabs">
+    <button class="pill" type="button" data-src="../models/honda-city-stock.glb">Stock</button>
+    <button class="pill" type="button" data-src="../models/honda-city.glb" aria-pressed="true">Modified</button>
+    <button class="theme" type="button"></button>
+  </div>
+</header>
+<model-viewer src="../models/honda-city.glb" alt="3D model of a grey 2016 Honda City" camera-controls auto-rotate auto-rotate-delay="1500"
+  rotation-per-second="18deg" shadow-intensity="1" exposure="1.05" camera-orbit="35deg 75deg auto" touch-action="pan-y"></model-viewer>
+<script src="theme.js"></script>
+<script>
+const mv = document.querySelector('model-viewer');
+const tabs = document.querySelectorAll('[data-src]');
+tabs.forEach(b => b.addEventListener('click', () => {
+  mv.src = b.dataset.src + '?t=' + Date.now();
+  tabs.forEach(t => t.setAttribute('aria-pressed', t === b));
+}));
+</script>
+</body>
+</html>

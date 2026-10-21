@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B · Instrument — concept</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=JetBrains+Mono:wght@400&display=swap">
+<link rel="stylesheet" href="base.css">
+<style>
+@layer page {
+  :root { --font-text: "Archivo", system-ui, sans-serif; --font-mono: "JetBrains Mono", ui-monospace, monospace; --accent: #00798C; }
+  :root[data-theme="dark"] { --accent: #2FD3EE; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --accent: #2FD3EE; } }
+
+  .display { font-stretch: 62%; font-weight: 800; text-transform: uppercase; letter-spacing: -.01em; line-height: .86; }
+
+  /* Hero: looks like a finished one-screen site (ref: 03-aristide-benoist) — the false bottom */
+  .hero { min-height: 100svh; display: grid; grid-template-rows: auto 1fr auto; padding-block: 88px 72px; row-gap: 32px; }
+  .hero h1 { font-size: clamp(3.5rem, 15.6vw, 19rem); white-space: nowrap; }
+  .strip { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 24px; }
+  .slats { display: flex; gap: 10px; justify-content: center; height: min(38svh, 360px); }
+  .slat { flex: 0 0 auto; aspect-ratio: 1 / 3; height: 100%; filter: grayscale(1); opacity: .55; transition: opacity .3s var(--ease-out-quart), translate .4s var(--ease-out-expo); }
+  .slat:hover, .slat:focus-visible { opacity: 1; translate: 0 -8px; }
+  .slat.empty { background: none; border: 1px dashed var(--rule); opacity: 1; }
+  .meter { display: grid; gap: 10px; width: 180px; }
+  .meter .ruler { width: 100%; }
+  .count { font-family: var(--font-mono); font-size: 2rem; letter-spacing: -.02em; }
+  .count small { font-size: var(--label); color: var(--graphite); }
+  .heroinfo { align-items: end; }
+  .heroinfo .role { grid-column: 1 / span 4; }
+  .heroinfo p:not(.role) { grid-column: 7 / span 5; font-size: 1.125rem; max-width: 46ch; }
+  @media (max-width: 720px) { .strip { grid-template-columns: 1fr; } .meter { display: none; } .slats { justify-content: start; overflow-x: auto; scroll-snap-type: x mandatory; } .heroinfo > * { grid-column: 1 / -1 !important; } }
+
+  /* Work: instrument-panel rows */
+  .work { padding-top: 160px; }
+  .row { display: grid; grid-template-columns: repeat(var(--cols), 1fr); column-gap: var(--gutter); align-items: center; padding-block: 20px; border-top: 1px solid var(--rule); }
+  .row:last-child { border-bottom: 1px solid var(--rule); }
+  .row .n { grid-column: 1; }
+  .row h3 { grid-column: 2 / span 6; font-size: clamp(2.5rem, 7vw, 6.5rem); }
+  .row .cat { grid-column: 8 / span 2; }
+  .row .ph { grid-column: 10 / span 3; aspect-ratio: 16 / 10; }
+  .row:hover h3 { color: var(--accent); }
+  @media (max-width: 720px) { .row > * { grid-column: 1 / -1 !important; } .row .ph { order: -1; } }
+
+  /* Off the clock: wide strip, clickable */
+  .car { padding-block: 200px 120px; }
+  .car a { display: block; position: relative; }
+  .car figure { aspect-ratio: 21 / 9; overflow: hidden; }
+  .car img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 62%; filter: grayscale(1); transition: filter .4s var(--ease-out-quart); }
+  .car a:hover img, .car a:focus-visible img { filter: none; }
+  .car .panel { position: absolute; right: 0; bottom: 0; background: var(--paper); padding: 20px; width: min(420px, 100%); display: grid; gap: 16px; }
+  .car .chev { width: 40px; height: 20px; }
+  .car .chev path { fill: none; stroke: var(--accent); stroke-width: 3; }
+  .car h2 { font-size: clamp(2rem, 4vw, 3.25rem); }
+  @media (max-width: 720px) { .car .panel { position: static; width: 100%; } }
+
+  /* About: skills as a cluster readout */
+  .about { padding-block: 80px 160px; row-gap: 56px; }
+  .about .bio { grid-column: 1 / span 8; font-size: clamp(1.5rem, 3vw, 2.5rem); line-height: 1.15; font-stretch: 80%; font-weight: 500; }
+  .gauges { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--ink); }
+  .gauges div { padding: 16px 16px 16px 0; border-right: 1px solid var(--rule); }
+  .gauges div + div { padding-left: 16px; }
+  .gauges dt { font-family: var(--font-mono); font-size: 2.25rem; letter-spacing: -.03em; color: var(--graphite); }
+  .gauges dd { margin-top: 32px; }
+  @media (max-width: 720px) { .gauges { grid-template-columns: 1fr 1fr; } .about > * { grid-column: 1 / -1 !important; } }
+
+  .contact { border-top: 1px solid var(--ink); padding-block: 40px 160px; }
+  .contact .big { font-size: clamp(5rem, 22vw, 26rem); grid-column: 1 / -1; }
+  .contact .meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 16px; margin-top: 24px; }
+
+  /* Telemetry readout: scroll % in the chrome, pure CSS (ref: 07-samsy, kept tiny) */
+  @property --p { syntax: "<integer>"; inherits: false; initial-value: 0; }
+  .tele::after { content: "000%"; }
+  @supports (animation-timeline: scroll()) {
+    .tele { animation: tele linear both; animation-timeline: scroll(root); counter-reset: p var(--p); }
+    .tele::after { content: counter(p, decimal-leading-zero) "%"; }
+    @keyframes tele { to { --p: 100; } }
+  }
+  main { position: relative; }
+  main > section { z-index: 1; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<svg width="0" height="0" style="position:absolute"><symbol id="jk" viewBox="0 0 40 40"><path d="M18 4V27a9 9 0 0 1-9 9H5M18 22 35 4M24.6 15.1 36 36" fill="none" stroke="currentColor" stroke-width="3.4"/></symbol></svg>
+
+<div class="chrome">
+  <a class="tl" href="#" aria-label="Jainam Kapadia, home"><svg aria-hidden="true"><use href="#jk"/></svg></a>
+  <div class="tr"><nav aria-label="Main"><a href="#" aria-current="page">Index</a>, <a href="#work">Work</a>, <a href="#about">About</a>, <a href="#contact">Contact</a></nav><button class="theme" type="button"></button></div>
+  <div class="bl"><a href="https://instagram.com/jainam05">IG</a> / <a href="#">LI</a></div>
+  <div class="bc muted tele" aria-hidden="true">Sec 01 · </div>
+  <div class="br muted">Student · Open to internships</div>
+</div>
+
+<main id="main">
+  <!-- One straight line down the left gutter, like a light bar; it turns into the taillight chevron at the car section -->
+  <svg class="line" viewBox="0 0 100 1000" preserveAspectRatio="none" aria-hidden="true">
+    <path class="draw" pathLength="1" d="M1.2 190 V 760"/>
+  </svg>
+
+  <section class="hero wrap" aria-labelledby="name">
+    <h1 class="display" id="name">Jainam Kapadia</h1>
+    <div class="strip">
+      <div class="meter"><div class="ruler"></div><span class="count">01<small> / 04</small></span></div>
+      <div class="slats" aria-label="Projects">
+        <a class="slat ph" href="#work" aria-label="EV Cluster Concept"></a>
+        <a class="slat ph" href="#work" aria-label="Infotainment Voice Flow"></a>
+        <a class="slat ph" href="#work" aria-label="Ride-Share Driver App"></a>
+        <a class="slat ph" href="#work" aria-label="Brand System 01"></a>
+        <span class="slat empty" aria-hidden="true"></span><span class="slat empty" aria-hidden="true"></span><span class="slat empty" aria-hidden="true"></span>
+      </div>
+      <span class="mono muted">← → to browse</span>
+    </div>
+    <div class="heroinfo grid">
+      <p class="role mono">Experience designer<br><span class="muted">Automotive HMI</span></p>
+      <p>Student experience designer working where people meet machines: the screens, controls and split-second moments that make a car feel intuitive at speed.</p>
+    </div>
+  </section>
+
+  <section class="work wrap" id="work" aria-label="Selected work">
+    <a class="row" href="#"><span class="n mono muted">01</span><h3 class="display">EV Cluster</h3><span class="cat mono muted">HMI<br>2026</span><div class="ph"></div></a>
+    <a class="row" href="#"><span class="n mono muted">02</span><h3 class="display">Voice Flow</h3><span class="cat mono muted">UX/UI<br>2025</span><div class="ph"></div></a>
+    <a class="row" href="#"><span class="n mono muted">03</span><h3 class="display">Driver App</h3><span class="cat mono muted">Product<br>2025</span><div class="ph"></div></a>
+    <a class="row" href="#"><span class="n mono muted">04</span><h3 class="display">Brand 01</h3><span class="cat mono muted">Visual<br>2024</span><div class="ph"></div></a>
+  </section>
+
+  <section class="car wrap" aria-labelledby="car-h">
+    <a href="#">
+      <figure><img src="../references/car/01-front-34-highway.png" alt="Front three-quarter view of a grey 2016 Honda City on an open road"></figure>
+      <div class="panel">
+        <svg class="chev" viewBox="0 0 40 20" aria-hidden="true"><path d="M0 4H22L32 10 22 16H0"/></svg>
+        <h2 class="display" id="car-h">Off the clock</h2>
+        <dl class="spec"><dt><b>A</b><span>Car</span></dt><dd>2016 Honda City</dd><dt><b>B</b><span>Paint</span></dt><dd>Sonic Grey Pearl</dd><dt><b>C</b><span>Wing</span></dt><dd>Mugen</dd><dt><b>D</b><span>Lamps</span></dt><dd>Snake-eye / Y-bar</dd></dl>
+        <span class="pill">See the build</span>
+      </div>
+    </a>
+  </section>
+
+  <section class="about wrap grid" id="about" aria-label="About">
+    <p class="bio">I'm an experience design student focused on automotive HMI. I design for attention that's already busy: clusters, controls and the second between a glance and the road.</p>
+    <dl class="gauges">
+      <div><dt>R</dt><dd class="mono">Research<br><span class="muted">Interviews, task analysis</span></dd></div>
+      <div><dt>U</dt><dd class="mono">UX / UI<br><span class="muted">Flows, systems</span></dd></div>
+      <div><dt>H</dt><dd class="mono">HMI<br><span class="muted">Cluster, centre display</span></dd></div>
+      <div><dt>P</dt><dd class="mono">Prototyping<br><span class="muted">Figma, Protopie</span></dd></div>
+      <div><dt>V</dt><dd class="mono">3D / Visual<br><span class="muted">Blender, Illustrator</span></dd></div>
+    </dl>
+  </section>
+
+  <section class="contact wrap grid" id="contact" aria-labelledby="contact-h">
+    <h2 class="big display" id="contact-h">Let's talk</h2>
+    <div class="meta"><a class="pill" href="mailto:jainamkapadia20@gmail.com">jainamkapadia20@gmail.com</a><a class="pill" href="https://instagram.com/jainam05">Instagram</a><a class="pill" href="#">LinkedIn</a></div>
+  </section>
+</main>
+<script src="theme.js"></script>
+</body>
+</html>

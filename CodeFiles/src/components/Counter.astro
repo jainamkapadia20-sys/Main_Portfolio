@@ -1,0 +1,20 @@
+---
+// "04 / 12" counter. Each digit is an odometer column (ref: 02-lusion, 03-aristide-benoist). Scripts update it by
+// setting --n on the columns (see setCounter in src/scripts/ui.ts); the motion pass makes the columns roll.
+interface Props { current: number; total: number; label?: string }
+const { current, total, label = 'Projects' } = Astro.props;
+const pad = (n: number) => String(n).padStart(2, '0');
+const odo = (n: number) => [...pad(n)].map((d) => ({ d }));
+---
+<p class="counter mono" role="img" aria-label={`${label}: ${current} of ${total}`} data-counter data-label={label}>
+  <span class="muted" aria-hidden="true">{label}</span>
+  <span class="odo" aria-hidden="true" data-odo="current">{odo(current).map(({ d }) => <span class="col" style={`--n:${d}`}>{[...'0123456789'].map((c) => <span>{c}</span>)}</span>)}</span>
+  <span class="muted" aria-hidden="true">/</span>
+  <span class="odo muted" aria-hidden="true" data-odo="total">{odo(total).map(({ d }) => <span class="col" style={`--n:${d}`}>{[...'0123456789'].map((c) => <span>{c}</span>)}</span>)}</span>
+</p>
+<style>
+  .counter { display: inline-flex; gap: 10px; align-items: baseline; }
+  .odo { display: inline-flex; height: 1.4em; overflow: hidden; align-self: center; }
+  .col { display: flex; flex-direction: column; translate: 0 calc(var(--n) * -1.4em); }
+  .col span { height: 1.4em; }
+</style>

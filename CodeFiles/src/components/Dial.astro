@@ -1,0 +1,23 @@
+---
+// Small 270-degree dial: the arc fills to value / max when it scrolls into view (motion.ts adds .in).
+interface Props { value: number; max: number; label: string; unit: string; display?: string }
+const { value, max, label, unit, display = String(value) } = Astro.props;
+---
+<div class="dial" data-gauge style={`--f:${(value / max).toFixed(3)}`} role="img" aria-label={`${label}: ${display} ${unit}`}>
+  <svg viewBox="0 0 120 120" aria-hidden="true">
+    <path class="bg" d="M27.5 92.5A46 46 0 1 1 92.5 92.5" pathLength="1" />
+    <path class="fg" d="M27.5 92.5A46 46 0 1 1 92.5 92.5" pathLength="1" />
+  </svg>
+  <span class="v" aria-hidden="true">{display}<small class="mono">{unit}</small></span>
+  <span class="l mono muted" aria-hidden="true">{label}</span>
+</div>
+<style>
+  .dial { position: relative; display: grid; justify-items: center; }
+  svg { width: 100%; max-width: 150px; overflow: visible; }
+  path { fill: none; }
+  .bg { stroke: var(--rule-strong); stroke-width: 9; stroke-dasharray: .006 .014; }
+  .fg { stroke: var(--accent); stroke-width: 4; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--f)); filter: drop-shadow(0 0 5px var(--accent)); }
+  .v { position: absolute; top: 33%; font: 700 clamp(1.5rem, 2.4vw, 2.25rem)/1 var(--font-text); font-stretch: 80%; display: grid; justify-items: center; gap: 4px; }
+  .v small { font-size: 10px; color: var(--graphite); font-weight: 400; }
+  .l { margin-top: -12px; text-align: center; }
+</style>

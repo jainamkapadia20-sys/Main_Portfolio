@@ -1,0 +1,15 @@
+# browser-tool screenshots and agent scratch
+.playwright-mcp/
+.superpowers/
+**/__pycache__/
+
+# Blender autosave backups
+*.blend1
+
+# video render intermediates (regenerable from brag-output/work/*.html, *.py)
+brag-output/work/frames*/
+brag-output/work/layers/
+brag-output/work/screens/
+brag-output/work/*.wav
+brag-output/work/*.jpg
+brag-output/work/*.png

@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C · Editorial Grid — concept</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300..500&family=IBM+Plex+Mono:wght@400&display=swap">
+<link rel="stylesheet" href="base.css">
+<style>
+@layer page {
+  :root { --font-text: "Newsreader", Georgia, serif; --font-mono: "IBM Plex Mono", ui-monospace, monospace; }
+  body { font-size: 1.125rem; line-height: 1.6; }
+
+  /* Hero: a fixed grid of cells around the name (ref: 01-studio-freight). Looks like a no-scroll site — the false bottom */
+  .hero { height: 100svh; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(4, 1fr); gap: 6px; padding: 72px var(--gutter) 64px; }
+  .hero .ph { min-height: 0; }
+  .hero .ph:nth-child(1) { grid-area: 1 / 1; } .hero .ph:nth-child(2) { grid-area: 1 / 4; } .hero .ph:nth-child(3) { grid-area: 2 / 6; }
+  .hero .ph:nth-child(4) { grid-area: 4 / 2; } .hero .ph:nth-child(5) { grid-area: 4 / 5; } .hero .ph:nth-child(6) { grid-area: 3 / 1; }
+  .lockup { grid-area: 2 / 2 / 4 / 6; display: grid; place-content: center; text-align: center; gap: 20px; }
+  .lockup h1 { font-weight: 300; font-size: clamp(3rem, 8.5vw, 9.5rem); line-height: .95; letter-spacing: -.02em; font-variation-settings: "opsz" 72; }
+  @media (max-width: 720px) {
+    .hero { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(6, 1fr); }
+    .hero .ph:nth-child(n+4) { display: none; }
+    .hero .ph:nth-child(1) { grid-area: 1 / 1; } .hero .ph:nth-child(2) { grid-area: 1 / 2; } .hero .ph:nth-child(3) { grid-area: 6 / 2; }
+    .lockup { grid-area: 2 / 1 / 6 / 3; }
+  }
+
+  /* Work: editorial spreads, title overlapping the image (ref: 06), filled by scroll (ref: 02) */
+  .work { padding-top: 200px; display: grid; gap: 200px; }
+  .spread { display: grid; grid-template-columns: repeat(var(--cols), 1fr); column-gap: var(--gutter); align-items: end; }
+  .spread .ph { grid-column: 1 / span 8; aspect-ratio: 16 / 10; }
+  .spread:nth-child(even) .ph { grid-column: 5 / span 8; }
+  .spread .t { grid-column: 6 / span 7; grid-row: 1; z-index: 2; margin-bottom: -.35em; }
+  .spread:nth-child(even) .t { grid-column: 1 / span 7; }
+  .spread h3 { font-weight: 300; font-size: clamp(2.75rem, 7.5vw, 8rem); line-height: .95; letter-spacing: -.02em; font-variation-settings: "opsz" 72;
+    color: var(--ink); }
+  @supports (animation-timeline: view()) {
+    .spread h3 { color: transparent; background: linear-gradient(90deg, var(--ink) 50%, var(--graphite) 50%) 100% 0 / 200% 100% no-repeat; -webkit-background-clip: text; background-clip: text;
+      animation: fill linear both; animation-timeline: view(); animation-range: entry 20% cover 45%; }
+    @keyframes fill { to { background-position: 0 0; } }
+  }
+  .spread .meta { grid-column: 1 / span 4; grid-row: 2; margin-top: 56px; display: grid; gap: 4px; }
+  .spread:nth-child(even) .meta { grid-column: 9 / span 4; }
+  @media (max-width: 720px) { .spread > * { grid-column: 1 / -1 !important; grid-row: auto !important; } .spread .t { margin: 16px 0 0; } }
+
+  /* Roofline: the City's roof curve, drawn as you scroll into the car section */
+  .roof { display: block; width: 100%; height: auto; margin-top: 200px; overflow: visible; }
+  .roof path { fill: none; stroke: var(--ink); stroke-width: 1.25; vector-effect: non-scaling-stroke; }
+  @supports (animation-timeline: view()) {
+    .roof path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw linear both; animation-timeline: view(); animation-range: entry 10% cover 50%; }
+  }
+
+  .car a { display: grid; grid-template-columns: repeat(var(--cols), 1fr); column-gap: var(--gutter); padding-block: 48px 160px; }
+  .car figure { grid-column: 2 / span 4; aspect-ratio: 3 / 4; overflow: hidden; }
+  .car img { width: 100%; height: 100%; object-fit: cover; }
+  .car .txt { grid-column: 7 / span 5; display: grid; gap: 28px; align-content: center; }
+  .car h2 { font-weight: 300; font-size: clamp(2rem, 4vw, 3.5rem); line-height: 1.05; font-variation-settings: "opsz" 72; }
+  @media (max-width: 720px) { .car a > * { grid-column: 1 / -1 !important; } .car .txt { margin-top: 24px; } }
+
+  .about { padding-block: 80px 160px; row-gap: 64px; border-top: 1px solid var(--rule); }
+  .about .lbl { grid-column: 1 / span 3; padding-top: 12px; }
+  .about .bio { grid-column: 4 / span 8; font-size: clamp(1.5rem, 2.6vw, 2.25rem); line-height: 1.3; font-weight: 300; padding-top: 4px; }
+  .table { grid-column: 4 / span 9; }
+  .table div { display: grid; grid-template-columns: 1fr 2fr; padding-block: 12px; border-top: 1px solid var(--rule); }
+  @media (max-width: 720px) { .about > * { grid-column: 1 / -1 !important; } }
+
+  .contact { padding-block: 120px 160px; text-align: center; border-top: 1px solid var(--rule); }
+  .contact h2 { font-weight: 300; font-size: clamp(4rem, 13vw, 14rem); line-height: .9; font-variation-settings: "opsz" 72; }
+  .contact .meta { display: flex; justify-content: center; flex-wrap: wrap; gap: 16px; margin-top: 48px; }
+  main { position: relative; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<svg width="0" height="0" style="position:absolute"><symbol id="jk" viewBox="0 0 40 40"><path d="M18 4V27a9 9 0 0 1-9 9H5M18 22 35 4M24.6 15.1 36 36" fill="none" stroke="currentColor" stroke-width="3.4"/></symbol></svg>
+
+<div class="chrome">
+  <a class="tl" href="#" aria-label="Jainam Kapadia, home"><svg aria-hidden="true"><use href="#jk"/></svg></a>
+  <div class="tr"><nav aria-label="Main"><a href="#" aria-current="page">Index</a>, <a href="#work">Work</a>, <a href="#about">About</a>, <a href="#contact">Contact</a></nav><button class="theme" type="button"></button></div>
+  <div class="bl"><a href="https://instagram.com/jainam05">IG</a> / <a href="#">LI</a></div>
+  <div class="bc muted">Experience designer, automotive HMI</div>
+  <div class="br muted">Student · Open to internships</div>
+</div>
+
+<main id="main">
+  <section class="hero" aria-labelledby="name">
+    <a class="ph" href="#work" aria-label="EV Cluster Concept"></a>
+    <a class="ph" href="#work" aria-label="Infotainment Voice Flow"></a>
+    <a class="ph" href="#work" aria-label="Ride-Share Driver App"></a>
+    <a class="ph" href="#work" aria-label="Brand System 01"></a>
+    <span class="ph" aria-hidden="true"></span>
+    <span class="ph" aria-hidden="true"></span>
+    <div class="lockup">
+      <h1 id="name">Jainam<br>Kapadia</h1>
+      <p class="mono muted">Designing where people meet machines</p>
+    </div>
+  </section>
+
+  <section class="work wrap" id="work" aria-label="Selected work">
+    <a class="spread" href="#"><div class="ph"><span>Placeholder · 16:10</span></div><div class="t"><h3>EV Cluster Concept</h3></div><div class="meta mono"><span>01 HMI</span><span class="muted">2026 · Cluster UI</span></div></a>
+    <a class="spread" href="#"><div class="ph"><span>Placeholder · 16:10</span></div><div class="t"><h3>Infotainment Voice Flow</h3></div><div class="meta mono"><span>02 UX/UI</span><span class="muted">2025 · Voice + touch</span></div></a>
+    <a class="spread" href="#"><div class="ph"><span>Placeholder · 16:10</span></div><div class="t"><h3>Ride-Share Driver App</h3></div><div class="meta mono"><span>03 Product</span><span class="muted">2025 · Mobile</span></div></a>
+    <a class="spread" href="#"><div class="ph"><span>Placeholder · 16:10</span></div><div class="t"><h3>Brand System 01</h3></div><div class="meta mono"><span>04 Visual</span><span class="muted">2024 · Identity</span></div></a>
+  </section>
+
+  <section class="car wrap" aria-labelledby="car-h">
+    <!-- Roof, A-pillar to C-pillar of a 4th-gen City side profile, stretched across the page -->
+    <svg class="roof" viewBox="0 0 1000 120" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M0 118 H160 C 250 112, 300 40, 420 22 S 640 14, 720 30 C 800 46, 850 98, 900 112 H1000"/></svg>
+    <a href="#">
+      <figure><img src="../references/car/02-rear-34-sunset-steelies.jpg" alt="A grey 2016 Honda City at sunset on open ground, taillights lit"></figure>
+      <div class="txt">
+        <p class="mono muted">Off the clock</p>
+        <h2 id="car-h">The car that got me into interfaces: a 2016 Honda City.</h2>
+        <dl class="spec"><dt><b>A</b><span>Paint</span></dt><dd>Sonic Grey Pearl</dd><dt><b>B</b><span>Wing</span></dt><dd>Mugen</dd><dt><b>C</b><span>Wheels</span></dt><dd>5-spoke, silver</dd><dt><b>D</b><span>Lamps</span></dt><dd>Snake-eye / Y-bar</dd></dl>
+        <span class="pill">See the build</span>
+      </div>
+    </a>
+  </section>
+
+  <section class="about wrap grid" id="about" aria-labelledby="about-h">
+    <h2 class="lbl mono muted" id="about-h">About</h2>
+    <p class="bio">I'm an experience design student focused on automotive HMI. I care about the second between a driver's glance and the road, and I design for attention that's already busy.</p>
+    <dl class="table mono">
+      <div><dt>Research</dt><dd class="muted">Interviews, contextual inquiry, task analysis</dd></div>
+      <div><dt>UX / UI</dt><dd class="muted">Flows, wireframes, design systems</dd></div>
+      <div><dt>HMI</dt><dd class="muted">Cluster, centre display, voice</dd></div>
+      <div><dt>Prototyping</dt><dd class="muted">Figma, Protopie</dd></div>
+      <div><dt>3D / Visual</dt><dd class="muted">Blender, Illustrator</dd></div>
+    </dl>
+  </section>
+
+  <section class="contact wrap" id="contact" aria-labelledby="contact-h">
+    <h2 id="contact-h">Let's talk</h2>
+    <div class="meta"><a class="pill" href="mailto:jainamkapadia20@gmail.com">jainamkapadia20@gmail.com</a><a class="pill" href="https://instagram.com/jainam05">Instagram</a><a class="pill" href="#">LinkedIn</a></div>
+  </section>
+</main>
+<script src="theme.js"></script>
+</body>
+</html>

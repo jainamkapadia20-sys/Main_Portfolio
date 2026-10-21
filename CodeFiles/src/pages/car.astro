@@ -1,0 +1,249 @@
+---
+// The car page, reached from the Home garage section. A real photo leads (the LCP image); the numbers, the build,
+// the 3D model in a contained studio frame (model-viewer + three download only when asked for), drawings, photos.
+import { Image } from 'astro:assets';
+import { getEntry, render } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import SpecSheet from '../components/SpecSheet.astro';
+import Pill from '../components/Pill.astro';
+import Dial from '../components/Dial.astro';
+import hero from '../assets/car/front-highway.jpg';
+
+// Blueprint elevations, traced from the 3D model (inlined so CSS can style and draw their strokes)
+import side from '../assets/car/elevation-side.svg?raw';
+import front from '../assets/car/elevation-front.svg?raw';
+import top from '../assets/car/elevation-top.svg?raw';
+
+const car = (await getEntry('car', 'city'))!;
+const c = car.data;
+const { Content } = await render(car);
+const pad = (n: number) => String(n).padStart(2, '0');
+const photos = c.photos.filter((p) => !p.src.src.includes('front-highway'));
+---
+<Base title={`${c.make} ${c.title}`} section="Off the clock" description={`My ${c.year} ${c.make} City in ${c.colour}: specs, modifications, photos and a 3D model built from scratch.`}>
+  <div class="page wrap">
+    <!-- The car itself first -->
+    <header class="hero">
+      <p class="crumb mono muted" data-hero-line>Off the clock / The garage</p>
+      <h1 class="title display" data-hero-line style="--i:1">{c.make} {c.title}</h1>
+      <div class="frame">
+        <Image src={hero} alt="My Honda City on an empty highway at sunset, front three-quarter view" widths={[800, 1400, 2000]} sizes="(min-width: 960px) 72vw, 100vw" loading="eager" fetchpriority="high" />
+        <span class="corners" aria-hidden="true"></span>
+      </div>
+      <dl class="spec mono" data-hero-line style="--i:2">
+        <div><dt><span>A</span>Model</dt><dd>{c.model}</dd></div>
+        <div><dt><span>B</span>Colour</dt><dd>{c.colour}</dd></div>
+        <div><dt><span>C</span>Engine</dt><dd>L15A i-VTEC, 1.5 L</dd></div>
+        <div><dt><span>D</span>Mods</dt><dd>{pad(c.mods.length)}</dd></div>
+      </dl>
+      <div class="lead" data-hero-line style="--i:3"><Content /></div>
+    </header>
+
+    <section class="numbers" aria-labelledby="num-h">
+      <h2 class="lbl mono muted" id="num-h" data-scramble>The numbers</h2>
+      <div class="dials" data-reveal>
+        <Dial value={119} max={200} label="Power" unit="PS" />
+        <Dial value={145} max={200} label="Torque" unit="Nm" />
+        <Dial value={6.6} max={8} label="Peak power" unit="x1000 r/min" />
+      </div>
+      <div class="sheet-spec" data-reveal style="--i:1">
+        <SpecSheet items={[
+          { label: 'Engine', value: c.engine },
+          { label: 'Power', value: c.power },
+          { label: 'Torque', value: c.torque },
+          { label: 'Gearbox', value: c.transmission },
+          { label: 'Size', value: c.dimensions },
+        ]} />
+      </div>
+    </section>
+
+    <section class="build" aria-labelledby="mods-h">
+      <h2 class="lbl mono muted" id="mods-h" data-scramble>The build</h2>
+      <ol class="list">
+        {c.mods.map((m, i) => <li data-reveal style={`--i:${i % 2}`}><span class="mono">{pad(i + 1)}</span><h3>{m.name}</h3><p>{m.note}</p></li>)}
+      </ol>
+    </section>
+
+    <!-- 3D: a contained studio frame beside its notes, never full screen -->
+    <section class="model" aria-labelledby="model-h">
+      <div class="stage" data-viewer data-stock={c.model3d.stock} data-modified={c.model3d.modified}>
+        <figure class="poster sheet" data-poster><Fragment set:html={side} /><figcaption class="mono muted">A&nbsp;&nbsp;Side. Length 4440, wheelbase 2600, height 1495</figcaption></figure>
+      </div>
+      <div class="model-notes">
+        <h2 class="mono muted lbl" id="model-h" data-scramble>The model</h2>
+        <p class="model-title display" data-split>Built from scratch</p>
+        <p class="muted">Modelled in Blender from a side-view blueprint and the photos on this page: first as it left the factory, then with every change since. Still being refined.</p>
+        <div class="controls">
+          <Pill label="View in 3D" tone="accent" attrs={{ 'data-load': '' }} />
+          <div class="loaded" data-loaded hidden>
+            <div class="seg mono" role="group" aria-label="Version">
+              <button type="button" data-version="modified" aria-pressed="true">Modified</button>
+              <button type="button" data-version="stock" aria-pressed="false">Stock</button>
+            </div>
+            <Pill label="Reset view" attrs={{ 'data-reset': '' }} />
+          </div>
+          <p class="note mono muted" role="status" data-note>Loads the model (about 1.4 MB). Drag to turn it, scroll to zoom.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="drawings" aria-labelledby="draw-h">
+      <h2 class="mono muted lbl" id="draw-h" data-scramble>Drawings</h2>
+      <div class="sheets">
+        <figure class="sheet front"><Fragment set:html={front} /><figcaption class="mono muted">B&nbsp;&nbsp;Front. Width 1695</figcaption></figure>
+        <figure class="sheet top"><Fragment set:html={top} /><figcaption class="mono muted">C&nbsp;&nbsp;Plan. Length 4440</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="photos" aria-labelledby="photos-h">
+      <h2 class="mono muted lbl" id="photos-h" data-scramble>Photos</h2>
+      <ul class="gallery">
+        {photos.map((p, i) => <li data-reveal="clip" style={`--i:${i % 3}`}><Image src={p.src} alt={p.alt} widths={[400, 800, 1200]} sizes="(min-width: 720px) 33vw, 50vw" quality={70} /></li>)}
+      </ul>
+      <p class="mono muted credit">Number plates blurred.</p>
+    </section>
+  </div>
+</Base>
+
+<script>
+  import type { ModelViewerElement } from '@google/model-viewer';
+  const stage = document.querySelector<HTMLElement>('[data-viewer]')!;
+  const notes = document.querySelector<HTMLElement>('.model-notes')!;
+  const loadBtn = notes.querySelector<HTMLButtonElement>('[data-load]')!;
+  const note = notes.querySelector<HTMLElement>('[data-note]')!;
+
+  // Studio look: soft neutral light, AgX tone mapping, pearl paint with a little metal flake and gloss
+  const finish = (mv: ModelViewerElement) => {
+    const paint = mv.model?.materials.find((m) => m.name === 'Sonic Grey Pearl');
+    paint?.pbrMetallicRoughness.setMetallicFactor(0.6);
+    paint?.pbrMetallicRoughness.setRoughnessFactor(0.26);
+  };
+
+  let mv: ModelViewerElement | undefined;
+  const failed = () => { note.textContent = 'The model failed to load. Try again later.'; loadBtn.disabled = false; };
+  loadBtn.addEventListener('click', async () => {
+    // checked on click, not on load: creating a WebGL context can block the main thread for a second on slow devices
+    const webgl = (() => { try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; } })();
+    if (!webgl) { loadBtn.disabled = true; note.textContent = 'This browser cannot show 3D. The photos below show the car instead.'; return; }
+    loadBtn.disabled = true; note.textContent = 'Loading the model…';
+    if (mv) { mv.remove(); mv = undefined; }          // a retry replaces the failed viewer instead of stacking another
+    let ModelViewerElement: typeof import('@google/model-viewer').ModelViewerElement;
+    try { ({ ModelViewerElement } = await import('@google/model-viewer')); } catch { failed(); return; }
+    ModelViewerElement.dracoDecoderLocation = import.meta.env.BASE_URL.replace(/\/?$/, '/') + 'draco/';
+    mv = document.createElement('model-viewer') as ModelViewerElement;
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    Object.entries({ src: stage.dataset.modified!, alt: 'Interactive 3D model of the modified Honda City', 'camera-controls': '', 'data-lenis-prevent-wheel': '', 'touch-action': 'pan-y',
+      'camera-orbit': '130deg 76deg 82%', 'min-camera-orbit': 'auto 20deg 70%', 'max-camera-orbit': 'auto 95deg 160%',
+      'environment-image': 'neutral', 'tone-mapping': 'agx', exposure: '1.15', 'shadow-intensity': '1.4', 'shadow-softness': '.7',
+      'interaction-prompt': 'none', ...(reduce ? {} : { 'auto-rotate': '', 'auto-rotate-delay': '0', 'rotation-per-second': '10deg' }) })
+      .forEach(([k, v]) => mv!.setAttribute(k, v));
+    mv.addEventListener('load', () => {
+      finish(mv!);
+      stage.querySelector('[data-poster]')?.remove(); loadBtn.hidden = true;
+      notes.querySelector<HTMLElement>('[data-loaded]')!.hidden = false; note.textContent = 'Drag to turn it, scroll to zoom.';
+      notes.querySelector<HTMLElement>('[data-version="modified"]')!.focus();   // the load button just hid itself
+    });
+    mv.addEventListener('error', failed);
+    mv.addEventListener('camera-change', (e) => { if ((e as CustomEvent).detail.source === 'user-interaction') mv!.removeAttribute('auto-rotate'); });
+    stage.prepend(mv);
+  });
+
+  notes.querySelectorAll<HTMLButtonElement>('[data-version]').forEach((b) => b.addEventListener('click', () => {
+    if (!mv) return;
+    mv.src = b.dataset.version === 'stock' ? stage.dataset.stock! : stage.dataset.modified!;
+    mv.alt = `Interactive 3D model of the ${b.dataset.version} Honda City`;
+    notes.querySelectorAll('[data-version]').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+  }));
+  notes.querySelector('[data-reset]')!.addEventListener('click', () => {
+    if (!mv) return;
+    mv.cameraOrbit = '130deg 76deg 82%'; mv.cameraTarget = 'auto auto auto'; mv.resetTurntableRotation(0); mv.jumpCameraToGoal();
+  });
+</script>
+
+<style>
+  .page { padding-top: 104px; padding-bottom: var(--s12); }
+  .page > section { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); margin-top: var(--s16); }
+  .lbl { grid-column: 1 / span 3; align-self: start; }
+
+  /* ---------- Hero ---------- */
+  .hero { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); }
+  .crumb { grid-column: 1 / -1; margin-bottom: var(--s3); }
+  .title { grid-column: 1 / -1; font-size: clamp(3.25rem, 10vw, 13rem); position: relative; z-index: 2; pointer-events: none; text-shadow: 0 4px 40px color-mix(in srgb, var(--paper) 70%, transparent); }
+  .frame { grid-column: 4 / span 8; position: relative; z-index: 1; margin-top: -2.8vw; aspect-ratio: 16 / 9; }
+  .frame :global(img) { width: 100%; height: 100%; object-fit: cover; object-position: 50% 62%; }
+  .corners { position: absolute; inset: -12px; pointer-events: none; --c: var(--ink); --l: 18px;
+    background:
+      linear-gradient(var(--c), var(--c)) 0 0 / var(--l) 1px, linear-gradient(var(--c), var(--c)) 0 0 / 1px var(--l),
+      linear-gradient(var(--c), var(--c)) 100% 0 / var(--l) 1px, linear-gradient(var(--c), var(--c)) 100% 0 / 1px var(--l),
+      linear-gradient(var(--c), var(--c)) 0 100% / var(--l) 1px, linear-gradient(var(--c), var(--c)) 0 100% / 1px var(--l),
+      linear-gradient(var(--c), var(--c)) 100% 100% / var(--l) 1px, linear-gradient(var(--c), var(--c)) 100% 100% / 1px var(--l);
+    background-repeat: no-repeat; }
+  .spec { grid-column: 1 / span 7; display: grid; grid-template-columns: repeat(4, auto); gap: var(--s2) var(--s3); margin-top: var(--s6); align-content: start; }
+  .spec dt { color: var(--graphite); display: flex; gap: 8px; }
+  .spec dt span { color: var(--accent); }
+  .spec dd { margin-top: 6px; }
+  .lead { grid-column: 9 / -1; margin-top: var(--s6); font-size: var(--t-lead); line-height: 1.45; }
+
+  /* ---------- Numbers, build ---------- */
+  .dials { grid-column: 4 / span 4; display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s2); align-self: start; }
+  .sheet-spec { grid-column: 9 / -1; }
+  .list { grid-column: 4 / -1; display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--s4) var(--gutter); }
+  .list li { border-top: 1px solid var(--rule-strong); padding-top: var(--s2); }
+  .list .mono { color: var(--accent); }
+  .list h3 { font: 800 clamp(1.5rem, 1rem + 1.4vw, 2.25rem)/1 var(--font-text); font-stretch: 78%; letter-spacing: -.02em; margin: var(--s1) 0 6px; }
+  .list p { color: var(--graphite); }
+
+  /* ---------- 3D model: contained studio ---------- */
+  .stage { grid-column: 1 / span 8; position: relative; aspect-ratio: 16 / 10; max-height: 72vh; overflow: hidden; border: 1px solid var(--rule);
+    background: radial-gradient(70% 60% at 50% 70%, color-mix(in srgb, var(--pearl) 22%, transparent), transparent 70%),
+      linear-gradient(var(--rule) 1px, transparent 1px) 0 0 / 48px 48px, linear-gradient(90deg, var(--rule) 1px, transparent 1px) 0 0 / 48px 48px, var(--surface); }
+  .stage > :global(model-viewer) { position: absolute; inset: 0; width: 100%; height: 100%; --poster-color: transparent; }
+  .stage .poster { position: absolute; inset: 0; margin: 0; display: grid; place-items: center; padding: 6% 9%; border: 0; background: none; }
+  .stage .poster figcaption { position: absolute; left: var(--s3); bottom: var(--s2); margin: 0; }
+  .poster :global(svg) { width: 100%; height: auto; overflow: visible; }
+  .poster :global(.outline) { color: var(--ink); stroke-width: 1.4; }
+  .poster :global(.detail) { color: var(--graphite); }
+  .poster :global(.dims) { color: var(--accent); }
+  .model-notes { grid-column: 9 / -1; display: grid; gap: var(--s3); align-content: start; }
+  .model-notes .lbl { grid-column: auto; }
+  .model-title { font-size: clamp(2rem, 1rem + 2.6vw, 3.75rem); }
+  .controls { display: grid; gap: 12px; justify-items: start; }
+  .loaded { display: flex; gap: 12px; flex-wrap: wrap; }
+  .loaded[hidden] { display: none; }
+  .seg { display: inline-flex; border: 1px solid var(--rule-strong); }
+  .seg button { min-height: 44px; padding: 0 16px; color: var(--graphite); }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+
+  /* ---------- Drawings, photos ---------- */
+  .sheets { grid-column: 4 / -1; display: grid; grid-template-columns: 2fr 5fr; gap: var(--s6) var(--gutter); align-items: end; }
+  .sheet { margin: 0; padding: var(--s3); border: 1px solid var(--rule);
+    background: linear-gradient(var(--rule) 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, var(--rule) 1px, transparent 1px) 0 0 / 24px 24px; }
+  .sheet :global(svg) { width: 100%; height: auto; overflow: visible; }
+  .sheet :global(.outline) { color: var(--ink); stroke-width: 1.4; }
+  .sheet :global(.detail) { color: var(--graphite); }
+  .sheet :global(.dims) { color: var(--accent); }
+  .sheet figcaption { margin-top: var(--s2); }
+  /* skipped until near the viewport, so its lazy photos stop competing with the hero photo (LCP) */
+  .photos { content-visibility: auto; contain-intrinsic-size: auto 1400px; }
+  .gallery { grid-column: 1 / -1; margin-top: var(--s3); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gutter); }
+  .gallery li { overflow: hidden; }
+  .gallery li:first-child { grid-column: span 2; grid-row: span 2; }
+  .gallery :global(img) { width: 100%; height: 100%; aspect-ratio: 4 / 5; object-fit: cover; transition: scale 900ms var(--ease-out-expo); }
+  .gallery li:hover :global(img) { scale: 1.04; }
+  .credit { grid-column: 1 / -1; margin-top: var(--s3); }
+
+  @media (max-width: 960px) {
+    .frame { grid-column: 1 / -1; margin-top: var(--s3); }
+    .spec { grid-column: 1 / -1; grid-template-columns: repeat(2, auto); }
+    .lead, .lbl, .dials, .sheet-spec, .list, .stage, .model-notes, .sheets { grid-column: 1 / -1; }
+    .lbl { margin-bottom: var(--s3); }
+    .sheet-spec, .model-notes { margin-top: var(--s6); }
+  }
+  @media (max-width: 720px) {
+    .page { padding-top: 88px; }
+    .list, .sheets { grid-template-columns: 1fr; }
+    .stage { aspect-ratio: 4 / 5; }
+    .gallery { grid-template-columns: 1fr 1fr; }
+    .gallery li:first-child { grid-row: auto; }
+  }
+</style>

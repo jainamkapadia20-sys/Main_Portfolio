@@ -1,0 +1,9 @@
+---
+// JK monogram, "shared stem": the J and K share one upright (chosen in Phase 1).
+interface Props { size?: number; title?: string }
+const { size = 20, title } = Astro.props;
+---
+<svg class="jk" width={size} height={size} viewBox="0 0 40 40" role={title ? 'img' : undefined} aria-hidden={title ? undefined : 'true'} aria-label={title}>
+  <path d="M18 4V27a9 9 0 0 1-9 9H5M18 22 35 4M24.6 15.1 36 36" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="square" />
+</svg>
+<style>.jk { flex: none; }</style>

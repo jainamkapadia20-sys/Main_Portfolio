@@ -1,0 +1,122 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Adaptive Cluster</title>
+<style>
+  @font-face { font-family: "Archivo"; src: url("fonts/archivo-var.woff2") format("woff2-variations"); font-weight: 400 800; font-stretch: 62% 100%; }
+  @font-face { font-family: "Geist Mono"; src: url("fonts/geist-mono-400.woff2") format("woff2"); }
+  :root { --paper: #0B0D12; --ink: #EEF0F2; --graphite: #8D97A7; --accent: #FF3B30; --dusk: #FFB38A; }
+  * { margin: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); color: var(--ink); font-family: "Archivo", sans-serif; }
+  .abs { position: absolute; }
+  #bg { inset: 0; background:
+      radial-gradient(900px 700px at 15% 95%, #FF3B3030, transparent 70%),
+      radial-gradient(900px 600px at 90% 5%, #FFB38A22, transparent 70%),
+      radial-gradient(1200px 500px at 50% 55%, #7D8FAD1f, transparent 70%); }
+  #red { inset: 0; background: radial-gradient(1200px 800px at 50% 50%, #FF3B3066, #FF3B3010 70%); opacity: 0; }
+  .mono { font-family: "Geist Mono", monospace; font-size: 22px; letter-spacing: .08em; text-transform: uppercase; }
+  .big { font-weight: 800; font-stretch: 72%; letter-spacing: -.03em; line-height: .9; }
+  #grid { left: 120px; top: 150px; width: 1680px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+  #grid img { width: 100%; aspect-ratio: 2 / 1; object-fit: cover; display: block; }
+  .hook { left: 0; right: 0; top: 470px; text-align: center; font-size: 120px; }
+  #stage { left: 0; top: 0; width: 1240px; height: 614px; transform-origin: 0 0; }
+  #stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; }
+  .corners { position: absolute; inset: -18px; --c: #EEF0F2; --l: 28px;
+    background:
+      linear-gradient(var(--c), var(--c)) 0 0 / var(--l) 2px, linear-gradient(var(--c), var(--c)) 0 0 / 2px var(--l),
+      linear-gradient(var(--c), var(--c)) 100% 0 / var(--l) 2px, linear-gradient(var(--c), var(--c)) 100% 0 / 2px var(--l),
+      linear-gradient(var(--c), var(--c)) 0 100% / var(--l) 2px, linear-gradient(var(--c), var(--c)) 0 100% / 2px var(--l),
+      linear-gradient(var(--c), var(--c)) 100% 100% / var(--l) 2px, linear-gradient(var(--c), var(--c)) 100% 100% / 2px var(--l);
+    background-repeat: no-repeat; }
+  #title { left: 0; right: 0; top: 790px; text-align: center; }
+  #title .big { font-size: 132px; }
+  #title p { margin-top: 22px; font-size: 40px; color: var(--graphite); }
+  #side { left: 1400px; top: 250px; width: 420px; }
+  #mode { color: var(--dusk); display: flex; gap: 14px; align-items: center; }
+  #mode i { width: 12px; height: 12px; background: var(--accent); box-shadow: 0 0 14px var(--accent); }
+  .cap { position: absolute; left: 0; top: 70px; width: 420px; }
+  .cap h3 { font-size: 84px; }
+  .cap p { margin-top: 26px; font-size: 38px; line-height: 1.25; color: #C9CED6; }
+  #stepbar { left: 1400px; top: 840px; width: 420px; height: 3px; background: #EEF0F21f; }
+  #stepbar i { position: absolute; inset: 0; background: linear-gradient(90deg, var(--dusk), var(--accent)); transform-origin: 0 50%; }
+  #crash { left: 0; right: 0; top: 760px; text-align: center; }
+  #crash .big { font-size: 128px; }
+  #crash p { font-size: 44px; color: var(--dusk); margin-top: 18px; }
+  #outro { left: 0; right: 0; top: 330px; text-align: center; }
+  #outro .big { font-size: 190px; }
+  #outro p { margin-top: 36px; font-size: 44px; color: #C9CED6; }
+  #outro .mono { margin-top: 60px; color: var(--graphite); }
+  #jk { left: 930px; top: 220px; width: 60px; height: 60px; }
+</style></head>
+<body>
+<div id="bg" class="abs"></div>
+<div id="red" class="abs"></div>
+<div id="grid" class="abs"></div>
+<p id="h1" class="abs hook big">Your dashboard shows everything.</p>
+<p id="h2" class="abs hook big">Important alerts get buried.</p>
+<div id="stage" class="abs"><span class="corners"></span></div>
+<div id="title" class="abs"><h1 class="big">Adaptive Cluster</h1><p>A cluster that changes with the drive.</p></div>
+<div id="side" class="abs"><p id="mode" class="mono"><i></i><span></span></p></div>
+<div id="stepbar" class="abs"><i></i></div>
+<div id="crash" class="abs"><p class="big">Emergency braking.</p><p>Impossible to miss.</p></div>
+<div id="outro" class="abs"><h1 class="big">Adaptive Cluster</h1><p>HMI concept by Jainam Kapadia</p><p class="mono">Highway mode / Traffic mode</p></div>
+<svg id="jk" class="abs" viewBox="0 0 40 40"><path d="M18 4V27a9 9 0 0 1-9 9H5M18 22 35 4M24.6 15.1 36 36" fill="none" stroke="#EEF0F2" stroke-width="3" stroke-linecap="square"/></svg>
+<script>
+  const SCREENS = ['startup','dashboard','traffic','proximity-warning','proximity-alert','nav-highway','blindspot-traffic','pedestrian','blindspot','park-auto','park-manual','crash'];
+  const $ = (s) => document.querySelector(s);
+  const grid = $('#grid'), stage = $('#stage'), side = $('#side');
+  SCREENS.forEach((n) => { const g = new Image(); g.src = `screens/${n}.png`; grid.append(g); });
+  // what the frame shows, from when
+  const SEQ = [[3.4,'dashboard'],[6.6,'nav-highway'],[9.1,'blindspot'],[11.9,'traffic'],[13.0,'proximity-warning'],[14.1,'proximity-alert'],[15.5,'park-auto'],[17.6,'crash'],[19.6,null]];
+  const shots = SEQ.slice(0, -1).map(([s, n]) => { const im = new Image(); im.src = `screens/${n}.png`; stage.append(im); return im; });
+  stage.append(stage.querySelector('.corners'));
+  // captions: [start, end, mode, title, body]
+  const CAPS = [[6.6,9.1,'Highway mode','Exit guidance','The exit card shows up early and counts down.'],
+    [9.1,11.9,'Highway mode','Blind spot','Side radar spots a car. Your lane turns amber.'],
+    [11.9,15.5,'Traffic mode','Closing in','The ring goes green, amber, red as the gap closes.'],
+    [15.5,17.6,'Traffic mode','Park assist','One prompt. Confirm, and it parks itself.']];
+  const caps = CAPS.map((c) => { const d = document.createElement('div'); d.className = 'cap'; d.innerHTML = `<h3 class="big">${c[3]}</h3><p>${c[4]}</p>`; side.append(d); return d; });
+
+  const cl = (x) => Math.max(0, Math.min(1, x));
+  const seg = (t, a, b) => cl((t - a) / (b - a));
+  const eo = (x) => 1 - Math.pow(1 - x, 4);          // ease out quart
+  const eio = (x) => x < .5 ? 8 * x ** 4 : 1 - Math.pow(-2 * x + 2, 4) / 2;
+  const lerp = (a, b, x) => a + (b - a) * x;
+  const fade = (t, a, b, d = .35, dOut = .25) => Math.min(eo(seg(t, a, a + d)), 1 - seg(t, b - dOut, b));
+  const set = (el, o, tf = '', f = '') => { el.style.opacity = o; el.style.transform = tf; el.style.filter = f; };
+
+  window.render = (t) => {
+    // 1. hook
+    const h1 = fade(t, .1, 1.75, .45, .2), h2 = fade(t, 1.85, 3.5, .35, .3);
+    set($('#h1'), h1, `translateY(${(1 - eo(seg(t, .1, .55))) * 30}px)`, `blur(${(1 - eo(seg(t, .1, .55))) * 10}px)`);
+    set($('#h2'), h2, `translateY(${(1 - eo(seg(t, 1.85, 2.2))) * 30}px)`, `blur(${(1 - eo(seg(t, 1.85, 2.2))) * 10}px)`);
+    [...grid.children].forEach((g, i) => {
+      const a = 1.55 + i * .05, o = seg(t, a, a + .25) * (1 - seg(t, 3.3, 3.7));
+      g.style.opacity = (o * .32).toFixed(3); g.style.transform = `scale(${lerp(1.06, 1, eo(seg(t, a, a + .4))) * lerp(1, .92, seg(t, 3.3, 3.7))})`;
+    });
+    // 2-5. the frame: scales up centred (reveal), slides left for the walk-through, recentres for the crash, leaves for the outro
+    const rv = eo(seg(t, 3.4, 4.3)), wk = eio(seg(t, 6.2, 6.9)), cr = eio(seg(t, 17.3, 17.9)), out = eio(seg(t, 19.4, 19.9));
+    const center = { x: 340, y: 150, s: 1 }, left = { x: 110, y: 233, s: 1.02 };
+    let x = lerp(center.x, left.x, wk), y = lerp(center.y, left.y, wk), s = lerp(lerp(.72, 1, rv), left.s, wk);
+    x = lerp(x, center.x, cr); y = lerp(y, 110, cr); s = lerp(s, 1, cr);
+    stage.style.transform = `translate(${x}px, ${y - out * 40}px) scale(${s})`;
+    stage.style.opacity = Math.min(rv, 1 - out);
+    shots.forEach((im, k) => { const [a] = SEQ[k], b = SEQ[k + 1][0]; im.style.opacity = t >= a && t < b + .4 ? eo(seg(t, a, a + .4)) : 0; });
+    set($('#title'), fade(t, 3.7, 6.35, .5, .3), `translateY(${(1 - eo(seg(t, 3.7, 4.3))) * 24}px)`);
+    // side captions + step bar
+    const sideOn = fade(t, 6.6, 17.45, .4, .3);
+    side.style.opacity = sideOn;
+    $('#mode span').textContent = t < 11.9 ? 'Highway mode' : 'Traffic mode';
+    caps.forEach((c, i) => { const [a, b] = CAPS[i]; set(c, fade(t, a + .1, b, .4, .2), `translateY(${(1 - eo(seg(t, a + .1, a + .5))) * 22}px)`); });
+    const cur = CAPS.find(([a, b]) => t >= a && t < b);
+    $('#stepbar').style.opacity = sideOn; $('#stepbar i').style.transform = `scaleX(${cur ? seg(t, cur[0], cur[1]) : 0})`;
+    // 5. emergency
+    $('#red').style.opacity = (seg(t, 17.6, 17.75) * (1 - seg(t, 17.75, 19.4) * .6) * (1 - seg(t, 19.3, 19.7))).toFixed(3);
+    set($('#crash'), fade(t, 17.8, 19.5, .3, .3), `translateY(${(1 - eo(seg(t, 17.8, 18.2))) * 24}px)`);
+    // 6. outro
+    const o = eo(seg(t, 19.8, 20.5));
+    set($('#outro'), o, `translateY(${(1 - o) * 30}px)`, `blur(${(1 - o) * 8}px)`);
+    set($('#jk'), eo(seg(t, 20.3, 20.8)));
+  };
+  window.ready = Promise.all([document.fonts.ready, ...[...document.images].map((i) => i.decode().catch(() => {}))]);
+  render(0);
+</script>
+</body></html>

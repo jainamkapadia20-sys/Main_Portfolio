@@ -1,0 +1,114 @@
+/* Design system: tokens, base, grid. Components keep their own scoped styles. */
+@layer reset, tokens, base, layout, utilities;
+
+@font-face {
+  font-family: "Archivo"; src: url("/fonts/archivo-var.woff2") format("woff2-variations");
+  font-weight: 400 800; font-stretch: 62% 100%; font-display: swap;   /* subset: Latin + punctuation, wght 400-800, wdth 62-100 */
+}
+@font-face {
+  font-family: "Geist Mono"; src: url("/fonts/geist-mono-400.woff2") format("woff2");
+  font-weight: 400; font-display: swap;
+}
+
+@layer reset {
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body, h1, h2, h3, h4, p, ul, ol, dl, dd, figure, blockquote { margin: 0; }
+  ul, ol { padding: 0; list-style: none; }
+  img, svg, video { display: block; max-width: 100%; }
+  img { height: auto; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+  [hidden] { display: none !important; }
+}
+
+@layer tokens {
+  :root {
+    /* colour: "dusk drive", taken from the sunset photo of the car: night asphalt, taillight red, dusk apricot,
+       Sonic Grey Pearl. Contrast on paper: ink 17, graphite 6.5, accent 5.4, dusk 11 */
+    --paper: #0B0D12; --ink: #EEF0F2; --graphite: #8D97A7;
+    --rule: #EEF0F21F; --rule-strong: #EEF0F24D; --surface: #131720; --accent: #FF3B30;
+    --dusk: #FFB38A; --pearl: #7D8FAD;
+    --glow-a: #FF3B3038; --glow-b: #FFB38A24; --glow-c: #7D8FAD26;
+    color-scheme: dark;
+
+    /* type */
+    --font-text: "Archivo", system-ui, sans-serif;
+    --font-mono: "Geist Mono", ui-monospace, monospace;
+    --t-label: .75rem;                 /* 12px mono labels */
+    --t-small: .875rem;
+    --t-body: 1.0625rem;               /* 17px */
+    --t-lead: clamp(1.125rem, 1rem + .5vw, 1.375rem);
+    --t-h3: clamp(1.75rem, 1rem + 3vw, 3.25rem);
+    --t-h2: clamp(3rem, 1rem + 8vw, 9rem);
+    --t-hero: clamp(3.25rem, 15.6vw, 19rem);
+    --track-label: .06em;
+
+    /* space: 8px unit */
+    --u: 8px;
+    --s1: 8px; --s2: 16px; --s3: 24px; --s4: 32px; --s6: 48px; --s8: 64px; --s12: 96px; --s16: 128px; --s20: 160px;
+    --gutter: clamp(16px, 2.5vw, 32px);
+    --cols: 12;
+
+    /* motion (used from Phase 5; Phase 3 is static) */
+    --ease-out-expo: cubic-bezier(.19, 1, .22, 1);
+    --ease-out-quart: cubic-bezier(.165, .84, .44, 1);
+    --ease-in-out-expo: cubic-bezier(1, 0, 0, 1);
+    --d-fast: 150ms; --d-ui: 300ms; --d-page: 800ms;
+
+    /* layers */
+    --z-base: 1; --z-chrome: 20; --z-overlay: 30; --z-menu: 40; --z-toast: 50;
+  }
+  /* light paper theme, picked with the toggle; contrast on paper: ink 17.2, graphite 5.4, accent 5.1 (taillight red) */
+  :root[data-theme="light"] {
+    --paper: #F3F2EE; --ink: #0E0E0E; --graphite: #5F6368;
+    --rule: #0E0E0E1C; --rule-strong: #0E0E0E40; --surface: #E9E8E3;
+    --accent: #C81E17;                 /* taillight red */
+    --dusk: #A8461B; --pearl: #4D5F7D;
+    --glow-a: #C81E171A; --glow-b: #FFB38A40; --glow-c: #7D8FAD26;
+    color-scheme: light;
+  }
+  @media (max-width: 720px) { :root { --cols: 4; } }
+}
+
+@layer base {
+  html { background: var(--paper); }
+  /* Ambient light: taillight red low left, dusk high right, pearl through the middle. It drifts with scroll (--sp). */
+  .ambient { position: fixed; inset: -20vh -10vw; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(40vw 40vw at calc(8% + var(--sp, 0) * 20%) calc(92% - var(--sp, 0) * 30%), var(--glow-a), transparent 70%),
+      radial-gradient(46vw 36vw at calc(92% - var(--sp, 0) * 25%) calc(6% + var(--sp, 0) * 40%), var(--glow-b), transparent 70%),
+      radial-gradient(60vw 30vw at 50% 55%, var(--glow-c), transparent 70%); }
+  .grain { position: fixed; inset: 0; z-index: 100; pointer-events: none; opacity: .06; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  body {
+    background: transparent; color: var(--ink);
+    font: 400 var(--t-body)/1.55 var(--font-text);
+    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  ::selection { background: var(--accent); color: var(--paper); }
+  h1, h2, h3 { font-weight: inherit; }
+  p { max-width: 62ch; }
+  /* cross-document page transitions where supported; a plain navigation elsewhere */
+  @view-transition { navigation: auto; }
+}
+
+@layer layout {
+  .wrap { padding-inline: var(--gutter); }
+  .grid { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); column-gap: var(--gutter); }
+  .section { padding-block: var(--s16); }
+  @media (max-width: 720px) { .section { padding-block: var(--s12); } }
+}
+
+@layer utilities {
+  .display { font-family: var(--font-text); font-stretch: 72%; font-weight: 800; line-height: .86; letter-spacing: -.035em; overflow-wrap: break-word; }
+  .mono { font-family: var(--font-mono); font-size: var(--t-label); letter-spacing: var(--track-label); text-transform: uppercase; line-height: 1.4; }
+  .muted { color: var(--graphite); }
+  .rule-top { border-top: 1px solid var(--rule); }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .progress { position: fixed; inset: 0 0 auto; height: 3px; z-index: var(--z-menu); background: linear-gradient(90deg, var(--dusk), var(--accent)); box-shadow: 0 0 12px var(--accent); transform-origin: 0 50%; scale: var(--p, 0) 1; pointer-events: none; }
+  .skip { position: absolute; left: var(--gutter); top: -100px; z-index: var(--z-toast); background: var(--ink); color: var(--paper); padding: var(--s1) var(--s2); }
+  .skip:focus { top: var(--gutter); }
+}

@@ -1,0 +1,147 @@
+/* Motion layer (Phase 5). Weighting: Jakub (subtle production polish) first, Jhey for the signature moments,
+   Emil's restraint for anything frequent or keyboard-driven. Tokens follow the transitions.dev scale.
+   Only transform, opacity, filter and clip-path animate. Every block has a reduced-motion path:
+   content is never hidden unless JS is running AND the visitor allows motion.
+   Unlayered on purpose: component styles are unlayered, so layered motion rules would always lose to them. */
+:root {
+  --duration-stagger: 40ms; --duration-quick: 150ms; --duration-fast: 250ms; --duration-medium: 350ms;
+  --duration-slow: 400ms; --duration-very-slow: 500ms;
+  --ease-smooth-out: cubic-bezier(.22, 1, .36, 1);
+  --distance-medium: 12px; --blur-small: 2px; --blur-medium: 3px;
+  --reel-ease: cubic-bezier(.16, 1, .3, 1);
+}
+
+/* Lenis (ref: 05-lenis): its recommended rules */
+html.lenis, html.lenis body { height: auto; }
+.lenis:not(.lenis-autoToggle).lenis-stopped { overflow: clip; }
+.lenis [data-lenis-prevent], .lenis [data-lenis-prevent-wheel] { overscroll-behavior: contain; }
+.lenis.lenis-smooth iframe { pointer-events: none; }
+
+/* Cross-document page transitions: the new page rises in, the old one simply fades (exit subtler than enter);
+   project images morph from card to case hero (ref: 03-aristide-benoist). The chrome stays put. */
+/* the new page wipes up over the old one, which settles back and dims (ref 03-aristide-benoist) */
+::view-transition-old(root) { animation: vt-out 700ms var(--ease-out-expo) both; }
+::view-transition-new(root) { animation: vt-wipe 900ms var(--ease-out-expo) both; }
+::view-transition-group(*) { animation-duration: 800ms; animation-timing-function: var(--ease-out-expo); }
+@keyframes vt-out { to { opacity: .35; scale: .97; } }
+@keyframes vt-wipe { from { clip-path: inset(100% 0 0 0); } to { clip-path: inset(0); } }
+.chrome .tl { view-transition-name: chrome-mark; }
+.chrome .tr { view-transition-name: chrome-nav; }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* ---- Reveals: hidden only while JS runs, shown by IntersectionObserver (.in). Safety net: html.reveal-all ---- */
+  /* hidden state; leaving (scrolling back up) is quicker and plainer than arriving */
+  .js:not(.reveal-all) [data-reveal]:not(.in) { opacity: 0; transform: translateY(16px); filter: blur(4px); transition-duration: 400ms; transition-delay: 0s; }
+  [data-reveal] { transition: opacity 700ms var(--ease-smooth-out), transform 700ms var(--ease-smooth-out), filter 700ms var(--ease-smooth-out);
+    transition-delay: calc(var(--i, 0) * 70ms); }
+  /* media frames wipe open from the bottom, the image inside settles from a slight zoom */
+  .js:not(.reveal-all) [data-reveal="clip"]:not(.in) { opacity: 1; transform: none; filter: none; clip-path: inset(100% 0 0 0); transition-duration: 600ms; }
+  [data-reveal="clip"] { transition: clip-path 1.1s var(--ease-out-expo); transition-delay: calc(var(--i, 0) * 90ms); }
+  .js:not(.reveal-all) [data-reveal="clip"]:not(.in) :is(img, .ph) { scale: 1.08; }
+
+  /* ---- Hero, the one orchestrated moment: the name rises out of a mask, the sheet settles in after it ---- */
+  /* letters drive in from the right, compressed and blurred, and open to full width as they arrive (with the tach sweep) */
+  .js .hero .ch { animation: drive-in 1.25s var(--ease-out-expo) backwards; animation-delay: calc(180ms + var(--i) * 45ms); }
+  /* starts at 1% opacity, not 0, so the browser counts the name as painted on its first frame (LCP) */
+  @keyframes drive-in { from { opacity: .01; translate: 1.1em 0; filter: blur(14px); font-stretch: 62%; } }
+  .js .hero .tach-wrap { animation: lift 1s var(--ease-smooth-out) backwards; }
+  .js .hero [data-hero-line] { animation: lift-h 700ms var(--ease-smooth-out) backwards; animation-delay: calc(450ms + var(--i, 0) * 80ms); }
+  @keyframes lift-h { from { opacity: .01; translate: 0 var(--distance-medium); filter: blur(var(--blur-medium)); } }
+
+  /* display headings: words rise out of a mask, staggered; they sink back when you scroll up past them */
+  .split .w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .1em; margin-bottom: -.1em; }
+  .split .w > span { display: inline-block; transition: translate 1s var(--ease-out-expo); transition-delay: calc(var(--wi) * 70ms); }
+  .js:not(.reveal-all) .split:not(.in) .w > span { translate: 0 112%; transition-duration: 450ms; transition-delay: 0s; }
+  .js:not(.reveal-all) [data-split]:not(.split) { opacity: 0; }
+
+  /* magnetic pills */
+  .pill { translate: var(--mx, 0px) var(--my, 0px); }
+
+  /* dials sweep to their value when they come into view */
+  .dial .fg { transition: stroke-dashoffset 1.6s var(--ease-out-expo) .2s; }
+  .dial:nth-child(2) .fg { transition-delay: .35s; } .dial:nth-child(3) .fg { transition-delay: .5s; }
+  .js:not(.reveal-all) .dial:not(.in) .fg { stroke-dashoffset: 1; }
+  @keyframes lift { from { opacity: 0; translate: 0 var(--distance-medium); filter: blur(var(--blur-medium)); } }
+
+  /* ---- Hover feedback (occasional): quick, interruptible transitions. Keyboard focus shows the same state
+     instantly (Emil: keyboard-initiated changes don't animate) ---- */
+  .roll .letters span { text-shadow: 0 1.25em currentColor; transition: translate var(--duration-medium) var(--ease-smooth-out); transition-delay: calc(var(--i) * 12ms); }
+  :is(a, button):hover .roll .letters span { translate: 0 -1.25em; }
+  .pill { transition: border-color var(--duration-quick) var(--ease-smooth-out), background-color var(--duration-quick), scale 100ms var(--ease-smooth-out), translate 450ms var(--ease-out-expo); }
+  .pill:active { scale: .97; }
+  .media :is(img, .ph) { transition: scale 1.4s var(--ease-out-expo); }
+  a.big { transition: color var(--duration-fast) var(--ease-smooth-out); }
+
+  /* ---- Odometer reels (transitions.dev "spinning counter", calmer): columns roll to --n, staggered ---- */
+  .odo .col { transition: translate 1.1s var(--reel-ease); }
+  .odo .col:nth-child(2) { transition-delay: 90ms; }
+
+  /* ---- Tick ruler cursor glides between positions ---- */
+  .ruler .cursor { transition: translate var(--duration-slow) var(--ease-smooth-out); }
+
+  /* ---- Phone menu: rises in, links follow; leaves quicker (exit subtler than enter) ---- */
+  #menu { opacity: 0; transform: translateY(8px);
+    transition: opacity var(--duration-fast) var(--ease-smooth-out), transform var(--duration-fast) var(--ease-smooth-out),
+      overlay var(--duration-fast) allow-discrete, display var(--duration-fast) allow-discrete; }
+  #menu:popover-open { opacity: 1; transform: none; transition-duration: var(--duration-slow); }
+  @starting-style { #menu:popover-open { opacity: 0; transform: translateY(var(--distance-medium)); } }
+  #menu:popover-open nav li { animation: lift var(--duration-very-slow) var(--ease-smooth-out) both; animation-delay: calc(80ms + var(--i, 0) * 50ms); }
+
+  /* ---- Blueprint draw-in (car page): outline first, then details, then dimensions ---- */
+  .sheet path { stroke-dasharray: 1; transition: stroke-dashoffset 1.6s var(--ease-smooth-out); }
+  .js:not(.reveal-all) .sheet:not(.in) path { stroke-dashoffset: 1; }
+  .sheet .detail path { transition-delay: .35s; transition-duration: 1.4s; }
+  .sheet .dims path { transition-delay: .9s; transition-duration: .8s; }
+
+  /* ---- Scroll-linked (scrubbed on purpose: they track position, ref 02-lusion), where supported ---- */
+  @supports (animation-timeline: scroll()) {
+    .hero .name { animation: drift linear both; animation-timeline: view(); animation-range: exit 0% exit 100%; }
+    @keyframes drift { to { translate: 0 -18vh; } }
+    .gallery img { animation: inner linear both; animation-timeline: view(); scale: 1.14; }
+    @keyframes inner { from { translate: 0 -6%; } to { translate: 0 6%; } }
+    /* the name pulls apart as the hero scrolls away and comes back together on the way up */
+    .hero:has(.name) { view-timeline: --hero; }
+    .hero .name .line { animation: apart linear both; animation-timeline: --hero; animation-range: exit 0% exit 85%; }
+    .hero .name .line:first-child { --dir: -1; } .hero .name .line:last-child { --dir: 1; }
+    @keyframes apart { to { translate: calc(var(--dir) * 26vw) 0; opacity: .1; } }
+    [data-fill] { color: transparent; background: linear-gradient(var(--ink), var(--ink)) 0 0 / 100% 0% no-repeat, var(--graphite);
+      -webkit-background-clip: text; background-clip: text; animation: fill linear both; animation-timeline: view(); animation-range: entry 30% cover 55%; }
+    @keyframes fill { to { background-size: 100% 100%, auto; } }
+    a[data-fill]:hover, a[data-fill]:focus-visible { background-image: linear-gradient(var(--accent), var(--accent)); }
+    .footer .ruler .cursor { animation: track linear both; animation-timeline: scroll(root); }
+
+    /* ---- Case studies: scroll-linked, so every move reverses on the way back up ---- */
+    /* media and the cluster player tilt up into place from below, like a screen being raised */
+    .case :is(.block, .cp) { animation: tilt-in linear both; animation-timeline: view(); animation-range: entry 0% entry 90%; transform-origin: 50% 100%; }
+    @keyframes tilt-in { from { transform: perspective(1600px) rotateX(18deg) translateY(90px) scale(.93); opacity: .15; } }
+    /* the header film sinks back and dims as you scroll past it */
+    .case .hero .frame { animation: sink linear both; animation-timeline: view(); animation-range: exit 0% exit 100%; }
+    @keyframes sink { to { transform: perspective(1600px) rotateX(-10deg) scale(.86) translateY(-4%); filter: brightness(.45); } }
+    /* a taillight-red rule draws across each chapter as it arrives */
+    .case .ch-head { background: linear-gradient(90deg, var(--dusk), var(--accent)) 0 -1px / 0% 2px no-repeat; animation: rule linear both; animation-timeline: view(); animation-range: entry 10% cover 40%; }
+    @keyframes rule { to { background-size: 100% 2px; } }
+    /* paragraphs rise in one after another */
+    .case .prose p { animation: rise-in linear both; animation-timeline: view(); animation-range: entry 0% entry 70%; }
+    @keyframes rise-in { from { opacity: .1; translate: 0 36px; } }
+    /* pairs of images arrive from opposite sides */
+    .case .two > :first-child { animation: from-l linear both; animation-timeline: view(); animation-range: entry 0% cover 35%; }
+    .case .two > :last-child { animation: from-r linear both; animation-timeline: view(); animation-range: entry 0% cover 35%; }
+    @keyframes from-l { from { translate: -10vw 0; rotate: -2deg; opacity: .2; } }
+    @keyframes from-r { from { translate: 10vw 0; rotate: 2deg; opacity: .2; } }
+    @keyframes track { from { translate: 0 0; } to { translate: calc(100cqw - 2px) 0; } }
+  }
+}
+
+/* Reduced motion calms the page instead of freezing it: nothing slides, zooms, scrubs or pins and smooth scrolling is
+   off (Lenis never starts), but content still fades in, dials fill, the progress bar and speed readout still work. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .js:not(.reveal-all) :is([data-reveal], [data-split]):not(.in) { opacity: 0; transition-duration: 300ms; transition-delay: 0s; }
+  :is([data-reveal], [data-split]) { transition: opacity 700ms var(--ease-smooth-out); transition-delay: calc(var(--i, 0) * 60ms); }
+  .js .hero :is(.ch, .tach-wrap, [data-hero-line]) { animation: fade 900ms var(--ease-smooth-out) backwards; animation-delay: calc(var(--i, 0) * 40ms); }
+  @keyframes fade { from { opacity: 0; } }
+  .dial .fg { transition: stroke-dashoffset 1.2s var(--ease-smooth-out) .2s; }
+  .js:not(.reveal-all) .dial:not(.in) .fg { stroke-dashoffset: 1; }
+  ::view-transition-new(root) { animation: fade 300ms var(--ease-smooth-out) both; }
+  ::view-transition-group(*) { animation-duration: 0s; }
+}

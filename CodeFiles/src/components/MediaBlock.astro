@@ -1,0 +1,23 @@
+---
+// Case-study media: the image when one exists, otherwise a Placeholder at the same ratio. Space is reserved up front.
+import { Image, getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import Placeholder from './Placeholder.astro';
+interface Props { src?: ImageMetadata; alt?: string; ratio?: string; caption?: string; label?: string; size?: string; name?: string; sizes?: string; eager?: boolean; decorative?: boolean; video?: string }   // video: a muted looping clip in public/, the image becomes its poster
+const { src, alt = '', ratio = '16 / 9', caption, label = 'Image', size, name, sizes = '(min-width: 720px) 90vw, 100vw', eager = false, decorative = false, video } = Astro.props;
+const poster = video && src ? (await getImage({ src, width: 1600, format: 'webp' })).src : undefined;
+---
+<figure class="media" data-reveal={eager ? undefined : 'clip'}>
+  {video
+    ? <video src={video} poster={poster} muted loop playsinline autoplay preload="metadata" data-autoplay aria-label={decorative ? undefined : alt} aria-hidden={decorative ? 'true' : undefined}
+        style={`aspect-ratio:${ratio};${name ? `view-transition-name:${name}` : ''}`}></video>
+    : src
+    ? <Image src={src} alt={decorative ? '' : alt} widths={[480, 960, 1600, 2400]} sizes={sizes} loading={eager ? 'eager' : 'lazy'} fetchpriority={eager ? 'high' : undefined}
+        style={`aspect-ratio:${ratio};${name ? `view-transition-name:${name}` : ''}`} />
+    : <Placeholder ratio={ratio} label={label} size={size} name={name} decorative={decorative} />}
+  {caption && <figcaption class="mono muted">{caption}</figcaption>}
+</figure>
+<style>
+  .media :global(img), .media video { width: 100%; height: auto; object-fit: cover; display: block; }
+  figcaption { margin-top: 10px; }
+</style>

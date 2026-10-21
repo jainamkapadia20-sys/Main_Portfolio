@@ -1,0 +1,126 @@
+---
+// Tachometer, 0 to 8 x1000 r/min over 270 degrees. The red band starts at 6,600 r/min, where the L15A in the
+// owner's City makes peak power. On load the needle does the cluster start-up sweep, then follows scroll speed.
+// Hold the gauge (or the "Hold to rev" button, or Space/Enter on it) to rev the synthesised engine (engine.ts).
+import Pill from './Pill.astro';
+const C = 200, R = 168;
+const ang = (v: number) => 135 + (v / 8) * 270;
+const pt = (v: number, r: number) => { const a = (ang(v) * Math.PI) / 180; return [C + r * Math.cos(a), C + r * Math.sin(a)].map((n) => +n.toFixed(2)); };
+const arc = (v0: number, v1: number, r: number) => { const [x0, y0] = pt(v0, r), [x1, y1] = pt(v1, r); return `M${x0} ${y0}A${r} ${r} 0 ${ang(v1) - ang(v0) > 180 ? 1 : 0} 1 ${x1} ${y1}`; };
+const ticks = Array.from({ length: 33 }, (_, i) => i / 4).map((v) => {
+  const len = v % 1 === 0 ? 22 : v % 0.5 === 0 ? 13 : 7;
+  const [x1, y1] = pt(v, R), [x2, y2] = pt(v, R - len);
+  return { x1, y1, x2, y2, major: v % 1 === 0, red: v >= 6.6 };
+});
+const nums = Array.from({ length: 9 }, (_, v) => ({ v, at: pt(v, R - 44) }));
+const peak = pt(6.6, R + 30);
+---
+<div class="tach" data-tach>
+  <svg viewBox="0 0 400 400" aria-hidden="true" data-gauge-face>
+    <defs>
+      <linearGradient id="rev" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="var(--pearl)" /><stop offset=".6" stop-color="var(--dusk)" /><stop offset="1" stop-color="var(--accent)" /></linearGradient>
+    </defs>
+    <path class="track" d={arc(0, 8, R + 8)} />
+    <path class="fill" d={arc(0, 8, R + 8)} pathLength="1" stroke="url(#rev)" />
+    <path class="redline" d={arc(6.6, 8, R + 8)} />
+    {ticks.map((t) => <line class:list={['tick', { major: t.major, red: t.red }]} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} />)}
+    {nums.map((n) => <text class:list={['num', { red: n.v >= 7 }]} x={n.at[0]} y={n.at[1]}>{n.v}</text>)}
+    <text class="peak" x={peak[0]} y={peak[1]}>6.6</text>
+    <g class="needle"><line x1={C - 26} y1={C} x2={C + R - 10} y2={C} /><circle cx={C} cy={C} r="9" /></g>
+    <text class="lamp vtec" x={C} y={C - 62}>VTEC</text>
+    <text class="rpm" x={C} y={C + 74} data-rpm>0</text>
+    <text class="unit" x={C} y={C + 96}>x1000 r/min</text>
+    <text class="boost" x={C} y={C + 124} data-boost>boost 0.0 bar</text>
+  </svg>
+  <div class="rev">
+    <Pill label="Hold to rev" tone="accent" attrs={{ 'data-rev': '', 'aria-describedby': 'rev-hint' }} />
+    <button class="snd mono" type="button" data-sound aria-pressed="true">Sound on</button>
+    <p class="mono muted hint" id="rev-hint">Hold the button, Space or Enter. Tuned turbo i-VTEC, synthesised live.</p>
+  </div>
+</div>
+<style>
+  .tach { --a: 135deg; --f: 0; display: grid; gap: var(--s2); justify-items: center; }
+  svg { width: 100%; height: auto; overflow: visible; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  .tach:global(.revving) svg { cursor: grabbing; }
+  .track { fill: none; stroke: var(--rule); stroke-width: 3; }
+  .fill { fill: none; stroke-width: 3; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--f)); filter: drop-shadow(0 0 6px var(--accent)); }
+  .redline { fill: none; stroke: var(--accent); stroke-width: 10; opacity: .85; transition: opacity 80ms; }
+  .tach:global(.shift) .redline { opacity: 1; filter: drop-shadow(0 0 14px var(--accent)); animation: shift 90ms steps(2) infinite; }
+  @keyframes shift { 50% { opacity: .35; } }
+  .tick { stroke: var(--graphite); stroke-width: 1.2; }
+  .tick.major { stroke: var(--ink); stroke-width: 2.4; }
+  .tick.red { stroke: var(--accent); }
+  .num { fill: var(--ink); font: 400 17px var(--font-mono); text-anchor: middle; dominant-baseline: central; }
+  .num.red { fill: var(--accent); }
+  .peak { fill: var(--accent); font: 400 11px var(--font-mono); text-anchor: middle; dominant-baseline: central; letter-spacing: .06em; }
+  .needle { rotate: var(--a); transform-origin: 200px 200px; }
+  .needle line { stroke: var(--accent); stroke-width: 4; stroke-linecap: round; filter: drop-shadow(0 0 8px var(--accent)); }
+  .needle circle { fill: var(--paper); stroke: var(--ink); stroke-width: 2; }
+  .lamp { font: 700 13px var(--font-mono); letter-spacing: .14em; text-anchor: middle; fill: var(--rule-strong); transition: fill 120ms, filter 120ms; }
+  .tach:global(.vtec) .vtec { fill: #FFB020; filter: drop-shadow(0 0 8px #FFB020); }
+  .rpm { fill: var(--ink); font: 400 34px var(--font-mono); text-anchor: middle; font-variant-numeric: tabular-nums; }
+  .unit, .boost { fill: var(--graphite); font: 400 11px var(--font-mono); text-anchor: middle; letter-spacing: .12em; text-transform: uppercase; }
+  .boost { fill: var(--dusk); }
+  .rev { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: center; }
+  .rev :global([data-rev]) { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  .tach:global(.revving) .rev :global([data-rev]) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, transparent); }
+  .snd { min-height: 44px; padding: 0 10px; color: var(--graphite); }
+  .snd:hover { color: var(--ink); }
+  .hint { flex-basis: 100%; text-align: center; font-size: 10px; }
+  @media (max-width: 720px) { .hint { display: none; } }
+</style>
+<script>
+  import { state } from '../scripts/drive';
+  import { engine, step, press, IDLE, isMuted, setMuted } from '../scripts/engine';
+  const el = document.querySelector<HTMLElement>('[data-tach]');
+  if (el) {
+    const rpmText = el.querySelector('[data-rpm]')!, boostText = el.querySelector('[data-boost]')!;
+    const face = el.querySelector<SVGElement>('[data-gauge-face]')!;
+    const revBtn = el.querySelector<HTMLButtonElement>('[data-rev]')!, snd = el.querySelector<HTMLButtonElement>('[data-sound]')!;
+    const name = document.querySelector<HTMLElement>('[data-name]'), glow = document.querySelector<HTMLElement>('[data-rev-glow]');
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let rpm = reduce ? IDLE : 0, t0 = 0, last = 0, visible = true, raf = 0;
+    const set = (v: number) => {
+      el.style.setProperty('--a', `${135 + (v / 8) * 270}deg`);
+      el.style.setProperty('--f', (v / 8).toFixed(4));
+      rpmText.textContent = String(Math.round(v * 20) * 50);
+    };
+    const ease = (x: number) => 1 - Math.pow(1 - x, 3);
+    const tick = (now: number) => {
+      t0 ||= now; const t = now - t0, dt = Math.min(0.05, (now - (last || now)) / 1000); last = now;
+      if (engine.active) {                                                             // the visitor is driving
+        step(dt); rpm = engine.rpm;
+        el.classList.toggle('vtec', engine.vtec); el.classList.toggle('shift', rpm > 6.6);
+        boostText.textContent = `boost ${(engine.boost * 1.2).toFixed(1)} bar`;
+        if (!reduce && name) { const s = Math.max(0, rpm - 4.5) * 0.9; name.style.setProperty('--sx', `${((Math.random() - .5) * s).toFixed(2)}px`); name.style.setProperty('--sy', `${((Math.random() - .5) * s).toFixed(2)}px`); }
+      } else if (reduce) rpm = IDLE;
+      else if (t < 650) rpm = 8 * ease(t / 650);                                       // start-up sweep to the stop
+      else if (t < 1500) rpm = 8 - (8 - IDLE) * ease((t - 650) / 850);                 // and back down to idle
+      else rpm += (IDLE + state.speed * 6.4 + Math.sin(now / 90) * 0.015 - rpm) * 0.12;  // then follow scroll speed
+      if (!engine.active) { el.classList.remove('vtec', 'shift'); if (name) { name.style.removeProperty('--sx'); name.style.removeProperty('--sy'); } boostText.textContent = 'boost 0.0 bar'; }
+      if (glow) glow.style.opacity = Math.max(0, (rpm - IDLE) / 7).toFixed(3);
+      set(rpm);
+      raf = visible || engine.active ? requestAnimationFrame(tick) : 0;
+    };
+    const run = () => { if (!raf) { last = 0; raf = requestAnimationFrame(tick); } };
+    set(rpm);
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) run(); }).observe(el);
+    run();
+
+    // Throttle: press and hold the gauge or the button (pointer), or hold Space / Enter on the button
+    const on = () => { press(true); el.classList.add('revving'); run(); };
+    const off = () => { press(false); el.classList.remove('revving'); };
+    [face, revBtn].forEach((t) => {
+      t.addEventListener('pointerdown', (e) => { if (e.button !== 0) return; t.setPointerCapture(e.pointerId); on(); });
+      t.addEventListener('pointerup', off); t.addEventListener('pointercancel', off); t.addEventListener('lostpointercapture', off);
+      t.addEventListener('contextmenu', (e) => e.preventDefault());
+    });
+    revBtn.addEventListener('keydown', (e) => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); on(); } });
+    revBtn.addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') off(); });
+    revBtn.addEventListener('blur', off);
+
+    const label = () => { snd.textContent = isMuted() ? 'Sound off' : 'Sound on'; snd.setAttribute('aria-pressed', String(!isMuted())); };
+    snd.addEventListener('click', () => { setMuted(!isMuted()); label(); });
+    label();
+  }
+</script>

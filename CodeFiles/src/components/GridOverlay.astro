@@ -1,0 +1,14 @@
+---
+// The 12-column grid with + marks at the column edges. Press G to toggle (script in Base.astro).
+---
+<div class="overlay wrap" data-grid-overlay hidden aria-hidden="true">
+  <div class="grid">{Array.from({ length: 12 }, (_, i) => <span class={i >= 4 ? 'wide' : ''} />)}</div>
+</div>
+<style>
+  .overlay { position: fixed; inset: 0; z-index: var(--z-overlay); pointer-events: none; }
+  .grid { height: 100%; }
+  .grid span { border-inline: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); background-color: color-mix(in srgb, var(--accent) 5%, transparent);
+    background-image: linear-gradient(var(--accent), var(--accent)), linear-gradient(var(--accent), var(--accent));
+    background-size: 9px 1px, 1px 9px; background-position: -4px 50%, 0 calc(50% - 4px); background-repeat: no-repeat; }
+  @media (max-width: 720px) { .grid span.wide { display: none; } }
+</style>

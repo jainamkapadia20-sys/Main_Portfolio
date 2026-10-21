@@ -1,0 +1,28 @@
+---
+// Footer on every page: contact details and back to top, with the ruler as a quiet sign-off.
+import TickRuler from './TickRuler.astro';
+import RollText from './RollText.astro';
+import { site } from '../site';
+---
+<footer class="footer wrap">
+  <TickRuler ticks={60} value={1} label="End of page" />
+  <div class="grid row mono">
+    <p class="who">{site.name}<br /><span class="muted">{site.role}, {site.focus}</span></p>
+    <ul class="links">
+      <li><a href={`mailto:${site.email}`} data-copy-email={site.email}>{site.email}</a></li>
+      <li><a href={site.instagram}><RollText text="Instagram" /></a></li>
+      {site.linkedin && <li><a href={site.linkedin}><RollText text="LinkedIn" /></a></li>}
+    </ul>
+    <a class="top" href="#top"><RollText text="Back to top" /></a>
+  </div>
+</footer>
+<style>
+  .footer { padding-block: var(--s8) calc(var(--s8) + 24px); border-top: 1px solid var(--rule); }
+  .row { margin-top: var(--s3); row-gap: var(--s3); }
+  .who { grid-column: 1 / span 4; }
+  .links { grid-column: 6 / span 4; display: grid; gap: 6px; }
+  .links a, .links button, .top { display: inline-flex; align-items: center; color: var(--graphite); letter-spacing: inherit; text-transform: inherit; min-height: 24px; text-align: left; }
+  .links a:hover, .links button:hover, .top:hover { color: var(--ink); }
+  .top { grid-column: 11 / span 2; justify-self: end; }
+  @media (max-width: 720px) { .who, .links, .top { grid-column: 1 / -1; justify-self: start; } .links a, .links button, .top { min-height: 44px; } }
+</style>

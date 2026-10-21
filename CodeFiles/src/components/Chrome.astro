@@ -1,0 +1,70 @@
+---
+// Fixed four-corner title-block chrome (ref: 01-studio-freight, 03-aristide-benoist).
+// Phones get a top bar with a full-screen menu built on the native popover (Esc closes it, no JS).
+import Monogram from './Monogram.astro';
+import ThemeToggle from './ThemeToggle.astro';
+import RollText from './RollText.astro';
+import { site } from '../site';
+const path = Astro.url.pathname.replace(import.meta.env.BASE_URL.replace(/\/$/, ''), '').replace(/(\/index)?\.html$/, '').replace(/\/$/, '') || '/';   // build.format 'file' -> /index.html, /work.html
+const current = (href: string) => (href === '/' ? path === '/' : path === href || path.startsWith(href + '/'));
+const socials = [
+  { href: site.instagram, label: 'Instagram' },
+  ...(site.linkedin ? [{ href: site.linkedin, label: 'LinkedIn' }] : []),
+];
+---
+<header class="chrome mono">
+  <a class="tl" href="/" aria-label={`${site.name}, home`}><Monogram size={26} /></a>
+  <nav class="tr" aria-label="Main">
+    <ul class="nav">
+      {site.nav.map((n, i) => (
+        <li><a href={n.href} aria-current={current(n.href) ? 'page' : undefined}><RollText text={n.label} /></a>{i < site.nav.length - 1 && <span aria-hidden="true">,</span>}</li>
+      ))}
+    </ul>
+    <ThemeToggle />
+  </nav>
+  <button class="menu-btn" type="button" popovertarget="menu">Menu</button>
+</header>
+<div id="menu" class="menu" popover>
+  <div class="menu-top mono">
+    <a href="/" aria-label={`${site.name}, home`}><Monogram /></a>
+    <button type="button" popovertarget="menu" popovertargetaction="hide">Close</button>
+  </div>
+  <nav aria-label="Main, mobile">
+    <ul>{site.nav.map((n, i) => <li style={`--i:${i}`}><a class="display" href={n.href} aria-current={current(n.href) ? 'page' : undefined}>{n.label}</a></li>)}</ul>
+  </nav>
+  <div class="menu-foot mono">
+    <ul>{socials.map((s) => <li><a href={s.href}>{s.label}</a></li>)}</ul>
+    <ThemeToggle />
+  </div>
+</div>
+
+<style>
+  .chrome > * { position: fixed; z-index: var(--z-chrome); }
+  .tl { top: var(--gutter); left: var(--gutter); display: flex; align-items: center; gap: 10px; min-height: 24px; }
+  .tr { top: var(--gutter); right: var(--gutter); display: flex; align-items: center; gap: 20px; }
+  .nav { display: flex; gap: 6px; }
+  .nav a { color: var(--graphite); }
+  .nav a:hover, .nav a[aria-current] { color: var(--ink); }
+  .nav a[aria-current]::before { content: "• "; content: "• " / ""; color: var(--accent); }   /* empty alt text: the dot is not announced */
+  .menu-btn { display: none; }
+  /* readable over content: chrome sits on a thin paper band only where it could collide */
+  .tr { background: color-mix(in srgb, var(--paper) 70%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 8px 12px; margin: -8px -12px; border: 1px solid var(--rule); }
+
+  .menu { inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; border: 0; padding: var(--gutter);
+    background: var(--paper); color: var(--ink); display: none; }
+  .menu:popover-open { display: grid; grid-template-rows: auto 1fr auto; }
+  .menu-top { display: flex; justify-content: space-between; align-items: center; min-height: 44px; }
+  .menu-top button { min-height: 44px; padding-inline: 8px; margin-right: -8px; }
+  .menu nav { align-self: center; }
+  .menu nav a { font-size: clamp(3rem, 18vw, 6rem); display: block; padding-block: 4px; }
+  .menu nav a[aria-current] { color: var(--accent); }
+  .menu-foot { display: flex; justify-content: space-between; align-items: end; }
+  .menu-foot ul { display: grid; gap: 8px; }
+
+  @media (max-width: 720px) {
+    .tr { display: none; }
+    .tl { top: 0; left: 0; right: 0; margin: 0; padding: 0 var(--gutter); height: 56px; position: fixed;
+      background: var(--paper); border-bottom: 1px solid var(--rule); }
+    .menu-btn { display: block; top: 0; right: 0; height: 56px; padding-inline: var(--gutter); z-index: calc(var(--z-chrome) + 1); }
+  }
+</style>

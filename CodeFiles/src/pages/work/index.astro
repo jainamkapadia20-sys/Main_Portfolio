@@ -1,0 +1,176 @@
+---
+// Work index (ref: 03-aristide-benoist): project names as a big list on the left, a sticky framed preview on the
+// right that wipes to whichever project is hovered or focused, with its lettered spec line. Numbered filter
+// (ref: 01-studio-freight). Without JS every project shows and every row is a plain link.
+import { Image } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import Placeholder from '../../components/Placeholder.astro';
+import Counter from '../../components/Counter.astro';
+import TickRuler from '../../components/TickRuler.astro';
+import { sortedProjects } from '../../lib/projects';
+
+const projects = await sortedProjects();
+const categories = ['HMI', 'UX/UI', 'Product', 'Visual'] as const;
+const count = (c: string) => projects.filter((p) => p.data.category === c).length;
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+<Base title="Work" section="Work" description="Selected projects by Jainam Kapadia: automotive HMI, UX/UI, product and visual design.">
+  <div class="page wrap" data-work>
+    <header class="head">
+      <h1 class="display" data-split>Work</h1>
+      <div class="filter mono" role="group" aria-label="Filter by category" data-filter>
+        <button type="button" aria-pressed="true" data-cat="all"><span class="muted">00</span> All <span class="muted">({projects.length})</span></button>
+        {categories.map((c, i) => (
+          <button type="button" aria-pressed="false" data-cat={c} disabled={!count(c)}><span class="muted">{pad(i + 1)}</span> {c} <span class="muted">({count(c)})</span></button>
+        ))}
+      </div>
+    </header>
+
+    <div class="index">
+      <ol class="list" data-list>
+        {projects.map((p, i) => (
+          <li class="row" data-category={p.data.category} data-i={i}>
+            <a href={`/work/${p.id}`}>
+              <span class="num mono">{pad(i + 1)}</span>
+              <span class="name">{p.data.title}</span>
+              <span class="meta mono muted">{p.data.category}<br />{p.data.year}</span>
+              <span class="thumb" aria-hidden="true">
+                {p.data.cover ? <Image src={p.data.cover} alt="" widths={[480, 800]} sizes="100vw" /> : <Placeholder ratio="16 / 10" label={p.data.title} decorative />}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ol>
+
+      <aside class="preview" aria-hidden="true">
+        <div class="frame">
+          {projects.map((p, i) => (
+            <div class:list={['shot', { on: i === 0 }]} data-shot={i} data-vt={`p-${p.id}`}>
+              {p.data.cover ? <Image src={p.data.cover} alt="" widths={[800, 1600]} sizes="42vw" loading={i === 0 ? 'eager' : 'lazy'} /> : <Placeholder ratio="16 / 10" label={p.data.title} decorative />}
+            </div>
+          ))}
+          <span class="corners"></span>
+        </div>
+        <div class="details">
+          {projects.map((p, i) => (
+            <div class:list={['detail', { on: i === 0 }]} data-detail={i}>
+              <dl class="spec mono">
+                <div><dt>A</dt><dd>{p.data.type}</dd></div>
+                <div><dt>B</dt><dd>{p.data.role.join(', ')}</dd></div>
+                <div><dt>C</dt><dd>{p.data.tools.join(', ')}</dd></div>
+                <div><dt>D</dt><dd>{p.data.duration}</dd></div>
+              </dl>
+              <p class="summary">{p.data.summary}</p>
+            </div>
+          ))}
+        </div>
+        <div class="status">
+          <Counter current={1} total={projects.length} />
+          <TickRuler ticks={30} value={0} label="Position in projects" />
+        </div>
+      </aside>
+    </div>
+    <p class="empty mono muted" data-empty hidden>No projects in this category yet.</p>
+  </div>
+</Base>
+
+<script>
+  import { setCounter, setRuler } from '../../scripts/ui';
+  const page = document.querySelector<HTMLElement>('[data-work]')!;
+  const rows = [...page.querySelectorAll<HTMLElement>('.row')];
+  const shots = [...page.querySelectorAll<HTMLElement>('[data-shot]')];
+  const details = [...page.querySelectorAll<HTMLElement>('[data-detail]')];
+  const counter = page.querySelector<HTMLElement>('[data-counter]')!;
+  const ruler = page.querySelector<HTMLElement>('[data-ruler]')!;
+  const visible = () => rows.filter((r) => !r.hidden);
+
+  // Show one project in the preview; only the shown image carries the morph name into the case study
+  let active = -1;
+  const show = (i: number) => {
+    if (i === active) return;
+    active = i;
+    shots.forEach((s, k) => { s.classList.toggle('on', k === i); s.style.viewTransitionName = k === i ? s.dataset.vt! : 'none'; });
+    details.forEach((d, k) => d.classList.toggle('on', k === i));
+    rows.forEach((r, k) => r.classList.toggle('on', k === i));
+    const list = visible(), pos = list.indexOf(rows[i]);
+    setCounter(counter, pos + 1, list.length);
+    setRuler(ruler, list.length > 1 ? pos / (list.length - 1) : 0);
+  };
+  rows.forEach((r, i) => { r.addEventListener('pointerenter', () => show(i)); r.addEventListener('focusin', () => show(i)); });
+
+  // Filter: hides rows outside the category; the preview, counter and empty state follow
+  page.querySelectorAll<HTMLButtonElement>('[data-cat]').forEach((b) => b.addEventListener('click', () => {
+    const cat = b.dataset.cat!;
+    page.querySelectorAll('[data-cat]').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+    rows.forEach((r) => (r.hidden = cat !== 'all' && r.dataset.category !== cat));
+    const list = visible();
+    page.querySelector<HTMLElement>('[data-empty]')!.hidden = list.length > 0;
+    active = -1;
+    if (list.length) show(rows.indexOf(list[0]));
+  }));
+  show(0);
+</script>
+
+<style>
+  .page { padding-top: 120px; padding-bottom: var(--s12); }
+  .head { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); align-items: end; row-gap: var(--s3); margin-bottom: var(--s8); }
+  h1 { grid-column: 1 / span 6; font-size: var(--t-h2); }
+  .filter { grid-column: 8 / -1; display: none; flex-wrap: wrap; gap: 4px 18px; justify-content: flex-end; }
+  :global(.js) .filter { display: flex; }
+  .filter button { min-height: 36px; color: var(--graphite); letter-spacing: inherit; text-transform: inherit; transition: color 150ms; }
+  .filter button:hover:not(:disabled), .filter button[aria-pressed="true"] { color: var(--ink); }
+  .filter button[aria-pressed="true"]::after { content: " •"; content: " •" / ""; color: var(--accent); }
+  .filter button:disabled { opacity: .45; cursor: default; }
+
+  .index { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); align-items: start; }
+  .list { grid-column: 1 / span 6; border-top: 1px solid var(--rule-strong); }
+  .row a { display: grid; grid-template-columns: 3ch 1fr auto; column-gap: var(--s2); align-items: baseline; padding: var(--s3) 0; border-bottom: 1px solid var(--rule); }
+  .num { color: var(--graphite); transition: color 200ms; }
+  .name { font: 800 clamp(2rem, 1rem + 3.2vw, 4.25rem)/.9 var(--font-text); font-stretch: 72%; letter-spacing: -.03em;
+    transition: translate 350ms var(--ease-smooth-out), color 200ms, font-stretch 450ms var(--ease-smooth-out); }
+  .meta { text-align: right; }
+  .thumb { display: none; }
+  .list:hover .row:not(:hover) .name { color: var(--graphite); }
+  .row.on .num, .row a:focus-visible .num { color: var(--accent); }
+  .row a:hover .name, .row a:focus-visible .name { translate: 14px 0; font-stretch: 84%; }
+
+  .preview { grid-column: 8 / -1; position: sticky; top: 112px; display: grid; gap: var(--s4); }
+  .frame { position: relative; aspect-ratio: 16 / 10; }
+  .shot { position: absolute; inset: 0; overflow: hidden; z-index: 1; clip-path: inset(0 0 100% 0); transition: clip-path 0s 750ms; }
+  .shot.on { z-index: 2; clip-path: inset(0); transition: clip-path 750ms var(--ease-out-expo); }
+  .shot :global(img), .shot :global(.ph) { width: 100%; height: 100%; object-fit: cover; scale: 1.12; transition: scale 1.1s var(--ease-out-expo); }
+  .shot.on :global(img), .shot.on :global(.ph) { scale: 1; }
+  .corners { position: absolute; inset: -12px; z-index: 3; pointer-events: none; --c: var(--ink); --l: 18px;
+    background:
+      linear-gradient(var(--c), var(--c)) 0 0 / var(--l) 1px, linear-gradient(var(--c), var(--c)) 0 0 / 1px var(--l),
+      linear-gradient(var(--c), var(--c)) 100% 0 / var(--l) 1px, linear-gradient(var(--c), var(--c)) 100% 0 / 1px var(--l),
+      linear-gradient(var(--c), var(--c)) 0 100% / var(--l) 1px, linear-gradient(var(--c), var(--c)) 0 100% / 1px var(--l),
+      linear-gradient(var(--c), var(--c)) 100% 100% / var(--l) 1px, linear-gradient(var(--c), var(--c)) 100% 100% / 1px var(--l);
+    background-repeat: no-repeat; }
+  .details { display: grid; }
+  .detail { grid-area: 1 / 1; opacity: 0; translate: 0 8px; transition: opacity 200ms, translate 200ms; visibility: hidden; }
+  .detail.on { opacity: 1; translate: 0 0; visibility: visible; transition: opacity 450ms var(--ease-smooth-out) 150ms, translate 450ms var(--ease-smooth-out) 150ms; }
+  .spec { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px var(--s3); }
+  .spec div { display: flex; gap: 10px; }
+  .spec dt { color: var(--accent); }
+  .summary { margin-top: var(--s2); color: var(--graphite); }
+  .status { display: grid; grid-template-columns: auto 1fr; gap: var(--s3); align-items: center; }
+  .empty { margin-top: var(--s4); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .shot, .shot.on { clip-path: none; opacity: 0; transition: opacity 300ms; }
+    .shot.on { opacity: 1; }
+    .row a:hover .name, .row a:focus-visible .name { translate: none; }
+  }
+  @media (max-width: 900px) {
+    .page { padding-top: 96px; }
+    h1, .filter { grid-column: 1 / -1; justify-content: flex-start; }
+    .filter button { min-height: 44px; }
+    .list { grid-column: 1 / -1; }
+    .preview { display: none; }
+    .row a { grid-template-columns: 3ch 1fr; row-gap: var(--s2); }
+    .meta { grid-column: 2; text-align: left; }
+    .thumb { display: block; grid-column: 1 / -1; aspect-ratio: 16 / 10; overflow: hidden; margin-top: var(--s2); }
+    .thumb :global(img) { width: 100%; height: 100%; object-fit: cover; }
+  }
+</style>
