@@ -1,0 +1,63 @@
+/* Styling for the React Bits islands, which render outside Astro's scoped styles. Everything reads the theme tokens. */
+
+/* hero glow: the cursor trail, on the stage only */
+.hero-glow { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+
+/* hero stage: particles fill the panel, the monogram floats at its centre */
+.hero-stage-fx, .hero-particles { position: absolute; inset: 0; }
+.hero-mono { position: absolute; inset: 14% 18% 18%; pointer-events: none; }
+.roles.text-rotate-highlight { font-size: 1em; line-height: 1.1; border-radius: .22em; padding: .04em .3em .1em; }
+
+/* StarBorder CTA */
+.cta.star-border { min-height: 48px; padding: 0 26px; font-weight: 500; transition: scale var(--duration-quick) var(--ease-smooth-out); }
+.cta.star-border:active { scale: .97; }
+
+/* featured scroll-expand: kept inside the page margins, rounded at every size */
+.featured-expand.scroll-expand { margin-inline: var(--edge); width: auto; height: auto; }
+.featured-expand .scroll-expand__stage { border-radius: var(--radius); }
+.featured-copy { display: grid; justify-items: center; gap: 16px; color: #fff; }
+.featured-title { font-size: var(--t-display); font-weight: 500; letter-spacing: -.04em; line-height: .95; }
+.featured-sum { max-width: 44ch; font-size: var(--t-lead); line-height: 1.35; opacity: .86; }
+
+/* flex carousel captions in the site's voice */
+.ideas-strip .flex-carousel__title { font-size: var(--t-body); color: var(--ink); }
+.ideas-strip .flex-carousel__subtitle, .ideas-strip .flex-carousel__count { color: var(--graphite); font-size: var(--t-small); font-variant-numeric: tabular-nums; }
+.ideas-strip .flex-carousel:focus-visible { box-shadow: inset 0 0 0 2px var(--accent); }
+
+/* music: the embed, then the elastic scrubber */
+.music { display: grid; gap: 18px; color: var(--ink); }
+.music-embed { border-radius: 12px; overflow: hidden; min-height: 152px; background: var(--surface-2); }
+.music-load { justify-self: start; }
+.music-load svg { width: 14px; height: 14px; }
+.music-time { font-size: var(--t-small); font-variant-numeric: tabular-nums; color: var(--ink); min-width: 3ch; }
+
+/* contact: the beam lands on the box; the stage is tall enough for the beam to travel */
+.contact-stage { position: relative; min-height: 640px; display: grid; place-items: end center; padding: 0 var(--edge) 72px; overflow: hidden; }
+.contact-laser { position: absolute; inset: 0; }
+.contact-box { position: relative; width: min(640px, 100%); padding: clamp(28px, 4vw, 48px); border-radius: var(--radius); background: var(--surface); display: grid; gap: 20px; }
+.contact-h { font-size: clamp(1.75rem, 1rem + 2.4vw, 2.75rem); }
+.contact-form { position: relative; }
+.contact-form input { width: 100%; height: 64px; padding: 0 64px 0 22px; border: 0; border-radius: 999px; background: var(--paper); font-size: var(--t-body); outline: none;
+  transition: box-shadow var(--duration-fast) var(--ease-smooth-out); }
+.contact-form input::placeholder { color: var(--graphite); }
+.contact-form input:focus-visible { box-shadow: inset 0 0 0 2px var(--accent); }
+.contact-form button { position: absolute; right: 8px; top: 8px; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--accent); color: var(--on-accent); transition: scale var(--duration-quick) var(--ease-smooth-out); }
+.contact-form button:hover { scale: 1.06; }
+.contact-form button:active { scale: .94; }
+.contact-form button svg { width: 18px; height: 18px; }
+.contact-note { font-size: var(--t-small); color: var(--graphite); }
+
+/* panels that hold WebGL */
+.road > *, .car-stage > *, .trail-panel > * { width: 100%; height: 100%; }
+
+/* car: the model fills its stage; the version switch floats at the top */
+.car-model { position: absolute; inset: 0; }
+.car-model > div:first-child { position: absolute !important; inset: 0; }
+.car-switch { position: absolute; top: 16px; left: 50%; translate: -50% 0; display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--paper); }
+.car-switch button { min-height: 36px; padding: 0 16px; border-radius: 999px; font-size: var(--t-small); font-weight: 500; color: var(--graphite); transition: color var(--duration-fast), background-color var(--duration-fast); }
+.car-switch button:hover { color: var(--ink); }
+.car-switch button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.trail-panel > .content { position: absolute; inset: 0; }
+.trail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; }
+.trail-grid img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 12px; }

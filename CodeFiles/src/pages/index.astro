@@ -1,298 +1,160 @@
 ---
 import { getImage } from 'astro:assets';
-import { getEntry } from 'astro:content';
 import Base from '../layouts/Base.astro';
-import MediaBlock from '../components/MediaBlock.astro';
-import Counter from '../components/Counter.astro';
-import TickRuler from '../components/TickRuler.astro';
-import BigWord from '../components/BigWord.astro';
-import Pill from '../components/Pill.astro';
-import Tach from '../components/Tach.astro';
-import Dial from '../components/Dial.astro';
+import WorkList from '../components/WorkList.astro';
+import Skills from '../components/Skills.astro';
+import HeroName from '../components/islands/HeroName.jsx';
+import Roles from '../components/islands/Roles.jsx';
+import HeroStage from '../components/islands/HeroStage.jsx';
+import Cta from '../components/islands/Cta.jsx';
+import Featured from '../components/islands/Featured.jsx';
+import Ideas from '../components/islands/Ideas.jsx';
+import Music from '../components/islands/Music.jsx';
+import Speed from '../components/islands/Speed.jsx';
 import { sortedProjects } from '../lib/projects';
+import { withBase } from '../lib/url';
 import { site } from '../site';
-import lakePoster from '../assets/car/lake-poster.jpg';
+
+import wfA from '../assets/projects/adaptive-cluster/wireframe-a.png';
+import wfB from '../assets/projects/adaptive-cluster/wireframe-b.png';
+import wfC from '../assets/projects/adaptive-cluster/wireframe-c.png';
+import wfD from '../assets/projects/adaptive-cluster/wireframe-d.png';
+import tabletop from '../assets/projects/adaptive-cluster/process-tabletop.png';
+import mapping from '../assets/projects/adaptive-cluster/process-mapping.png';
+import render from '../assets/car/poster-mod.png';
+import filmPoster from '../assets/projects/adaptive-cluster/film-poster.jpg';
 
 const projects = await sortedProjects();
-const featured = projects.filter((p) => p.data.featured);   // `featured: false` keeps a project off Home
-const car = (await getEntry('car', 'city'))!;
-const poster = await getImage({ src: lakePoster, width: 1600, format: 'jpg', quality: 70 });
-const pad = (n: number) => String(n).padStart(2, '0');
-let k = 0;
-const lines = site.name.split(' ').map((w) => [...w].map((c) => ({ c, i: k++ })));
-const skills = [
-  { group: 'Research', tools: 'Interviews, contextual inquiry, task analysis' },
-  { group: 'UX / UI', tools: 'Flows, wireframes, design systems' },
-  { group: 'HMI', tools: 'Clusters, centre displays, voice' },
-  { group: 'Prototyping', tools: 'Figma, ProtoPie' },
-  { group: '3D / Visual', tools: 'Blender, Illustrator' },
-];
+const lead = projects[0];
+const roles = ['interfaces', 'identities', 'services', 'in-car screens'];
+const img = async (src: ImageMetadata, width = 1400) => (await getImage({ src, width, format: 'webp' })).src;
+const ideas = await Promise.all(([
+  [wfA, 'Layout A, vitals around the road', 'Adaptive Cluster wireframe'],
+  [tabletop, 'Exit guidance, acted out with toy cars', 'Tabletop prototype'],
+  [wfB, 'Layout B, an assist strip', 'Adaptive Cluster wireframe'],
+  [mapping, 'Sensor to screen, five features', 'Process board'],
+  [wfC, 'Layout C, exit banner and arch', 'Adaptive Cluster wireframe'],
+  [render, 'My Honda City, modelled from scratch', 'Blender render'],
+  [wfD, 'Layout D, a wraparound arc', 'Adaptive Cluster wireframe'],
+] as const).map(async ([src, title, subtitle]) => ({ src: await img(src), alt: `${title}.`, title, subtitle })));
+const poster = await img(filmPoster, 1600);
+const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-arm t-learn-arm-top" d="M6 4L10 8" /><path class="t-learn-arm t-learn-arm-bot" d="M10 8L6 12" /></svg>';
 ---
-<Base section="Index">
-  <!-- Hero: the name once, and an instrument cluster that starts up with the page -->
-  <section class="hero wrap" aria-labelledby="name">
-    <div class="rev-glow" data-rev-glow aria-hidden="true"></div>
-    <div class="tach-wrap"><Tach /></div>
-    <h1 class="name" id="name" data-name>
-      <span class="sr-only">{site.name}</span>
-      {lines.map((l) => <span class="line" aria-hidden="true">{l.map(({ c, i }) => <span class="ch" style={`--i:${i}`}>{c}</span>)}</span>)}
-    </h1>
-    <div class="intro">
-      <p class="role mono" data-hero-line style="--i:0">{site.role}<br /><span class="muted">for automotive HMI</span></p>
-      <p class="bio" data-hero-line style="--i:1">I design where people meet machines: the screens, controls and split-second moments that make a car feel intuitive at speed.</p>
-      <div class="cta" data-hero-line style="--i:2"><Pill href="#work" label="See the work" tone="accent" /><Pill href="/contact" label="Get in touch" /></div>
-    </div>
-    <p class="hint mono muted" data-hero-line style="--i:3"><span>{site.status}</span><span aria-hidden="true">Scroll to rev it</span></p>
-  </section>
-
-  <!-- Selected work: a pinned showroom; scrolling down drives the projects past (ref: 03-aristide-benoist) -->
-  <section class="showroom" id="work" aria-labelledby="work-h" data-showroom style={`--n:${featured.length}`}>
-    <div class="pin">
-      <header class="sr-head wrap">
-        <h2 class="mono" id="work-h" data-scramble>Selected work</h2>
-        <div class="sr-ruler"><TickRuler ticks={40} value={0} label="Position in selected work" /></div>
-        <Counter current={1} total={featured.length} label="Project" />
-      </header>
-      <ol class="track" data-track>
-        {featured.map((p, i) => (
-          <li class="panel" data-panel>
-            <a href={`/work/${p.id}`}>
-              <span class="idx mono">{pad(i + 1)}</span>
-              <div class="frame">
-                <MediaBlock decorative video={p.data.preview} src={p.data.cover} alt={p.data.coverAlt} ratio="16 / 10" label={p.data.title} size="1600 × 1000" name={`p-${p.id}`} sizes="(min-width: 720px) 56vw, 100vw" />
-                <span class="corners" aria-hidden="true"></span>
-              </div>
-              <h3 class="ptitle">{p.data.title}</h3>
-              <dl class="spec mono">
-                <div><dt>A</dt><dd>{p.data.type}</dd></div>
-                <div><dt>B</dt><dd>{p.data.role.join(', ')}</dd></div>
-                <div><dt>C</dt><dd>{p.data.year}</dd></div>
-              </dl>
-            </a>
-          </li>
-        ))}
-        <li class="panel end"><a class="all" href="/work"><span class="mono muted">{pad(projects.length)} projects</span><span class="ptitle">All work</span></a></li>
-      </ol>
-    </div>
-  </section>
-
-  <section class="about wrap section grid" id="about" aria-labelledby="about-h">
-    <h2 class="lbl mono muted" id="about-h" data-scramble>About</h2>
-    <p class="statement" data-fill>I'm an experience design student focused on automotive HMI. I design for attention that is already busy: clusters, controls and the second between a glance and the road.</p>
-    <dl class="skills" data-reveal>
-      {skills.map((s) => <div><dt class="mono">{s.group}</dt><dd>{s.tools}</dd></div>)}
-    </dl>
-    <p class="more"><Pill href="/about" label="More about me" /></p>
-  </section>
-
-  <!-- The car: one balanced section, a real photo and its numbers -->
-  <section class="garage wrap section" aria-labelledby="car-h">
-    <figure class="film" data-reveal="clip">
-      <video data-film muted loop playsinline preload="none" data-poster={poster.src} width="1600" height="900"
-        aria-label="My Honda City parked on a wet hill road beside a lake, with a motorbike next to it">
-        <source src="/video/city-lake.mp4" type="video/mp4" />
-      </video>
-      <button class="film-btn mono" type="button" data-film-btn>Pause</button>
-      <figcaption class="mono muted">Plate blurred</figcaption>
-    </figure>
-    <div class="info">
-      <p class="mono muted" data-scramble>Off the clock</p>
-      <h2 class="ctitle" id="car-h" data-split>{car.data.make} {car.data.title}</h2>
-      <p class="lead" data-reveal>The car I keep tinkering with: {car.data.colour}, an L15A up front and a list of changes that keeps growing.</p>
-      <div class="dials" data-reveal>
-        <Dial value={119} max={200} label="Power" unit="PS" />
-        <Dial value={145} max={200} label="Torque" unit="Nm" />
-        <Dial value={6.6} max={8} label="Peak power" unit="x1000 r/min" />
+<Base>
+  <!-- Hero: a quiet sheet with the name, and a stage that never stops moving -->
+  <section class="hero" aria-labelledby="hero-h">
+    <div class="sheet">
+      <h1 id="hero-h" class="hero-name">
+        <span class="sr-only">{site.name}</span>
+        <span class="name-fx" aria-hidden="true"><HeroName client:load text={site.name} /></span>
+      </h1>
+      <p class="hero-roles" data-reveal style="--i:1">
+        <span class="sr-only">I design interfaces, identities, services and in-car screens.</span>
+        <span aria-hidden="true" class="roles-row">I design <Roles client:load items={roles} /></span>
+      </p>
+      <p class="hero-intro" data-reveal style="--i:2">A design student working across UI/UX, graphic, service and HMI design, with a sketchbook always open.</p>
+      <div class="hero-actions" data-reveal style="--i:3">
+        <Cta client:load href="#work">See my work</Cta>
+        <a class="btn" href="/about">About me</a>
       </div>
-      <ul class="mods mono" data-reveal>{car.data.mods.slice(0, 6).map((m) => <li>{m.name}</li>)}</ul>
-      <p data-reveal><Pill href="/car" label="Open the garage" tone="accent" /></p>
+    </div>
+    <div class="stage panel">
+      <HeroStage client:load monogram={withBase('/monogram.svg')} />
+      <div class="stage-bar small"><span><span class="dot" aria-hidden="true"></span>{site.status}</span><span class="muted">Move across the field</span></div>
     </div>
   </section>
 
-  <section class="contact wrap section" aria-labelledby="contact-h">
-    <h2 class="sr-only" id="contact-h">Contact</h2>
-    <BigWord text="Let's talk" href="/contact" fill />
-    <div class="pills" data-reveal>
-      <Pill href={`mailto:${site.email}`} label={site.email} tone="accent" attrs={{ 'data-copy-email': site.email }} />
-      <Pill href={site.instagram} label="Instagram" />
-      {site.linkedin && <Pill href={site.linkedin} label="LinkedIn" />}
+  <!-- The lead project opens up as you scroll -->
+  <section class="featured section" aria-labelledby="featured-h">
+    <div class="wrap sec-head">
+      <h2 id="featured-h" class="head" data-reveal>Latest project</h2>
+      <p class="muted" data-reveal style="--i:1">{lead.data.type}, {lead.data.year}. Keep scrolling and it opens up.</p>
+    </div>
+    <Featured client:visible src={withBase(lead.data.preview ?? '/video/adaptive-cluster-loop.mp4')} poster={poster}
+      title={lead.data.title} summary={lead.data.summary} href={withBase(`/work/${lead.id}`)} />
+  </section>
+
+  <section class="section wrap" id="work" aria-labelledby="work-h">
+    <div class="sec-head">
+      <h2 id="work-h" class="head" data-reveal>Selected work</h2>
+      <a class="t-learn muted" href="/work" data-reveal style="--i:1">All projects and filters <span class="t-learn-chevron" set:html={arrow} /></a>
+    </div>
+    <WorkList projects={projects} />
+  </section>
+
+  <section class="section ideas" aria-labelledby="ideas-h">
+    <div class="wrap sec-head">
+      <h2 id="ideas-h" class="head" data-reveal>Sketches and side work</h2>
+      <p class="muted" data-reveal style="--i:1">Drag the strip, or click a piece to look closer.</p>
+    </div>
+    <div class="ideas-strip"><Ideas client:visible items={ideas} /></div>
+  </section>
+
+  <section class="section wrap" aria-labelledby="skills-h"><Skills /></section>
+
+  <section class="section wrap note" aria-labelledby="note-h">
+    <div class="letter">
+      <h2 id="note-h" class="sr-only">A note from Jainam</h2>
+      <span class="avatar" aria-hidden="true">JK</span>
+      <p data-reveal>Hi, I'm Jainam. I'm a design student, and I like problems where people meet systems: an app on a busy commute, a warning in a car at 90 km/h, a service with too many steps.</p>
+      <p data-reveal style="--i:1">I start with the people using the thing, get ideas onto paper early, and keep going until the design is clear before it is clever.</p>
+      <p data-reveal style="--i:2">I'm looking for an internship where I can do that with a team.</p>
+      <p class="sign" data-reveal style="--i:3">Jainam Kapadia<span class="muted small">Designer, student</span></p>
+      <a class="t-learn" href="/about" data-reveal style="--i:4">More about me <span class="t-learn-chevron" set:html={arrow} /></a>
+    </div>
+    <aside class="panel onrepeat" aria-labelledby="music-h" data-reveal style="--i:2">
+      <h3 id="music-h">On repeat while I design</h3>
+      <Music client:visible uri={site.spotify.uri} label={site.spotify.label} />
+    </aside>
+  </section>
+
+  <section class="section wrap clock" aria-labelledby="clock-h">
+    <div class="panel road"><Speed client:visible /></div>
+    <div class="clock-copy">
+      <h2 id="clock-h" class="head" data-reveal>Off the clock</h2>
+      <p data-reveal style="--i:1">A 2016 Honda City that I keep changing, and a 3D model of it built from scratch in Blender. Press and hold the road to speed up.</p>
+      <a class="t-learn" href="/car" data-reveal style="--i:2">See the car <span class="t-learn-chevron" set:html={arrow} /></a>
     </div>
   </section>
 </Base>
 
-<script>
-  import { onDrive } from '../scripts/drive';
-  import { setCounter, setRuler } from '../scripts/ui';
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  // Name: leans with scroll speed; letters near the pointer widen and warm up (variable width axis)
-  const name = document.querySelector<HTMLElement>('[data-name]')!;
-  if (!reduce) {
-    onDrive(({ speed }) => name.style.setProperty('--speed', speed.toFixed(3)));
-    if (matchMedia('(pointer: fine)').matches) {
-      const chars = [...name.querySelectorAll<HTMLElement>('.ch')];
-      const hero = name.closest('section')!;
-      hero.addEventListener('pointermove', (e) => chars.forEach((c) => {
-        const r = c.getBoundingClientRect();
-        const d = Math.hypot(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2));
-        c.style.setProperty('--x', Math.max(0, 1 - d / 380).toFixed(3));
-      }));
-      hero.addEventListener('pointerleave', () => chars.forEach((c) => c.style.setProperty('--x', '0')));
-    }
-  }
-
-  // Showroom: pinned while vertical scroll drives the track sideways; the panel nearest the centre comes into focus
-  const sr = document.querySelector<HTMLElement>('[data-showroom]')!;
-  const track = sr.querySelector<HTMLElement>('[data-track]')!;
-  const panels = [...track.querySelectorAll<HTMLElement>('[data-panel]')];
-  const counter = sr.querySelector<HTMLElement>('[data-counter]')!;
-  const ruler = sr.querySelector<HTMLElement>('[data-ruler]')!;
-  const wide = matchMedia('(min-width: 721px)');
-  let active = -1;
-  const update = () => {
-    if (!sr.classList.contains('pinned')) return;
-    const r = sr.getBoundingClientRect();
-    const p = Math.min(1, Math.max(0, -r.top / (r.height - innerHeight)));
-    track.style.setProperty('--tx', `${(-p * (track.scrollWidth - innerWidth)).toFixed(1)}px`);
-    let best = 0, bestD = Infinity;
-    panels.forEach((el, i) => {
-      const b = el.getBoundingClientRect();
-      const d = (b.left + b.width / 2 - innerWidth / 2) / b.width;
-      el.style.setProperty('--d', Math.max(-1.5, Math.min(1.5, d)).toFixed(3));
-      if (Math.abs(d) < bestD) { bestD = Math.abs(d); best = i; }
-    });
-    if (best !== active) { active = best; setCounter(counter, best + 1, panels.length); }
-    setRuler(ruler, p);
-  };
-  const mode = () => {
-    sr.classList.toggle('pinned', !reduce && wide.matches);
-    if (!sr.classList.contains('pinned')) panels.forEach((el) => el.style.removeProperty('--d'));
-    update();
-  };
-  wide.addEventListener('change', mode); addEventListener('resize', update);
-  mode(); onDrive(update);
-
-  // Film: plays muted while on screen; pausing is the visitor's choice and sticks.
-  const film = document.querySelector<HTMLVideoElement>('[data-film]')!;
-  const filmBtn = document.querySelector<HTMLButtonElement>('[data-film-btn]')!;
-  let paused = false, onScreen = false;
-  const sync = () => {
-    if (onScreen && !paused) film.play().catch(() => {}); else film.pause();
-    filmBtn.textContent = paused ? 'Play' : 'Pause';
-  };
-  new IntersectionObserver(([e]) => { onScreen = e.isIntersecting; sync(); }, { threshold: 0.25 }).observe(film);
-  // the poster is attached only as the film nears the screen, so it never competes with the hero on load
-  const near = new IntersectionObserver(([e]) => { if (e.isIntersecting) { film.poster = film.dataset.poster!; near.disconnect(); } }, { rootMargin: '800px 0px' });
-  near.observe(film);
-  filmBtn.addEventListener('click', () => { paused = !paused; sync(); });
-</script>
-
 <style>
-  /* ---------- Hero ---------- */
-  .hero { position: relative; min-height: 100svh; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter);
-    align-content: end; padding-top: 120px; padding-bottom: calc(var(--gutter) + 56px); overflow: clip; }
-  .tach-wrap { position: absolute; z-index: 2; top: 84px; right: calc(var(--gutter) + 2vw); width: min(36vw, 60vh); }
-  .name { grid-column: 1 / -1; position: relative; font: 800 clamp(4.25rem, 17vw, 21rem)/.8 var(--font-text); font-stretch: 78%;
-    letter-spacing: -.045em; margin-bottom: var(--s6); transform-origin: 0 100%;
-    transform: translate(var(--sx, 0px), var(--sy, 0px)) skewX(calc(var(--speed, 0) * -9deg)); }
-  .rev-glow { position: absolute; inset: 0; pointer-events: none; opacity: 0; z-index: -1;
-    background: radial-gradient(60% 55% at 72% 38%, color-mix(in srgb, var(--accent) 38%, transparent), transparent 70%); }
-  .line { display: block; white-space: nowrap; }
-  .line + .line { padding-left: 8.5vw; }
-  .ch { display: inline-block; font-stretch: calc(78% + var(--x, 0) * 22%);
-    color: color-mix(in oklab, var(--ink), var(--dusk) calc(var(--x, 0) * 100%));
-    transition: font-stretch 600ms var(--ease-smooth-out), color 600ms var(--ease-smooth-out); }
-  .intro { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; align-items: end; row-gap: var(--s3); }
-  .role { grid-column: 1 / span 3; }
-  .bio { grid-column: 5 / span 4; font-size: var(--t-lead); line-height: 1.45; }
-  .cta { grid-column: 10 / span 3; display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
-  .hint { position: absolute; left: var(--gutter); bottom: var(--gutter); display: flex; gap: var(--s4); }
+  /* hero: two panels side by side, one viewport tall */
+  .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; padding: var(--nav-h) var(--edge) 0; height: 100svh; min-height: 640px; }
+  .sheet { display: flex; flex-direction: column; justify-content: center; gap: 28px; padding: var(--pad); }
+  .name-fx { display: block; height: clamp(110px, 12vw, 200px); width: calc(100% + var(--pad) * .5); margin-left: calc(var(--pad) * -.25); color: var(--ink); }
+  .hero-roles { font-size: clamp(1.5rem, 1rem + 1.6vw, 2.5rem); font-weight: 500; letter-spacing: -.025em; }
+  .roles-row { display: inline-flex; align-items: center; gap: .3em; flex-wrap: wrap; }
+  .hero-intro { color: var(--graphite); max-width: 40ch; }
+  .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  .stage { position: relative; margin: 0; height: calc(100svh - var(--nav-h) - var(--edge)); min-height: 560px; }
+  .stage-bar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; gap: 16px; padding: 18px 24px; }
+  .stage-bar > span { display: inline-flex; align-items: center; gap: 10px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
 
-  /* ---------- Showroom ---------- */
-  .showroom { position: relative; padding-block: var(--s12); }
-  .sr-head { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--s4); margin-bottom: var(--s6); }
-  .track { display: flex; gap: 6vw; overflow-x: auto; padding-inline: var(--gutter); padding-block: 24px; scroll-snap-type: x mandatory; scrollbar-width: none; }
-  .panel { flex: 0 0 min(72vw, 860px); scroll-snap-align: center; }
-  .panel > a { display: block; position: relative; }
-  .idx { display: block; margin-bottom: 12px; color: var(--accent); }
-  .frame { position: relative; }
-  .frame :global(.media) { overflow: hidden; }
-  .frame :global(.media :is(img, .ph)) { scale: 1.08; translate: calc(var(--d, 0) * -5%) 0; transition: scale 900ms var(--ease-out-expo); }
-  .panel a:hover .frame :global(.media :is(img, .ph)) { scale: 1.12; }
-  .corners { position: absolute; inset: -12px; pointer-events: none; --c: var(--ink); --l: 18px;
-    background:
-      linear-gradient(var(--c), var(--c)) 0 0 / var(--l) 1px, linear-gradient(var(--c), var(--c)) 0 0 / 1px var(--l),
-      linear-gradient(var(--c), var(--c)) 100% 0 / var(--l) 1px, linear-gradient(var(--c), var(--c)) 100% 0 / 1px var(--l),
-      linear-gradient(var(--c), var(--c)) 0 100% / var(--l) 1px, linear-gradient(var(--c), var(--c)) 0 100% / 1px var(--l),
-      linear-gradient(var(--c), var(--c)) 100% 100% / var(--l) 1px, linear-gradient(var(--c), var(--c)) 100% 100% / 1px var(--l);
-    background-repeat: no-repeat; transition: inset 500ms var(--ease-smooth-out); }
-  .panel a:hover .corners, .panel a:focus-visible .corners { inset: -20px; --c: var(--accent); }
-  .ptitle { position: relative; display: block; text-wrap: balance; font: 800 clamp(2rem, 3.4vw, 4rem)/.9 var(--font-text); font-stretch: 72%; letter-spacing: -.035em;
-    margin-top: -.5em; margin-left: -.06em; transition: color 300ms var(--ease-smooth-out); text-shadow: 0 2px 30px var(--paper); }
-  .panel a:hover .ptitle { color: var(--accent); }
-  .spec { display: flex; flex-wrap: wrap; gap: 6px 28px; margin-top: var(--s3); }
-  .spec div { display: flex; gap: 10px; }
-  .spec dt { color: var(--accent); }
-  .panel.end { flex-basis: min(40vw, 520px); align-self: center; }
-  .all { display: grid; gap: 12px; padding: var(--s6) 0; }
-  .all .ptitle { margin: 0; }
-  .all:hover .ptitle { color: var(--accent); }
+  .sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px 24px; flex-wrap: wrap; margin-bottom: 48px; }
+  .sec-head p { max-width: 44ch; }
+  .featured .sec-head { margin-bottom: 0; }
+  .ideas-strip { height: min(72svh, 720px); }
 
-  /* pinned (JS, wide screens, motion allowed): vertical scroll drives the track sideways */
-  .showroom.pinned { height: calc(var(--n) * 75vh + 120vh); padding: 0; }
-  .pinned .pin { position: sticky; top: 0; height: 100svh; display: grid; grid-template-rows: auto 1fr; grid-template-columns: minmax(0, 1fr); padding-top: 104px; overflow: hidden; perspective: 1600px; }
-  .pinned .track { overflow: visible; translate: var(--tx, 0) 0; align-items: center; gap: 4vw; padding-inline: calc(50vw - min(21vw, 330px)); padding-bottom: 4vh; transform-style: preserve-3d; }
-  /* panels swing in like pages of a carousel: turned away at the sides, flat and forward in the centre */
-  .pinned .panel { flex-basis: min(42vw, 660px); opacity: calc(1 - min(1, abs(var(--d, 0))) * .6);
-    transform: rotateY(calc(clamp(-1, var(--d, 0), 1) * -24deg)) translateZ(calc(min(1, abs(var(--d, 0))) * -160px)); transform-origin: 50% 50%; }
-  .pinned .panel .frame { box-shadow: 0 30px 80px -30px #000; }
+  .note { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 48px; align-items: start; }
+  .letter { display: grid; gap: 20px; max-width: 560px; font-size: var(--t-lead); line-height: 1.45; letter-spacing: -.01em; }
+  .avatar { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font-size: 1.125rem; font-weight: 500; }
+  .sign { display: grid; gap: 2px; font-weight: 500; }
+  .letter .t-learn { font-size: var(--t-body); }
+  .onrepeat { margin: 0; padding: 28px; display: grid; gap: 20px; }
+  .onrepeat h3 { font-size: var(--t-lead); }
 
-  /* ---------- Garage ---------- */
-  .garage { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); align-items: center; }
-  .film { grid-column: 1 / span 7; position: relative; margin: 0; }
-  .film video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; background: var(--surface); }
-  .film-btn { position: absolute; right: 12px; top: 12px; min-height: 36px; padding: 0 12px; background: color-mix(in srgb, var(--paper) 85%, transparent);
-    border: 1px solid var(--rule-strong); }
-  .film-btn:hover { border-color: var(--ink); }
-  .film figcaption { margin-top: 10px; }
-  .info { grid-column: 9 / span 4; display: grid; gap: var(--s3); align-content: center; justify-items: start; }
-  .ctitle { font: 800 clamp(3rem, 5.6vw, 6.5rem)/.84 var(--font-text); font-stretch: 72%; letter-spacing: -.035em; }
-  .lead { font-size: var(--t-lead); color: var(--graphite); }
-  .dials { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s2); width: min(100%, 460px); margin-block: var(--s2); }
-  .mods { display: flex; flex-wrap: wrap; gap: 8px; }
-  .mods li { border: 1px solid var(--rule-strong); padding: 6px 10px; }
+  .clock { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 48px; align-items: center; }
+  .road { margin: 0; aspect-ratio: 16 / 10; }
+  .clock-copy { display: grid; gap: 20px; justify-items: start; }
 
-  /* ---------- About, contact ---------- */
-  .about { row-gap: var(--s8); }
-  .about .lbl { grid-column: 1 / span 2; padding-top: .6em; }
-  .statement { grid-column: 3 / span 9; font-size: clamp(1.75rem, 3.6vw, 3.5rem); line-height: 1.08; font-weight: 600; letter-spacing: -.015em; max-width: none; }
-  .skills { grid-column: 3 / -1; display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--rule-strong); }
-  .skills div { padding: var(--s2) var(--s2) 0 0; }
-  .skills div + div { padding-left: var(--s2); border-left: 1px solid var(--rule); }
-  .skills dt { color: var(--dusk); }
-  .skills dd { margin-top: var(--s3); color: var(--graphite); font-size: .9375rem; }
-  .more { grid-column: 3 / -1; }
-  .contact { border-top: 1px solid var(--rule); }
-  .contact :global(.big) { font-size: clamp(5rem, 22vw, 26rem); }
-  .pills { display: flex; flex-wrap: wrap; gap: 12px; margin-top: var(--s4); }
-
-  @media (max-width: 720px) {
-    .hero { padding-top: 96px; padding-bottom: 104px; }
-    .hero { align-content: start; }
-    .tach-wrap { position: relative; top: auto; right: auto; grid-column: 1 / -1; justify-self: center; width: min(80vw, 340px); margin-bottom: var(--s4); }
-    .name { font-size: 22vw; margin-bottom: var(--s4); }
-    .line + .line { padding-left: 0; }
-    .role, .bio, .cta { grid-column: 1 / -1; }
-    .cta { justify-content: flex-start; }
-    .hint { flex-direction: column; gap: 4px; }
-    .sr-head { grid-template-columns: 1fr auto; }
-    .sr-ruler { display: none; }
-    .track { flex-direction: column; gap: var(--s12); overflow: visible; }
-    .panel, .panel.end { flex-basis: auto; }
-    .film, .info { grid-column: 1 / -1; }
-    .film { margin-bottom: var(--s6); }
-    .about > *, .about .lbl { grid-column: 1 / -1; }
-    .skills { grid-template-columns: 1fr 1fr; row-gap: var(--s3); }
-    .skills div + div { border-left: 0; padding-left: 0; }
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; height: auto; min-height: 0; }
+    .stage { order: -1; height: 56svh; min-height: 360px; }
+    .sheet { padding: 40px 8px 24px; }
+    .name-fx { height: 22vw; min-height: 80px; }
+    .note, .clock { grid-template-columns: 1fr; }
+    .ideas-strip { height: 62svh; }
   }
 </style>

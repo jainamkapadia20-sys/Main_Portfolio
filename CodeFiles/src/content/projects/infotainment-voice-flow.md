@@ -6,7 +6,7 @@ role: [Conversation design, UX]
 tools: [Figma, Voiceflow]
 duration: 6 weeks
 summary: Voice commands that a driver can use without looking away from the road. Placeholder project.
-category: UX/UI
+category: HMI
 cover: ../../assets/projects/infotainment-voice-flow.svg
 coverAlt: "Placeholder artwork: a voice waveform inside listening rings, linked to conversation nodes."
 coverRatio: 4 / 3
@@ -21,7 +21,7 @@ blocks:
   - { type: text-image, after: Solution, ratio: 4 / 5, text: "Placeholder. A detail worth a closer look, with a sentence on why it matters.", caption: Placeholder. Detail. }
   - { type: video, after: Outcome, ratio: 16 / 9, caption: Placeholder. Walkthrough video. }
 featured: true
-order: 2
+order: 4
 placeholder: true
 ---
 

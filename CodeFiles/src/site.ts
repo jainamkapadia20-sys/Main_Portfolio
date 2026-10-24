@@ -1,18 +1,19 @@
-// One place for the facts that appear across pages (chrome, footer, meta).
+// One place for the facts that appear across pages (nav, footer, meta).
 export const site = {
   name: 'Jainam Kapadia',
-  role: 'Experience designer',
-  focus: 'Automotive HMI',
+  role: 'Designer',
+  disciplines: ['UI/UX', 'Graphic', 'Service', 'HMI', 'Sketches'],
   status: 'Student, open to internships',
   email: 'jainamkapadia20@gmail.com',
   instagram: 'https://instagram.com/jainam05',
   linkedin: 'https://www.linkedin.com/in/jainamkapadia2432/',
   description:
-    'Jainam Kapadia, an experience design student working where people meet machines: automotive HMI, in-car screens and controls.',
+    'Jainam Kapadia, a design student working across UI/UX, graphic, service and HMI design, with a sketchbook always open.',
   nav: [
-    { href: '/', label: 'Index' },
     { href: '/work', label: 'Work' },
     { href: '/about', label: 'About' },
-    { href: '/contact', label: 'Contact' },
+    { href: '#contact', label: 'Contact' },
   ],
+  // Sample playlist until Jainam picks his own (any Spotify track, album or playlist URI works here)
+  spotify: { uri: 'spotify:playlist:37i9dQZF1DX4sWSpwq3LiO', label: 'the playlist' },
 } as const;

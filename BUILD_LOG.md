@@ -424,3 +424,45 @@ Skills: design-motion-principles (Create mode; weighting Jakub primary, Jhey sec
 - Checked locally under `/Main_Portfolio/`: 6 pages, nav, a project, the 3D model; 0 failed requests.
 - `.gitignore` keeps render scratch out (frame dumps, intermediate layers, WAVs, Blender backups, tool screenshots).
 - Pushed as jainamkapadia20-sys (never the -sudo account).
+
+## Session 4 (24 Oct 2026): general-portfolio redesign on the pinned red/black world
+- **Tools added:**
+  - impeccable: `init` wrote PRODUCT.md; the design hook is on (user-level install).
+  - taste-skill, web-design-guidelines, 67 design-style skills, obsidian skills.
+  - code-review plugin, GitHub CLI 2.103.2, Vercel CLI 65.2.0.
+- **User correction:**
+  - The site is a general design portfolio (UI/UX, graphic, service, HMI, sketches, about).
+  - Cars are a small side note.
+  - The visual world is pinned: simple red/black with light and dark modes. The richness belongs to flow and animation.
+  - After two re-rolls on impeccable's decision page, the user stopped the direction round.
+- **Home rebuilt:**
+  - Hero: name once, plus a rolling "I design ___" line.
+  - Pinned 3D showroom.
+  - "What I do" discipline list with a cursor-following preview.
+  - General About.
+  - One-line "On the side" car row with a blueprint.
+  - Red contact field that rises on scroll.
+- **Removed:**
+  - Car-theme elements: tachometer and engine sound, speed HUD, car video, car photo gallery.
+  - The apricot third colour and the drifting glow.
+- **Car page:** blueprint hero, specs, mods, 3D model, drawings; no photos.
+- **Impeccable finish review (two rounds), all applied:**
+  - Placeholder labels and honest counts.
+  - Two-column fallback showroom.
+  - Non-car second project.
+  - Real spec labels.
+  - Titles below images.
+  - No kickers, decorative numbering, letter rows or ring gauges.
+  - Status moved into the CTA row; the work header shows in the first viewport.
+- **web-design-guidelines fixes:**
+  - The rolling line stops after two loops.
+  - Decorative loops stop under reduced motion.
+  - The filter state goes in the URL.
+  - Player button state fixed.
+  - Scroll-margin, touch-action and image dimensions added.
+- **Documenter:** wrote DESIGN.md and `.impeccable/design.json`. The drift it found was fixed: chapter numbers, glows, scroll-entrance fades, dead gauge CSS, the old palette on /system.
+- **Checks:**
+  - axe: 0 violations.
+  - Lighthouse: Home 99, Work 100, case study 96 (LCP 2.7 s, the header video), About 99, Car 99. Accessibility 100 everywhere.
+  - Detector: only the intentional placeholder grid remains.
+- Not pushed yet.

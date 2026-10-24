@@ -1,204 +1,241 @@
 ---
-// Case study, result first (ref: richardmattka.com/work/ozworld, 03-aristide-benoist): the finished work framed
-// under a giant title with a lettered spec line, then the outcome, then the process chapter by chapter beside a
-// sticky rail that tracks how far through the story you are. Blocks sit after the section they name.
-// ← / → step through projects.
-import type { CollectionEntry } from 'astro:content';
-import { createMarkdownProcessor } from '@astrojs/markdown-remark';
+// Case study as a split stage. The stage on the left never moves: it plays the film while the column beside it
+// gives the hook, the facts and the results, then crossfades to each process step's picture as that step arrives.
+// The project's preview frame on the work list grows into this stage (shared view-transition name `case-media`).
+import { getImage } from 'astro:assets';
+import { render, type CollectionEntry } from 'astro:content';
 import Base from '../../layouts/Base.astro';
-import MediaBlock from '../../components/MediaBlock.astro';
-import BigWord from '../../components/BigWord.astro';
-import CaseBlock from '../../components/CaseBlock.astro';
+import Placeholder from '../../components/Placeholder.astro';
+import ClusterPlayer from '../../components/ClusterPlayer.astro';
+import Reveal from '../../components/islands/Reveal.jsx';
 import { sortedProjects } from '../../lib/projects';
+import { withBase } from '../../lib/url';
 
 export async function getStaticPaths() {
   const all = await sortedProjects();
-  return all.map((project, i) => ({
-    params: { slug: project.id },
-    props: { project, prev: all[(i - 1 + all.length) % all.length], next: all[(i + 1) % all.length], index: i, total: all.length },
-  }));
+  return all.map((project, i) => ({ params: { slug: project.id }, props: { project, next: all[(i + 1) % all.length] } }));
 }
 type P = CollectionEntry<'projects'>;
-interface Props { project: P; prev: P; next: P; index: number; total: number }
-const { project, prev, next, index, total } = Astro.props;
+interface Props { project: P; next: P }
+const { project, next } = Astro.props;
 const p = project.data;
-const pad = (n: number) => String(n).padStart(2, '0');
+const { Content } = await render(project);
 
-// Split the Markdown body at its "## " headings so blocks can sit between sections
-const md = await createMarkdownProcessor();
-const body = (project.body ?? '').trim();
-const parts = body.split(/^## /m);
-const sections: { title: string; html: string }[] = [];
-if (!body.startsWith('## ') && parts[0].trim()) sections.push({ title: '', html: (await md.render(parts[0])).code });   // text before the first heading
-for (const chunk of parts.slice(1)) {
-  const [heading, ...rest] = chunk.split('\n');
-  sections.push({ title: heading.trim(), html: (await md.render(rest.join('\n'))).code });
-}
-// The outcome leads, right under the hero; everything else becomes a process chapter
-const isResult = (t: string) => /^(outcome|results?)$/i.test(t);
-const result = sections.find((s) => isResult(s.title));
-const chapters = sections.filter((s) => s !== result);
-const after = (t: string) => !t ? [] : p.blocks.filter((b) => (b.after ?? '').toLowerCase() === t.toLowerCase());
-const loose = p.blocks.filter((b) => !b.after || !sections.some((s) => s.title.toLowerCase() === b.after!.toLowerCase()));
-const spec = [
-  { k: 'A', label: 'Year', value: String(p.year) },
-  { k: 'B', label: 'Type', value: p.type },
-  { k: 'C', label: 'Role', value: p.role.join(', ') },
-  { k: 'D', label: 'Tools', value: p.tools.join(', ') },
-  { k: 'E', label: 'Duration', value: p.duration },
+const web = async (src: ImageMetadata, width = 1600) => (src.format === 'svg' ? src.src : (await getImage({ src, width, format: 'webp' })).src);
+const film = p.blocks.find((b) => b.type === 'video' && b.src) as Extract<typeof p.blocks[number], { type: 'video' }> | undefined;
+const cluster = p.blocks.find((b) => b.type === 'cluster') as Extract<typeof p.blocks[number], { type: 'cluster' }> | undefined;
+const filmPoster = film?.poster ? await web(film.poster) : undefined;
+const cover = p.cover ? await web(p.cover) : undefined;
+// stage layers: the film (or cover) first, then one per process step that has a picture
+const steps = await Promise.all(p.process.map(async (s) => ({
+  ...s, img: s.media ? await web(s.media) : undefined,
+  thumbs: s.gallery ? await Promise.all(s.gallery.map(async (g) => ({ src: await web(g.src, 800), alt: g.alt }))) : [],
+})));
+const facts = [
+  { k: 'Role', v: p.role.join(', ') },
+  { k: 'Type', v: p.type },
+  { k: 'Tools', v: p.tools.join(', ') },
+  { k: p.duration === 'To confirm' ? 'Year' : 'Duration', v: p.duration === 'To confirm' ? String(p.year) : `${p.duration}, ${p.year}` },
 ];
-let n = 0;
+const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-arm t-learn-arm-top" d="M6 4L10 8" /><path class="t-learn-arm t-learn-arm-bot" d="M10 8L6 12" /></svg>';
 ---
-<Base title={p.title} section={`Work ${pad(index + 1)} / ${pad(total)}`} description={p.summary}>
-  <link slot="head" rel="prev" href={`/work/${prev.id}`} />
-  <link slot="head" rel="next" href={`/work/${next.id}`} />
-  <article class="case" data-prev={`/work/${prev.id}`} data-next={`/work/${next.id}`}>
-    <!-- 1. The result -->
-    <header class="hero wrap">
-      <p class="crumb mono muted" data-hero-line><a href="/work">Work</a> / {pad(index + 1)} of {pad(total)} / {p.category}</p>
-      <h1 class="title display" data-hero-line style="--i:1">{p.title}</h1>
-      <div class="frame">
-        <MediaBlock video={p.preview} src={p.cover} alt={p.coverAlt} ratio="16 / 9" label={p.title} size="2400 × 1350" name={`p-${project.id}`} eager sizes="(min-width: 720px) 72vw, 100vw" />
-        <span class="corners" aria-hidden="true"></span>
+<Base title={p.title} description={p.summary}>
+  <div class="case">
+    <!-- the stage: sticky on desktop, a framed header on phones -->
+    <div class="stage" data-stage style="view-transition-name: case-media">
+      <div class="layer on" data-layer="0">
+        {film ? <video src={withBase(film.src!)} poster={filmPoster} muted loop playsinline autoplay controls preload="metadata" data-autoplay aria-label={film.alt}></video>
+          : cover ? <img src={cover} alt={p.coverAlt} /> : <Placeholder ratio="4 / 3" label="Project film or cover" />}
       </div>
-      <dl class="spec mono" data-hero-line style="--i:2">
-        {spec.map((s) => <div><dt><span class="k" aria-hidden="true">{s.k}</span>{s.label}</dt><dd>{s.value}</dd></div>)}
-      </dl>
-      <p class="lead" data-hero-line style="--i:3">{p.summary}</p>
-    </header>
-
-    {result && (
-      <section class="result wrap" aria-labelledby="result-h">
-        <h2 class="mono" id="result-h" data-reveal><span class="dot" aria-hidden="true"></span>The result</h2>
-        <div class="result-text" data-fill set:html={result.html} />
-        {after(result.title).map((b) => <CaseBlock block={b} title={p.title} n={++n} />)}
-      </section>
-    )}
-
-    <!-- 2. How it got there -->
-    <div class="process wrap" data-process>
-      <nav class="rail mono" aria-label="Chapters">
-        <p class="muted" data-scramble>How I got there</p>
-        <ol>{chapters.map((s, i) => <li><a href={`#ch-${i + 1}`} data-ch-link><span class="num">{pad(i + 1)}</span>{s.title || 'Introduction'}</a></li>)}</ol>
-        <div class="line" aria-hidden="true"><i></i></div>
-      </nav>
-      <div class="flow">
-        {chapters.map((s, i) => (
-          <section class="chapter" id={`ch-${i + 1}`} aria-labelledby={`ch-${i + 1}-h`} data-chapter>
-            <header class="ch-head">
-              <span class="num mono">{pad(i + 1)}</span>
-              <h2 class="display" id={`ch-${i + 1}-h`} data-split>{s.title || 'Introduction'}</h2>
-            </header>
-            <div class="prose" data-reveal set:html={s.html} />
-            {after(s.title).map((b) => <CaseBlock block={b} title={p.title} n={++n} />)}
-          </section>
-        ))}
-        {loose.map((b) => <CaseBlock block={b} title={p.title} n={++n} />)}
-      </div>
+      {steps.map((s, i) => s.img && <div class="layer" data-layer={i + 1}><img src={s.img} alt={s.alt} loading="lazy" /></div>)}
+      <p class="stage-cap small" data-cap aria-live="polite">{film ? 'Project film' : p.title}</p>
     </div>
 
-    <nav class="next wrap" aria-label="More projects">
-      <div class="row mono">
-        <a href={`/work/${prev.id}`} rel="prev"><span class="muted">Previous</span>&nbsp;{prev.data.title}</a>
-        <p class="keys muted" aria-hidden="true"><kbd>←</kbd> <kbd>→</kbd> projects</p>
-        <span class="muted">Next project</span>
+    <article class="col">
+      <a class="back t-learn muted small" href="/work"><span class="t-learn-chevron flip" set:html={arrow} />All work</a>
+      <header class="intro">
+        <p class="cat small"><span class="dot" aria-hidden="true"></span>{p.category}{p.placeholder && <span class="tag">Placeholder</span>}</p>
+        <h1 class="title">{p.title}</h1>
+        <p class="hook lead">{p.summary}</p>
+      </header>
+
+      <dl class="facts">
+        {facts.map((f) => <div><dt class="small muted">{f.k}</dt><dd>{f.v}</dd></div>)}
+      </dl>
+
+      {p.results.length > 0 && (
+        <section class="results" aria-labelledby="res-h" data-step="0">
+          <h2 id="res-h" class="h2">What came out of it</h2>
+          <ul>{p.results.map((r) => <li>{r}</li>)}</ul>
+        </section>
+      )}
+
+      {steps.length > 0 && (
+        <section class="process" aria-labelledby="proc-h">
+          <h2 id="proc-h" class="h2">How I got there</h2>
+          <ol class="steps">
+            {steps.map((s, i) => (
+              <li class="step" data-step={s.img ? i + 1 : undefined}>
+                <Reveal client:visible>
+                  <p class="phase small">{s.phase}</p>
+                  <h3>{s.title}</h3>
+                  <ul class="points">{s.points.map((pt) => <li>{pt}</li>)}</ul>
+                  {s.img && <img class="inline" src={s.img} alt={s.alt} loading="lazy" />}
+                  {s.thumbs.length > 0 && <div class="thumbs">{s.thumbs.map((t) => <img src={t.src} alt={t.alt} loading="lazy" />)}</div>}
+                  {s.caption && <p class="cap small muted">{s.caption}</p>}
+                </Reveal>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
+      {!steps.length && <div class="prose"><Content /></div>}
+    </article>
+  </div>
+
+  {cluster && (
+    <section class="section try" aria-labelledby="try-h">
+      <div class="wrap try-head">
+        <h2 id="try-h" class="head" data-reveal>Try the cluster</h2>
+        <p class="muted" data-reveal style="--i:1">Pick a mode, then a moment. Each screen says what the car senses and what the driver sees.</p>
       </div>
-      <BigWord text={next.data.title} href={`/work/${next.id}`} fill />
-    </nav>
-  </article>
+      <ClusterPlayer block={cluster} />
+    </section>
+  )}
+
+  {steps.length > 0 && (
+    <section class="wrap full" aria-label="Full write-up">
+      <details class="t-more">
+        <summary>Read the full write-up</summary>
+        <div class="prose"><Content /></div>
+      </details>
+    </section>
+  )}
+
+  <section class="section wrap next" aria-labelledby="next-h">
+    <p class="small muted">Next project</p>
+    <a class="next-link" href={`/work/${next.id}`} id="next-h">{next.data.title} <span class="t-learn-chevron" set:html={arrow} /></a>
+  </section>
 </Base>
 
-<script>
-  import { onDrive } from '../../scripts/drive';
-  // ← / → move between projects (not while typing or with modifier keys)
-  const article = document.querySelector<HTMLElement>('.case')!;
-  addEventListener('keydown', (e) => {
-    if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey || (e.target as HTMLElement).closest('input, textarea, [contenteditable], video, model-viewer')) return;
-    if (e.key === 'ArrowLeft') location.href = article.dataset.prev!;
-    if (e.key === 'ArrowRight') location.href = article.dataset.next!;
-  });
-
-  // Chapter rail: the line fills as you read through the process; the chapter in view is marked current
-  const proc = document.querySelector<HTMLElement>('[data-process]');
-  if (proc) {
-    const links = [...proc.querySelectorAll<HTMLAnchorElement>('[data-ch-link]')];
-    const chapters = [...proc.querySelectorAll<HTMLElement>('[data-chapter]')];
-    const line = proc.querySelector<HTMLElement>('.line')!;
-    onDrive(() => {
-      const r = proc.getBoundingClientRect();
-      const f = Math.min(1, Math.max(0, (innerHeight * 0.5 - r.top) / r.height));
-      line.style.setProperty('--f', f.toFixed(4));
-      let cur = 0;
-      chapters.forEach((c, i) => { if (c.getBoundingClientRect().top < innerHeight * 0.5) cur = i; });
-      links.forEach((a, i) => (i === cur ? a.setAttribute('aria-current', 'step') : a.removeAttribute('aria-current')));
-    });
-  }
-</script>
-
 <style>
-  /* ---------- Result hero ---------- */
-  .hero { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); padding-top: 104px; }
-  .crumb { grid-column: 1 / -1; margin-bottom: var(--s3); }
-  .crumb a:hover { color: var(--ink); }
-  .title { grid-column: 1 / -1; font-size: clamp(3.25rem, 9.5vw, 12rem); position: relative; z-index: 2; text-wrap: balance; pointer-events: none; text-shadow: 0 4px 40px color-mix(in srgb, var(--paper) 70%, transparent); }
-  .frame { grid-column: 4 / span 8; position: relative; z-index: 1; margin-top: -2.6vw; }
-  .corners { position: absolute; inset: -12px; pointer-events: none; --c: var(--ink); --l: 18px;
-    background:
-      linear-gradient(var(--c), var(--c)) 0 0 / var(--l) 1px, linear-gradient(var(--c), var(--c)) 0 0 / 1px var(--l),
-      linear-gradient(var(--c), var(--c)) 100% 0 / var(--l) 1px, linear-gradient(var(--c), var(--c)) 100% 0 / 1px var(--l),
-      linear-gradient(var(--c), var(--c)) 0 100% / var(--l) 1px, linear-gradient(var(--c), var(--c)) 0 100% / 1px var(--l),
-      linear-gradient(var(--c), var(--c)) 100% 100% / var(--l) 1px, linear-gradient(var(--c), var(--c)) 100% 100% / 1px var(--l);
-    background-repeat: no-repeat; }
-  .spec { grid-column: 1 / span 7; display: grid; grid-template-columns: repeat(5, auto); gap: var(--s2) var(--s3); margin-top: var(--s6); align-content: start; }
-  .spec dt { color: var(--graphite); display: flex; gap: 8px; }
-  .spec .k { color: var(--accent); }
-  .spec dd { margin-top: 6px; }
-  .lead { grid-column: 9 / -1; margin-top: var(--s6); font-size: var(--t-lead); line-height: 1.45; }
+  .case { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 12px; padding: var(--nav-h) var(--edge) 0; align-items: start; }
+  .stage { position: sticky; top: calc(var(--nav-h)); height: calc(100svh - var(--nav-h) - var(--edge)); border-radius: var(--radius); overflow: hidden; background: #050505; }
+  .layer { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; scale: 1.03; filter: blur(8px);
+    transition: opacity 600ms var(--ease-smooth-out), scale 1000ms var(--ease-out-expo), filter 600ms var(--ease-smooth-out); }
+  .layer.on { opacity: 1; scale: 1; filter: none; }
+  .layer video, .layer img { width: 100%; height: 100%; object-fit: contain; }
+  .layer :global(.ph) { height: 100%; }
+  .stage-cap { position: absolute; left: 20px; bottom: 16px; padding: 6px 12px; border-radius: 999px; background: rgba(14, 14, 14, .72); color: #F2F2F0; pointer-events: none; }
+  .layer video ~ * { pointer-events: none; }
 
-  /* ---------- Result ---------- */
-  .result { margin-top: var(--s16); display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); }
-  .result h2 { grid-column: 1 / span 3; display: flex; gap: 10px; align-items: center; color: var(--dusk); padding-top: var(--s2); border-top: 1px solid var(--dusk); align-self: start; }
-  .dot { width: 7px; height: 7px; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
-  .result-text { grid-column: 4 / -1; font-size: clamp(1.5rem, 1rem + 1.6vw, 2.5rem); line-height: 1.2; font-weight: 600; letter-spacing: -.01em; padding-top: var(--s2); border-top: 1px solid var(--rule); }
-  .result-text :global(p) { max-width: 30ch; }
-  .result :global(.block) { grid-column: 4 / -1; padding-inline: 0; }
-  .result :global(.cp), .result :global(.block.video) { grid-column: 1 / -1; padding-inline: 0; }
+  .col { padding: clamp(32px, 4vw, 64px) var(--pad) 0; display: grid; gap: 56px; align-content: start; }
+  .back { justify-self: start; }
+  .flip { transform: scaleX(-1); }
+  .t-learn:hover .flip { transform: scaleX(-1) translateX(2px); }
+  .intro { display: grid; gap: 18px; }
+  .cat { display: inline-flex; align-items: center; gap: 10px; font-weight: 500; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .title { font-size: clamp(2.75rem, 1rem + 4.6vw, 5.5rem); letter-spacing: -.045em; line-height: .95; }
+  .hook { color: var(--ink); }
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .facts div { padding: 16px 18px; border-radius: 14px; background: var(--surface); display: grid; gap: 2px; }
+  .facts dd { font-weight: 500; }
+  .h2 { font-size: var(--t-small); font-weight: 500; letter-spacing: 0; color: var(--graphite); margin-bottom: 20px; }
+  .results ul { display: grid; gap: 14px; }
+  .results li { font-size: var(--t-lead); line-height: 1.3; letter-spacing: -.015em; font-weight: 500; padding-left: 28px; position: relative; }
+  .results li::before { content: ""; position: absolute; left: 0; top: .5em; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
 
-  /* ---------- Process: rail + chapters ---------- */
-  .process { margin-top: var(--s16); display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); }
-  .rail { grid-column: 1 / span 3; position: sticky; top: 104px; align-self: start; display: grid; grid-template-columns: auto 1fr; column-gap: var(--s2); }
-  .rail > p { grid-column: 1 / -1; margin-bottom: var(--s3); }
-  .rail ol { grid-column: 2; display: grid; gap: 4px; }
-  .rail a { display: flex; gap: 12px; min-height: 36px; align-items: center; color: var(--graphite); transition: color 200ms var(--ease-smooth-out); }
-  .rail a:hover, .rail a[aria-current] { color: var(--ink); }
-  .rail a[aria-current] .num { color: var(--accent); }
-  .line { grid-column: 1; grid-row: 2; width: 2px; background: var(--rule); position: relative; overflow: hidden; }
-  .line i { position: absolute; inset: 0; background: linear-gradient(var(--dusk), var(--accent)); transform-origin: 50% 0; scale: 1 var(--f, 0); box-shadow: 0 0 8px var(--accent); }
-  .flow { grid-column: 4 / -1; display: grid; gap: var(--s16); }
-  .ch-head { display: flex; gap: var(--s2); align-items: baseline; padding-top: var(--s2); border-top: 1px solid var(--rule-strong); }
-  .ch-head .num { color: var(--accent); }
-  .ch-head h2 { font-size: clamp(2.25rem, 1rem + 3.4vw, 4.5rem); }
-  .prose { margin-top: var(--s4); max-width: 62ch; }
-  .prose :global(p) { font-size: var(--t-lead); line-height: 1.5; }
-  .prose :global(p + p) { margin-top: 1em; }
-  .flow :global(.block) { padding-inline: 0; margin-top: var(--s8); }
+  /* the process: a red line fills down the steps as you read */
+  .steps { position: relative; display: grid; gap: 72px; padding-left: 28px; }
+  .steps::before { content: ""; position: absolute; left: 5px; top: 8px; bottom: 8px; width: 2px; border-radius: 2px; background: var(--surface-2); }
+  .steps::after { content: ""; position: absolute; left: 5px; top: 8px; bottom: 8px; width: 2px; border-radius: 2px; background: var(--accent);
+    transform-origin: top; scale: 1 var(--fill, 0); }
+  .step { position: relative; }
+  .step::before { content: ""; position: absolute; left: -28px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--paper); box-shadow: inset 0 0 0 2px var(--graphite);
+    transition: background-color 300ms, box-shadow 300ms; z-index: 1; }
+  .step.on::before { background: var(--accent); box-shadow: inset 0 0 0 2px var(--accent); }
+  .phase { color: var(--accent); font-weight: 500; margin-bottom: 6px; }
+  .step h3 { font-size: clamp(1.5rem, 1rem + 1.4vw, 2.25rem); letter-spacing: -.03em; margin-bottom: 16px; }
+  .points { display: grid; gap: 10px; }
+  .points li { padding-left: 18px; position: relative; }
+  .points li::before { content: ""; position: absolute; left: 0; top: .7em; width: 6px; height: 6px; border-radius: 50%; background: var(--graphite); }
+  .inline { display: none; width: 100%; border-radius: 14px; margin-top: 20px; }
+  .thumbs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 20px; }
+  .thumbs img { border-radius: 10px; aspect-ratio: 2 / 1; object-fit: cover; width: 100%; background: var(--surface); }
+  .cap { margin-top: 10px; }
+  .prose { display: grid; gap: 16px; }
+  .prose :global(h2) { font-size: var(--t-lead); margin-top: 24px; }
 
-  /* ---------- Next ---------- */
-  .next { margin-top: var(--s16); padding-block: var(--s8) var(--s12); border-top: 1px solid var(--rule); }
-  .row { display: flex; justify-content: space-between; gap: var(--s2); flex-wrap: wrap; align-items: center; }
-  .row a { min-height: 44px; display: inline-flex; align-items: center; }
-  .row a:hover { color: var(--accent); }
-  kbd { font: inherit; display: inline-block; min-width: 1.8em; padding: 2px 6px; border: 1px solid var(--rule-strong); text-align: center; }
-  .next :global(.big) { margin-top: var(--s2); font-size: clamp(3rem, 9vw, 10rem); }
+  .try-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px 24px; flex-wrap: wrap; margin-bottom: 40px; }
+  .try-head p { max-width: 44ch; }
+  .full { padding-top: 64px; }
+  .t-more { max-width: 760px; border-radius: 14px; background: var(--surface); }
+  .t-more summary { list-style: none; cursor: pointer; padding: 20px 24px; font-weight: 500; display: flex; justify-content: space-between; }
+  .t-more summary::-webkit-details-marker { display: none; }
+  .t-more summary::after { content: "+"; font-size: 1.25em; line-height: 1; transition: rotate var(--duration-fast) var(--ease-smooth-out); }
+  .t-more[open] summary::after { rotate: 45deg; }
+  .t-more .prose { padding: 0 24px 24px; }
+  .next { display: grid; gap: 8px; }
+  .next-link { display: inline-flex; align-items: center; gap: 16px; font-size: var(--t-display); font-weight: 500; letter-spacing: -.045em; line-height: 1; transition: color var(--duration-fast) var(--ease-smooth-out); }
+  .next-link:hover { color: var(--accent); }
+  .next-link :global(svg) { width: .5em; height: .5em; }
+  .next-link .t-learn-chevron :global(svg) { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
+
+  :global(:root[data-motion="calm"]) .layer { scale: 1; filter: none; transition: opacity 300ms; }
 
   @media (max-width: 960px) {
-    .frame { grid-column: 1 / -1; margin-top: var(--s3); }
-    .spec { grid-column: 1 / -1; grid-template-columns: repeat(2, auto); }
-    .lead { grid-column: 1 / -1; margin-top: var(--s4); }
-    .result h2, .result-text, .result :global(.block) { grid-column: 1 / -1; }
-    .result-text { margin-top: var(--s3); }
-    .rail { display: none; }
-    .flow { grid-column: 1 / -1; }
-    .keys { display: none; }
+    .case { grid-template-columns: 1fr; }
+    .stage { position: relative; top: auto; height: auto; aspect-ratio: 16 / 10; }
+    .layer:not([data-layer="0"]) { display: none; }
+    .col { padding-inline: 8px; }
+    .inline { display: block; }
+    .facts { grid-template-columns: 1fr; }
   }
 </style>
+
+<script>
+  // The stage follows the reading: whichever step crosses the middle of the screen owns the stage
+  const stage = document.querySelector<HTMLElement>('[data-stage]');
+  if (stage) {
+    const layers = [...stage.querySelectorAll<HTMLElement>('[data-layer]')];
+    const cap = stage.querySelector<HTMLElement>('[data-cap]')!;
+    const firstCap = cap.textContent;
+    const film = stage.querySelector('video');
+    const steps = [...document.querySelectorAll<HTMLElement>('.step')];
+    const show = (n: number) => {
+      layers.forEach((l) => l.classList.toggle('on', l.dataset.layer === String(n)));
+      const step = steps.find((s) => s.dataset.step === String(n));
+      cap.textContent = n === 0 ? firstCap : step?.querySelector('.cap')?.textContent ?? step?.querySelector('h3')?.textContent ?? '';
+      if (film && n !== 0 && !film.paused) { film.dataset.auto = '1'; film.pause(); }
+      if (film && n === 0 && film.paused && film.dataset.auto === '1') film.play().catch(() => {});
+    };
+    const io = new IntersectionObserver((entries) => entries.forEach((e) => {
+      if (!e.isIntersecting) return;
+      const el = e.target as HTMLElement;
+      steps.forEach((s) => s.classList.toggle('on', s === el || (steps.indexOf(s) < steps.indexOf(el))));
+      if (el.dataset.step) show(+el.dataset.step);
+    }), { rootMargin: '-45% 0px -45% 0px' });
+    document.querySelectorAll<HTMLElement>('[data-step], .step').forEach((el) => io.observe(el));
+    // back above the process: the film returns
+    const res = document.querySelector('.results, .facts');
+    if (res) new IntersectionObserver(([e]) => { if (e.isIntersecting) show(0); }, { rootMargin: '-45% 0px -45% 0px' }).observe(res);
+
+    // the red line fills with how far the reader is through the steps
+    const list = document.querySelector<HTMLElement>('.steps');
+    if (list) {
+      const fill = () => {
+        const r = list.getBoundingClientRect();
+        const t = Math.min(1, Math.max(0, (innerHeight * 0.5 - r.top) / r.height));
+        list.style.setProperty('--fill', t.toFixed(3));
+      };
+      addEventListener('scroll', fill, { passive: true }); fill();
+    }
+  }
+  // ← / → step to the next project (ignored while typing)
+  addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowRight' || (e.target as HTMLElement).closest('input, textarea, video')) return;
+    document.querySelector<HTMLAnchorElement>('.next-link')?.click();
+  });
+</script>

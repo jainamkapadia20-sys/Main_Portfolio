@@ -2,12 +2,13 @@
 // Polite status message, used by copy-email ("Email copied"). Motion: transitions.dev "toast", rising in with a
 // fade, slight scale and cross-blur, leaving faster than it arrived.
 ---
-<div class="toast mono" role="status" aria-live="polite" data-toast></div>
+<div class="toast" role="status" aria-live="polite" data-toast></div>
 <style>
-  .toast { position: fixed; left: 50%; bottom: 72px; z-index: var(--z-toast); background: var(--ink); color: var(--paper); padding: 10px 16px;
+  .toast { position: fixed; left: 50%; bottom: 32px; z-index: var(--z-toast); background: var(--ink); color: var(--paper); padding: 10px 18px; border-radius: 999px;
+    font-size: var(--t-small); font-weight: 500;
     visibility: hidden; opacity: 0; transform: translate(-50%, 16px) scale(.97); filter: blur(2px);
     transition: opacity 250ms var(--ease-smooth-out), transform 250ms var(--ease-smooth-out), filter 250ms var(--ease-smooth-out), visibility 0s 250ms; }
   .toast:global(.show) { visibility: visible; opacity: 1; transform: translate(-50%, 0) scale(1); filter: blur(0);
     transition: opacity 350ms var(--ease-smooth-out), transform 350ms var(--ease-smooth-out), filter 350ms var(--ease-smooth-out), visibility 0s; }
-  @media (prefers-reduced-motion: reduce) { .toast { transition: none; filter: none; } }
+  :global(:root[data-motion="calm"]) .toast { transform: translate(-50%, 0); filter: none; }
 </style>

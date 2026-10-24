@@ -1,28 +1,42 @@
 ---
-// Footer on every page: contact details and back to top, with the ruler as a quiet sign-off.
-import TickRuler from './TickRuler.astro';
-import RollText from './RollText.astro';
+// The close of every page: the laser contact, then links, then the name set across the full width.
+import Contact from './islands/Contact.jsx';
 import { site } from '../site';
 ---
-<footer class="footer wrap">
-  <TickRuler ticks={60} value={1} label="End of page" />
-  <div class="grid row mono">
-    <p class="who">{site.name}<br /><span class="muted">{site.role}, {site.focus}</span></p>
-    <ul class="links">
-      <li><a href={`mailto:${site.email}`} data-copy-email={site.email}>{site.email}</a></li>
-      <li><a href={site.instagram}><RollText text="Instagram" /></a></li>
-      {site.linkedin && <li><a href={site.linkedin}><RollText text="LinkedIn" /></a></li>}
-    </ul>
-    <a class="top" href="#top"><RollText text="Back to top" /></a>
+<footer class="foot" id="contact" aria-labelledby="contact-h">
+  <Contact client:visible email={site.email} heading="Have a project or an internship in mind?" />
+
+  <div class="cols wrap">
+    <div>
+      <h3>Pages</h3>
+      <a href="/work">Work</a><a href="/about">About</a><a href="/car">Off the clock</a>
+    </div>
+    <div>
+      <h3>Elsewhere</h3>
+      <a href={site.instagram} rel="me">Instagram</a><a href={site.linkedin} rel="me">LinkedIn</a>
+      <a href={`mailto:${site.email}`} data-copy-email={site.email}>Copy my email</a>
+    </div>
+    <p class="status"><span class="dot" aria-hidden="true"></span>{site.status}</p>
   </div>
+
+  <p class="name" aria-hidden="true">{site.name}</p>
+  <p class="legal wrap small muted">© {new Date().getFullYear()} {site.name}</p>
 </footer>
+
 <style>
-  .footer { padding-block: var(--s8) calc(var(--s8) + 24px); border-top: 1px solid var(--rule); }
-  .row { margin-top: var(--s3); row-gap: var(--s3); }
-  .who { grid-column: 1 / span 4; }
-  .links { grid-column: 6 / span 4; display: grid; gap: 6px; }
-  .links a, .links button, .top { display: inline-flex; align-items: center; color: var(--graphite); letter-spacing: inherit; text-transform: inherit; min-height: 24px; text-align: left; }
-  .links a:hover, .links button:hover, .top:hover { color: var(--ink); }
-  .top { grid-column: 11 / span 2; justify-self: end; }
-  @media (max-width: 720px) { .who, .links, .top { grid-column: 1 / -1; justify-self: start; } .links a, .links button, .top { min-height: 44px; } }
+  .foot { margin-top: var(--section); padding-bottom: var(--edge); overflow: hidden; }
+  .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; padding-block: 72px 48px; }
+  .cols div { display: grid; align-content: start; gap: 8px; }
+  h3 { font-size: var(--t-small); font-weight: 500; letter-spacing: 0; color: var(--graphite); margin-bottom: 4px; }
+  .cols a { justify-self: start; transition: color var(--duration-fast) var(--ease-smooth-out); }
+  .cols a:hover { color: var(--accent); }
+  .status { justify-self: end; display: inline-flex; align-items: center; gap: 10px; align-self: start; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  /* the name returns at full width as the last word on every page */
+  .name { max-width: none; padding-inline: var(--edge); font-size: 12.4vw; font-weight: 500; letter-spacing: -.055em; line-height: .8; white-space: nowrap; }
+  .legal { margin-top: 16px; }
+  @media (max-width: 720px) {
+    .cols { grid-template-columns: 1fr 1fr; }
+    .status { grid-column: 1 / -1; justify-self: start; }
+  }
 </style>

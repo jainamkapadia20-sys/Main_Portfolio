@@ -1,87 +1,99 @@
 ---
+// About as a split stage: the person on the left (a portrait once one is added to src/assets/about/, the monogram
+// until then), the facts and the approach on the right, then skills, music and interests.
+import { getImage } from 'astro:assets';
 import Base from '../layouts/Base.astro';
-import Pill from '../components/Pill.astro';
+import Skills from '../components/Skills.astro';
+import Monogram from '../components/islands/Monogram.jsx';
+import Music from '../components/islands/Music.jsx';
+import Cta from '../components/islands/Cta.jsx';
+import { withBase } from '../lib/url';
 import { site } from '../site';
 
-const principles = [
-  { title: 'Design for the glance', text: 'A driver gives a screen a second, not a minute. Every layout has to survive that second.' },
-  { title: 'Prototype at speed', text: 'Ideas get tested in motion, on a real screen, as early as possible, not argued over in stills.' },
-  { title: 'Quiet by default', text: 'The interface stays out of the way until it matters, then it is impossible to miss.' },
+const found = Object.values(import.meta.glob<{ default: ImageMetadata }>('../assets/about/portrait.{jpg,jpeg,png,webp}', { eager: true }))[0];
+const portrait = found ? (await getImage({ src: found.default, width: 1400, format: 'webp' })).src : undefined;
+const approach = [
+  { t: 'Start with people', d: 'Who is using this, where, and in what hurry. The answer shapes everything after it.' },
+  { t: 'Sketch early', d: 'Ideas go on paper and into rough prototypes fast, so they get tested instead of argued over.' },
+  { t: 'Clear before clever', d: 'The design gets out of the way of the task; the craft shows in the details.' },
 ];
-const skills = [
-  { group: 'Research', tools: 'Interviews, contextual inquiry, task analysis, usability testing' },
-  { group: 'UX / UI', tools: 'User flows, wireframes, interface design, design systems' },
-  { group: 'HMI', tools: 'Instrument clusters, centre displays, voice interaction' },
-  { group: 'Prototyping', tools: 'Figma, ProtoPie' },
-  { group: '3D / Visual', tools: 'Blender, Illustrator' },
+const facts = [
+  { k: 'Now', v: 'Design student' },
+  { k: 'Looking for', v: 'A design internship' },
+  { k: 'Works in', v: 'UI/UX, graphic, service and HMI design' },
+  { k: 'Email', v: site.email, href: `mailto:${site.email}` },
 ];
-const timeline = [
-  { when: '20XX to now', what: 'Placeholder. Degree, school' },
-  { when: '20XX', what: 'Placeholder. Internship or project' },
-];
+const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-arm t-learn-arm-top" d="M6 4L10 8" /><path class="t-learn-arm t-learn-arm-bot" d="M10 8L6 12" /></svg>';
 ---
-<Base title="About" section="About" description="About Jainam Kapadia: experience design student focused on automotive HMI. Approach, skills and background.">
-  <div class="page wrap">
-    <h1 class="display" data-split>About</h1>
+<Base title="About" description="About Jainam Kapadia: a design student working across UI/UX, graphic, service and HMI design. Approach, skills and interests.">
+  <div class="about">
+    <div class="stage panel">
+      {portrait ? <img src={portrait} alt={`Portrait of ${site.name}`} />
+        : <div class="mono-fx"><Monogram client:load src={withBase('/monogram.svg')} /></div>}
+      <p class="stage-cap small"><span class="dot" aria-hidden="true"></span>{site.status}</p>
+    </div>
 
-    <section data-reveal class="grid bio" aria-label="Bio">
-      <p class="mono muted lbl" data-scramble>Bio</p>
-      <p class="text">Upcoming experience designer working where people meet machines. I'm drawn to automotive HMI: the screens, controls and split-second moments that make a car feel intuitive at speed. Car enthusiast first, designer always.</p>
-    </section>
-
-    <section data-reveal class="grid approach" aria-labelledby="approach-h">
-      <h2 class="mono muted lbl" data-scramble id="approach-h">Approach</h2>
-      <ol class="principles">
-        {principles.map((p, i) => <li><span class="mono muted">{String(i + 1).padStart(2, '0')}</span><h3>{p.title}</h3><p>{p.text}</p></li>)}
-      </ol>
-    </section>
-
-    <section data-reveal class="grid" id="skills" aria-labelledby="skills-h">
-      <h2 class="mono muted lbl" data-scramble id="skills-h">Skills</h2>
-      <dl class="readout">
-        {skills.map((s) => <div><dt class="mono">{s.group}</dt><dd>{s.tools}</dd></div>)}
+    <div class="col">
+      <header class="intro">
+        <h1 class="display" data-reveal>Hi, I'm Jainam</h1>
+        <p class="lead" data-reveal style="--i:1">I'm a design student working across UI/UX, graphic, service and HMI design. I like problems where people meet systems, and I sketch my way through most of them.</p>
+      </header>
+      <dl class="facts" data-reveal style="--i:2">
+        {facts.map((f) => <div><dt class="small muted">{f.k}</dt><dd>{f.href ? <a href={f.href} data-copy-email={site.email}>{f.v}</a> : f.v}</dd></div>)}
       </dl>
-    </section>
-
-    <section data-reveal class="grid" aria-labelledby="interests-h">
-      <h2 class="mono muted lbl" data-scramble id="interests-h">Interests</h2>
-      <p class="text-sm">Automotive HMI and the way cars talk to the people driving them, motorsport, and the small craft details that make an interface feel engineered. Off the clock I work on my own car.</p>
-    </section>
-
-    <section data-reveal class="grid" aria-labelledby="timeline-h">
-      <h2 class="mono muted lbl" data-scramble id="timeline-h">Timeline</h2>
-      <dl class="timeline">
-        {timeline.map((t) => <div><dt class="mono muted">{t.when}</dt><dd>{t.what}</dd></div>)}
-      </dl>
-    </section>
-
-    <section data-reveal class="grid" aria-labelledby="cv-h">
-      <h2 class="mono muted lbl" data-scramble id="cv-h">CV</h2>
-      <p class="cv"><span class="mono muted">The CV download goes here once it's ready.</span> <Pill href={`mailto:${site.email}?subject=CV`} label="Ask for my CV" /></p>
-    </section>
+      <section aria-labelledby="ap-h">
+        <h2 id="ap-h" class="h2">How I work</h2>
+        <ul class="approach">
+          {approach.map((a, i) => <li data-reveal style={`--i:${i}`}><h3>{a.t}</h3><p class="muted">{a.d}</p></li>)}
+        </ul>
+      </section>
+      <div class="actions" data-reveal>
+        <Cta client:visible href={`mailto:${site.email}?subject=${encodeURIComponent('CV request')}`}>Ask for my CV</Cta>
+        <a class="btn" href={site.linkedin} rel="me">LinkedIn</a>
+      </div>
+    </div>
   </div>
+
+  <section class="section wrap" aria-labelledby="skills-h"><Skills heading="Skills" intro="What I can bring to a team, and the tools I use for it." /></section>
+
+  <section class="section wrap side" aria-label="Outside the brief">
+    <div class="panel onrepeat" data-reveal>
+      <h2 class="h3">On repeat while I design</h2>
+      <Music client:visible uri={site.spotify.uri} label={site.spotify.label} />
+    </div>
+    <div class="panel interests" data-reveal style="--i:1">
+      <h2 class="h3">Off the clock</h2>
+      <p>Drawing, interfaces in cars and everyday products, and the small details that make a design feel considered. On the side I'm rebuilding my own car in 3D.</p>
+      <a class="t-learn" href="/car">See the car <span class="t-learn-chevron" set:html={arrow} /></a>
+    </div>
+  </section>
 </Base>
 
 <style>
-  .page { padding-top: 120px; padding-bottom: var(--s12); }
-  h1 { font-size: var(--t-h2); margin-bottom: var(--s12); }
-  section { row-gap: var(--s3); padding-block: var(--s6); border-top: 1px solid var(--rule); }
-  .lbl { grid-column: 1 / span 3; }
-  .text { grid-column: 4 / span 8; font-size: clamp(1.5rem, 2.6vw, 2.5rem); line-height: 1.15; font-weight: 600; max-width: none; }
-  .text-sm { grid-column: 4 / span 6; font-size: var(--t-lead); }
-  .principles { grid-column: 4 / -1; display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gutter); }
-  .principles h3 { font-size: var(--t-lead); font-weight: 700; margin: var(--s2) 0 var(--s1); }
-  .principles p { color: var(--graphite); }
-  .readout { grid-column: 4 / -1; }
-  .readout div, .timeline div { display: grid; grid-template-columns: 12em 1fr; gap: var(--s2); padding: 12px 0; border-bottom: 1px solid var(--rule); }
-  .readout div:first-child, .timeline div:first-child { border-top: 1px solid var(--ink); }
-  .readout dd { color: var(--graphite); }
-  .timeline { grid-column: 4 / -1; }
-  .cv { grid-column: 4 / -1; display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; max-width: none; }
-  @media (max-width: 720px) {
-    .page { padding-top: 96px; }
-    section > * { grid-column: 1 / -1 !important; }
-    .principles { grid-template-columns: 1fr; }
-    .readout div, .timeline div { grid-template-columns: 1fr; gap: 4px; }
+  .about { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 12px; padding: var(--nav-h) var(--edge) 0; align-items: start; }
+  .stage { position: sticky; top: var(--nav-h); margin: 0; height: calc(100svh - var(--nav-h) - var(--edge)); }
+  .stage img { width: 100%; height: 100%; object-fit: cover; }
+  .mono-fx { position: absolute; inset: 10%; }
+  .stage-cap { position: absolute; left: 20px; bottom: 18px; display: inline-flex; align-items: center; gap: 10px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .col { padding: clamp(48px, 7vw, 120px) var(--pad) 24px; display: grid; gap: 56px; }
+  .intro { display: grid; gap: 24px; }
+  .lead { max-width: 34ch; }
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .facts div { padding: 16px 18px; border-radius: 14px; background: var(--surface); display: grid; gap: 2px; }
+  .facts dd { font-weight: 500; overflow-wrap: anywhere; }
+  .facts a:hover { color: var(--accent); }
+  .h2 { font-size: var(--t-small); font-weight: 500; letter-spacing: 0; color: var(--graphite); margin-bottom: 20px; }
+  .approach { display: grid; gap: 28px; }
+  .approach h3 { font-size: clamp(1.5rem, 1rem + 1.4vw, 2.25rem); letter-spacing: -.03em; margin-bottom: 6px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  .side { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .side .panel { margin: 0; padding: 28px; display: grid; gap: 18px; align-content: start; }
+  .h3 { font-size: var(--t-lead); }
+  @media (max-width: 860px) {
+    .about { grid-template-columns: 1fr; }
+    .stage { position: relative; top: auto; height: 60svh; }
+    .col { padding-inline: 8px; }
+    .facts, .side { grid-template-columns: 1fr; }
   }
 </style>

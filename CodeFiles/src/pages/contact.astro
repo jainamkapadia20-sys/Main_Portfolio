@@ -1,32 +1,16 @@
 ---
+// Contact lives in the footer of every page; this page gives it a direct address and an introduction.
 import Base from '../layouts/Base.astro';
-import Pill from '../components/Pill.astro';
 import { site } from '../site';
 ---
-<Base title="Contact" section="Contact" description="Contact Jainam Kapadia: email, Instagram and LinkedIn.">
-  <div class="page wrap">
-    <h1 class="cta display"><span>Let's</span>{' '}<span>talk <span aria-hidden="true">→</span></span></h1>
-    <div class="grid rows" data-reveal>
-      <p class="mono muted lbl">Email</p>
-      <p class="val"><Pill href={`mailto:${site.email}`} label={site.email} tone="accent" attrs={{ 'data-copy-email': site.email }} /> <a class="mono mailto" href={`mailto:${site.email}`}>Open in mail app</a></p>
-      <p class="mono muted lbl">Elsewhere</p>
-      <ul class="val links">
-        <li><Pill href={site.instagram} label="Instagram" /></li>
-        {site.linkedin && <li><Pill href={site.linkedin} label="LinkedIn" /></li>}
-      </ul>
-      <p class="mono muted lbl">Status</p>
-      <p class="val mono">{site.status}</p>
-    </div>
-  </div>
+<Base title="Contact" description={`Get in touch with ${site.name}: internships, projects and collaborations.`}>
+  <section class="wrap top" aria-labelledby="c-h">
+    <h1 id="c-h" class="display" data-reveal>Say hello</h1>
+    <p class="lead" data-reveal style="--i:1">Internships, projects, or a question about the work. Write a line below, or reach me at <a href={`mailto:${site.email}`}>{site.email}</a>.</p>
+  </section>
 </Base>
 
 <style>
-  .page { padding-top: 120px; padding-bottom: var(--s12); }
-  .cta { font-size: clamp(5rem, 22vw, 26rem); display: grid; }
-  .rows { margin-top: var(--s12); row-gap: var(--s3); align-items: center; border-top: 1px solid var(--ink); padding-top: var(--s4); }
-  .lbl { grid-column: 1 / span 3; }
-  .val { grid-column: 4 / -1; display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; max-width: none; }
-  .mailto { color: var(--graphite); }
-  .mailto:hover { color: var(--ink); }
-  @media (max-width: 720px) { .page { padding-top: 96px; } .lbl, .val { grid-column: 1 / -1; } }
+  .top { padding-top: calc(var(--nav-h) + clamp(48px, 8vw, 120px)); }
+  .lead { margin-top: 24px; max-width: 40ch; }
 </style>

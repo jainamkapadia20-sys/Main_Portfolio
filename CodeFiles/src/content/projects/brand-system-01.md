@@ -6,7 +6,7 @@ role: [Identity, Art direction]
 tools: [Illustrator, Figma]
 duration: 4 weeks
 summary: An identity system built from a single grid and one typeface. Placeholder project.
-category: Visual
+category: Graphic
 cover: ../../assets/projects/brand-system-01.svg
 coverAlt: "Placeholder artwork: a geometric mark drawn on a construction grid."
 coverRatio: 4 / 3
@@ -21,7 +21,7 @@ blocks:
   - { type: text-image, after: Solution, ratio: 4 / 5, text: "Placeholder. A detail worth a closer look, with a sentence on why it matters.", caption: Placeholder. Detail. }
   - { type: video, after: Outcome, ratio: 16 / 9, caption: Placeholder. Walkthrough video. }
 featured: true
-order: 4
+order: 3
 placeholder: true
 ---
 

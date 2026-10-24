@@ -1,18 +1,16 @@
 ---
 import Base from '../layouts/Base.astro';
-import Pill from '../components/Pill.astro';
 ---
-<Base title="Page not found" section="404" noindex>
-  <div class="page wrap">
-    <p class="code display" aria-hidden="true">404</p>
-    <h1>Wrong turn. This page doesn't exist, or it moved.</h1>
-    <p class="actions"><Pill href="/" label="Back to the index" tone="accent" /> <Pill href="/work" label="See the work" /></p>
-  </div>
+<Base title="Not found" noindex>
+  <section class="wrap top" aria-labelledby="nf-h">
+    <h1 id="nf-h" class="display">This page took a wrong turn</h1>
+    <p class="lead muted">The link may be old. The work is still here.</p>
+    <div class="actions"><a class="btn primary" href="/work">See the work</a><a class="btn" href="/">Home</a></div>
+  </section>
 </Base>
 
 <style>
-  .page { min-height: 80svh; padding-top: 120px; display: grid; align-content: center; gap: var(--s4); }
-  .code { font-size: var(--t-hero); }
-  h1 { font-size: var(--t-lead); }
-  .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  .top { padding-top: calc(var(--nav-h) + clamp(48px, 8vw, 120px)); display: grid; gap: 24px; justify-items: start; }
+  .display { max-width: 12ch; }
+  .actions { display: flex; gap: 12px; }
 </style>

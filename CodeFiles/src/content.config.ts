@@ -29,12 +29,18 @@ const projects = defineCollection({
       tools: z.array(z.string()).min(1),
       duration: z.string(),
       summary: z.string().max(160),
-      category: z.enum(['HMI', 'UX/UI', 'Product', 'Visual']),
+      category: z.enum(['UI/UX', 'Graphic', 'Service', 'HMI', 'Sketches']),
       cover: image().optional(),                          // falls back to a placeholder at coverRatio
       preview: z.string().optional(),                     // muted loop in public/ shown instead of the cover (home card, case header)
       coverAlt: z.string().default(''),
       coverRatio: z.string().default('4 / 3'),
       blocks: z.array(block).default([]),
+      // the case study's hook: what came out of it, one short line each
+      results: z.array(z.string()).default([]),
+      // the process as steps: a phase word, a title, two to four short points, and the picture the stage shows
+      process: z.array(z.object({ phase: z.string(), title: z.string(), points: z.array(z.string()).min(1).max(5),
+        media: image().optional(), alt: z.string().default(''), caption: z.string().optional(),
+        gallery: z.array(z.object({ src: image(), alt: z.string() })).optional() })).default([]),
       featured: z.boolean().default(false),
       order: z.number().int(),
       placeholder: z.boolean().default(false),

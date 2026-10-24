@@ -1,74 +1,41 @@
 import Lenis from 'lenis';
-import { onDrive } from './drive';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { calm } from '../lib/motion.js';
 
+gsap.registerPlugin(ScrollTrigger);
 const root = document.documentElement;
-const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 root.classList.add('motion-ready');
 
-// Smooth scroll only when the visitor allows motion; reduced motion keeps native scrolling
-if (!reduce) (window as any).lenis = new Lenis({ autoRaf: true, lerp: 0.1 });
-
-// Progress bar, ambient light drift and the speed readout all ride the shared scroll loop
-const bar = document.querySelector<HTMLElement>('.progress');
-const ambient = document.querySelector<HTMLElement>('.ambient');
-const kmh = document.querySelector<HTMLElement>('[data-kmh]');
-const hud = document.querySelector<HTMLElement>('.hud');
-const bars = [...document.querySelectorAll<HTMLElement>('.hud .bars i')];
-let shown = -1, sleep = 0;
-onDrive(({ speed, progress }) => {
-  bar?.style.setProperty('--p', progress.toFixed(4));
-  if (!reduce) ambient?.style.setProperty('--sp', progress.toFixed(3));
-  // the readout wakes while the page moves and fades out a moment after it stops, so it never sits over text
-  if (speed > 0.02) { hud?.classList.add('live'); clearTimeout(sleep); sleep = window.setTimeout(() => hud?.classList.remove('live'), 1400); }
-  const k = Math.round(speed * 240);
-  if (k !== shown && kmh) {
-    shown = k; kmh.textContent = String(k).padStart(3, '0');
-    const lit = Math.round(speed * bars.length);
-    bars.forEach((b, i) => b.classList.toggle('on', i < lit));
-  }
-});
-
-// Split display headings into masked words (the words rise in; ref 02-lusion, 03-aristide-benoist). The text
-// stays real text with its spaces, so it reads normally.
-document.querySelectorAll<HTMLElement>('[data-split]').forEach((el) => {
-  const words = (el.textContent ?? '').trim().split(/\s+/);
-  el.innerHTML = words.map((w, i) => `<span class="w"><span style="--wi:${i}">${w.replace(/[&<>]/g, (c) => `&#${c.charCodeAt(0)};`)}</span></span>`).join(' ');
-  el.classList.add('split');
-});
-
-// Mono labels decode like an HMI readout when they arrive (ref 02-lusion). A hidden copy carries the real text.
-const glyphs = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/<>-+#';
-document.querySelectorAll<HTMLElement>('[data-scramble]').forEach((el) => {
-  const text = el.textContent ?? '';
-  el.innerHTML = `<span class="sr-only">${text}</span><span aria-hidden="true" data-scr>${text}</span>`;
-});
-function scramble(el: HTMLElement) {
-  const out = el.querySelector<HTMLElement>('[data-scr]'); if (!out || reduce) return;
-  const text = el.querySelector('.sr-only')!.textContent ?? '';
-  const start = performance.now(), dur = 520 + text.length * 18;
-  const frame = (now: number) => {
-    const p = Math.min(1, (now - start) / dur), done = Math.floor(p * text.length);
-    out.textContent = [...text].map((c, i) => (i < done || c === ' ' ? c : glyphs[(Math.random() * glyphs.length) | 0])).join('');
-    if (p < 1) requestAnimationFrame(frame);
-  };
-  requestAnimationFrame(frame);
+// Smooth scroll in full motion only, driven by GSAP's ticker so ScrollTrigger (AnimatedContent, the stage) stays in step
+if (!calm()) {
+  const lenis = new Lenis({ lerp: 0.1 });
+  lenis.on('scroll', ScrollTrigger.update);
+  gsap.ticker.add((t) => lenis.raf(t * 1000));
+  gsap.ticker.lagSmoothing(0);
+  (window as any).lenis = lenis;
+  // in-page anchors (Contact) glide instead of jumping
+  document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach((a) => a.addEventListener('click', (e) => {
+    const target = document.querySelector(a.getAttribute('href')!);
+    if (!target) return;
+    e.preventDefault();
+    lenis.scrollTo(target as HTMLElement, { offset: -24 });
+  }));
 }
+// islands hydrate after load and change heights; re-measure once they have
+addEventListener('load', () => setTimeout(() => ScrollTrigger.refresh(), 600));
 
-// Reveal on scroll, both ways: an element animates in as it arrives and back out when it leaves through the
-// bottom (scrolling back up), then in again on the way down. Leaving through the top keeps it shown.
+// Entrances: each [data-reveal] rises in once as it arrives (CSS does the motion, see motion.css)
 const io = new IntersectionObserver((entries) => entries.forEach((e) => {
-  const el = e.target as HTMLElement;
-  if (e.isIntersecting) {
-    if (el.classList.contains('in')) return;
-    el.classList.add('in');
-    if (el.matches('[data-counter]')) roll(el);
-    if (el.matches('[data-scramble]')) scramble(el);
-  } else if (e.boundingClientRect.top > 0) el.classList.remove('in');
-}), { rootMargin: '0px 0px -8% 0px' });
-document.querySelectorAll('[data-reveal], [data-split], [data-scramble], .sheet, [data-counter], [data-gauge]').forEach((el) => io.observe(el));
+  if (!e.isIntersecting) return;
+  e.target.classList.add('in');
+  io.unobserve(e.target);
+}), { rootMargin: '0px 0px -10% 0px' });
+document.querySelectorAll('[data-reveal]').forEach((el) => io.observe(el));
 
-// Looping clips play while on screen and pause off screen; a clip the visitor paused stays paused
+// Looping clips play while on screen and pause off screen; in Calm, decorative loops hold their poster frame
 document.querySelectorAll<HTMLVideoElement>('video[data-autoplay]').forEach((v) => {
+  if (calm() && !v.controls) { v.removeAttribute('autoplay'); v.pause(); return; }
   let userPaused = false;
   v.addEventListener('pause', () => { if (v.dataset.auto !== '1') userPaused = true; v.dataset.auto = ''; });
   v.addEventListener('play', () => (userPaused = false));
@@ -78,24 +45,42 @@ document.querySelectorAll<HTMLVideoElement>('video[data-autoplay]').forEach((v) 
   }, { threshold: 0.2 }).observe(v);
 });
 
-// Magnetic pills: buttons lean toward the pointer and spring back (fine pointers, motion allowed)
-if (!reduce && matchMedia('(pointer: fine)').matches) {
-  document.querySelectorAll<HTMLElement>('.pill').forEach((b) => {
-    b.addEventListener('pointermove', (e) => {
-      const r = b.getBoundingClientRect();
-      b.style.setProperty('--mx', `${((e.clientX - r.left - r.width / 2) * 0.22).toFixed(1)}px`);
-      b.style.setProperty('--my', `${((e.clientY - r.top - r.height / 2) * 0.32).toFixed(1)}px`);
-    });
-    b.addEventListener('pointerleave', () => { b.style.setProperty('--mx', '0px'); b.style.setProperty('--my', '0px'); });
+// Theme switch: flips light/dark and remembers it
+const themeBtn = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+const themeLabel = () => themeBtn?.setAttribute('aria-label', root.dataset.theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme');
+themeLabel();
+themeBtn?.addEventListener('click', () => {
+  root.dataset.theme = root.dataset.theme === 'light' ? 'dark' : 'light';
+  try { localStorage.setItem('theme', root.dataset.theme); } catch {}
+  document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')!.content = root.dataset.theme === 'light' ? '#F4F4F2' : '#0E0E0E';
+  themeLabel();
+});
+
+// Motion switch: Full or Calm. The WebGL pieces read it when they start, so the page reloads after the thumb lands.
+const motionBtn = document.querySelector<HTMLButtonElement>('[data-motion-toggle]');
+if (motionBtn) {
+  motionBtn.setAttribute('aria-checked', String(!calm()));
+  motionBtn.addEventListener('click', () => {
+    const full = motionBtn.getAttribute('aria-checked') !== 'true';
+    motionBtn.classList.add('is-init');
+    motionBtn.setAttribute('aria-checked', String(full));
+    try { localStorage.setItem('motion', full ? 'full' : 'calm'); } catch {}
+    setTimeout(() => location.reload(), 380);
   });
 }
 
-// Odometer: wind the reels back to zero, then let them roll up to their value
-function roll(counter: HTMLElement) {
-  if (reduce) return;
-  const cols = [...counter.querySelectorAll<HTMLElement>('.col')];
-  const target = cols.map((c) => c.style.getPropertyValue('--n'));
-  cols.forEach((c) => { c.style.transition = 'none'; c.style.setProperty('--n', '0'); });
-  void counter.offsetHeight;
-  cols.forEach((c, i) => { c.style.transition = ''; c.style.setProperty('--n', target[i]); });
-}
+// Copy email. The links are real mailto links, so they still work without JS or a clipboard.
+const toast = document.querySelector<HTMLElement>('[data-toast]');
+document.querySelectorAll<HTMLElement>('[data-copy-email]').forEach((b) => b.addEventListener('click', async (e) => {
+  e.preventDefault();
+  const email = b.dataset.copyEmail!;
+  try { await navigator.clipboard.writeText(email); } catch { location.href = `mailto:${email}`; return; }
+  if (!toast) return;
+  toast.textContent = 'Email copied';
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 1800);
+}));
+
+// The phone menu covers the page, so close it when focus leaves it
+const menu = document.getElementById('menu');
+menu?.addEventListener('focusout', (e) => { if (!menu.contains(e.relatedTarget as Node)) menu.hidePopover(); });

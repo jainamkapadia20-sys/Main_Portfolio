@@ -32,19 +32,66 @@ blocks:
           - { src: ../../assets/projects/adaptive-cluster/screens/pedestrian.png, alt: "Pedestrian Detected warning with a red zone ahead of the car.", title: Pedestrian, sensors: "The camera classifies a pedestrian ahead.", screen: "The zone in front of the car turns red with a Pedestrian Detected warning." }
           - { src: ../../assets/projects/adaptive-cluster/screens/park-auto.png, alt: "A parking space highlighted green with a Confirm prompt.", title: Park assist, sensors: "Cameras and ultrasonic sensors measure the gaps and find a space that fits.", screen: "The space is highlighted with one prompt: confirm, and the car parks itself." }
           - { src: ../../assets/projects/adaptive-cluster/screens/park-manual.png, alt: "A top-down car view with distance arcs beside a rear camera feed with guide lines.", title: Manual parking, sensors: "Ultrasonic sensors measure the clearance on every side.", screen: "Camera feed with guide lines, and distance arcs around a top-down view of the car." }
-  - { type: quote, after: Research, text: "Important alerts get buried.", cite: Research finding }
-  - { type: full, after: Sensor to screen, src: ../../assets/projects/adaptive-cluster/process-mapping.png, alt: "A board of sticky notes in two halves, frontend and backend, one column per feature, beside hand-drawn screen wireframes.", ratio: 1575 / 495, caption: Frontend against backend for five features, next to the first screen wireframes. }
-  - { type: full, after: Prototyping, src: ../../assets/projects/adaptive-cluster/process-tabletop.png, alt: "Toy cars on paper lanes with arrows drawn on, beside a hand sketch of exit-guidance screens.", ratio: 1250 / 675, caption: "Highway exit guidance, acted out with toy cars, then sketched beat by beat." }
-  - type: two
-    after: Layouts
-    items:
-      - { src: ../../assets/projects/adaptive-cluster/wireframe-a.png, alt: "Layout A: speed and rpm dials either side of a top-down lane view, with battery, range, tyre pressure and drive modes.", ratio: 2 / 1, caption: "A. Vitals around a top-down lane view." }
-      - { src: ../../assets/projects/adaptive-cluster/wireframe-b.png, alt: "Layout B: large speed and rpm panels either side of the road, with a strip for blind spot, lane keep, ACC, range and speed limit.", ratio: 2 / 1, caption: "B. A strip of driver-assist states." }
-  - type: two
-    after: Layouts
-    items:
-      - { src: ../../assets/projects/adaptive-cluster/wireframe-c.png, alt: "Layout C: an Exit 12 banner across the top, speed in an arch over the road, range and rpm bars at the sides.", ratio: 2 / 1, caption: "C. Exit banner, speed in an arch." }
-      - { src: ../../assets/projects/adaptive-cluster/wireframe-d.png, alt: "Layout D: a wraparound arc of lights framing the road, with speed and range inside it.", ratio: 2 / 1, caption: "D. A wraparound arc of lights." }
+results:
+  - Two modes, Highway and Traffic, each showing only what that drive needs.
+  - Twelve screens, from start-up to emergency braking and self-parking.
+  - Every alert traced from the sensor to the screen, and shown where the hazard is.
+process:
+  - phase: Research
+    title: What overloads a driver
+    points:
+      - "Four questions: what matters most, how it changes, what distracts, and what would take effort away."
+      - Priorities depend on context. Navigation in new places, cameras in tight spots, blind spot on the highway, assistance at night.
+      - "The worst distractions: touchscreen climate controls, typing a destination, pop-ups over the map, too many alerts at once."
+  - phase: Define
+    title: Two modes, not one busy screen
+    points:
+      - Highway keeps speed and the limit in view, with range, exit guidance, lane keeping and blind spot.
+      - Traffic brings proximity and collision alerts, pedestrians, start-stop, climate and parking cameras.
+      - One extra, the suspension lifts the nose over a speed breaker, and the cluster shows it.
+    media: ../../assets/projects/adaptive-cluster/screens/traffic.png
+    alt: Traffic mode with a green proximity ring around the car and a live map on the right.
+    caption: Traffic mode
+  - phase: Map
+    title: Sensor to screen
+    points:
+      - Five features mapped backend against frontend, step by step.
+      - What the radar, cameras and GPS pick up, what the system decides, what the driver sees.
+      - That map set the order, timing and priority of every alert.
+    media: ../../assets/projects/adaptive-cluster/process-mapping.png
+    alt: A board of sticky notes in two halves, frontend and backend, one column per feature, beside hand-drawn screen wireframes.
+    caption: Frontend against backend, five features
+  - phase: Prototype
+    title: Toy cars before pixels
+    points:
+      - Scenarios acted out on a tabletop with toy cars and paper lanes.
+      - Each beat sketched as the screen it needs.
+      - "Exit guidance: the card appears early, the distance counts down, the lane guidance widens."
+    media: ../../assets/projects/adaptive-cluster/process-tabletop.png
+    alt: Toy cars on paper lanes with arrows drawn on, beside a hand sketch of exit-guidance screens.
+    caption: Exit guidance, acted out then sketched
+  - phase: Sketch
+    title: Four layouts, one direction
+    points:
+      - Wireframes for each mode, then four revised layouts redrawn from my sketches.
+      - Vitals around a lane view, an assist strip, an exit banner over an arch, a wraparound arc.
+    media: ../../assets/projects/adaptive-cluster/wireframe-c.png
+    alt: "Layout C: an Exit 12 banner across the top, speed in an arch over the road, range and rpm bars at the sides."
+    caption: Layout C
+    gallery:
+      - { src: ../../assets/projects/adaptive-cluster/wireframe-a.png, alt: "Layout A: speed and rpm dials either side of a top-down lane view." }
+      - { src: ../../assets/projects/adaptive-cluster/wireframe-b.png, alt: "Layout B: large speed and rpm panels with a strip of driver-assist states." }
+      - { src: ../../assets/projects/adaptive-cluster/wireframe-c.png, alt: "Layout C: an exit banner across the top and speed in an arch over the road." }
+      - { src: ../../assets/projects/adaptive-cluster/wireframe-d.png, alt: "Layout D: a wraparound arc of lights framing the road." }
+  - phase: Final
+    title: Calm until it matters
+    points:
+      - Two large dials and the car at the centre of the road view.
+      - Each alert appears where the hazard actually is.
+      - In an emergency the whole cluster turns red, impossible to miss.
+    media: ../../assets/projects/adaptive-cluster/screens/crash.png
+    alt: The whole cluster tinted red with an Emergency Braking warning.
+    caption: Emergency braking
 featured: true
 order: 1
 ---

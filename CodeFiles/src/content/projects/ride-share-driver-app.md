@@ -6,7 +6,7 @@ role: [Product design, UI]
 tools: [Figma, Maze]
 duration: 10 weeks
 summary: A driver app that keeps trip decisions to a single glance. Placeholder project.
-category: Product
+category: UI/UX
 cover: ../../assets/projects/ride-share-driver-app.svg
 coverAlt: "Placeholder artwork: a phone showing a map route and a trip card."
 coverRatio: 4 / 3
@@ -21,7 +21,7 @@ blocks:
   - { type: text-image, after: Solution, ratio: 4 / 5, text: "Placeholder. A detail worth a closer look, with a sentence on why it matters.", caption: Placeholder. Detail. }
   - { type: video, after: Outcome, ratio: 16 / 9, caption: Placeholder. Walkthrough video. }
 featured: true
-order: 3
+order: 2
 placeholder: true
 ---
 

@@ -1,0 +1,93 @@
+---
+// The bar: wordmark, three links, the Motion switch and the theme switch. On phones the links move into a menu.
+import { site } from '../site';
+const path = Astro.url.pathname.replace(/\.html$/, '');
+const current = (href: string) => href !== '#contact' && (path === href || path.startsWith(href + '/'));
+---
+<header class="nav">
+  <a class="mark" href="/" aria-label={`${site.name}, home`}>
+    <svg viewBox="0 0 120 120" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="15"><path d="M60 12V76a23 23 0 0 1-46 0"/><path d="M60 66L100 12"/><path d="M76 45L106 108"/></g></svg>
+    <span>{site.name}</span>
+  </a>
+
+  <nav class="links" aria-label="Main">
+    {site.nav.map((l) => <a href={l.href} aria-current={current(l.href) ? 'page' : undefined}>{l.label}</a>)}
+  </nav>
+
+  <div class="tools">
+    <button class="t-toggle-wrap" type="button" role="switch" aria-checked="true" aria-label="Motion" data-motion-toggle>
+      <span class="t-label">Motion</span>
+      <span class="t-toggle" aria-hidden="true"><span class="t-toggle-thumb"></span></span>
+    </button>
+    <button class="theme" type="button" data-theme-toggle aria-label="Switch to light theme">
+      <svg class="i sun" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.6"/><path d="M10 1.8v2.4M10 15.8v2.4M1.8 10h2.4M15.8 10h2.4M4.2 4.2l1.7 1.7M14.1 14.1l1.7 1.7M4.2 15.8l1.7-1.7M14.1 5.9l1.7-1.7"/></svg>
+      <svg class="i moon" viewBox="0 0 20 20" aria-hidden="true"><path d="M16.5 12.4A7 7 0 0 1 7.6 3.5a7 7 0 1 0 8.9 8.9z"/></svg>
+    </button>
+    <button class="menu-btn" type="button" popovertarget="menu" aria-label="Open menu">
+      <span aria-hidden="true"></span><span aria-hidden="true"></span>
+    </button>
+  </div>
+
+  <div id="menu" popover class="menu">
+    <nav aria-label="Menu">
+      {site.nav.map((l) => <a href={l.href} popovertarget={l.href.startsWith('#') ? 'menu' : undefined} popovertargetaction="hide">{l.label}</a>)}
+    </nav>
+    <button class="close" type="button" popovertarget="menu" popovertargetaction="hide">Close</button>
+  </div>
+</header>
+
+<style>
+  .nav { position: fixed; inset: 0 0 auto; z-index: var(--z-chrome); height: var(--nav-h); display: flex; align-items: center; gap: 24px;
+    padding-inline: var(--inset); background: var(--paper); }
+  .mark { display: inline-flex; align-items: center; gap: 10px; font-weight: 500; letter-spacing: -.01em; margin-right: auto; white-space: nowrap; }
+  .mark svg { width: 22px; height: 22px; color: var(--accent); }
+  .links { display: flex; gap: 28px; }
+  .links a { position: relative; color: var(--graphite); transition: color var(--duration-fast) var(--ease-smooth-out); }
+  .links a:hover, .links a[aria-current] { color: var(--ink); }
+  /* a red dot rises under the current page */
+  .links a[aria-current]::after { content: ""; position: absolute; left: 50%; bottom: -10px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--accent); }
+  .tools { display: flex; align-items: center; gap: 8px; margin-left: 12px; }
+
+  /* transitions.dev toggle: the thumb travels with a double-bounce overshoot */
+  .t-toggle-wrap { display: inline-flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 12px; border-radius: 999px; color: var(--graphite); font-size: var(--t-small); }
+  .t-toggle-wrap:hover { color: var(--ink); }
+  .t-toggle { position: relative; width: 34px; height: 20px; border-radius: 999px; background: var(--surface-2); transition: background var(--duration-fast) var(--ease-smooth-out); }
+  .t-toggle-thumb { position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--graphite); translate: 0 0; will-change: translate; }
+  [aria-checked="true"] .t-toggle { background: var(--accent); }
+  [aria-checked="true"] .t-toggle-thumb { translate: 14px 0; background: var(--on-accent); }
+  .t-toggle-wrap.is-init[aria-checked="true"] .t-toggle-thumb { animation: t-toggle-on 350ms cubic-bezier(0.34, 1.35, 0.64, 1) both; }
+  .t-toggle-wrap.is-init[aria-checked="false"] .t-toggle-thumb { animation: t-toggle-off 350ms cubic-bezier(0.34, 1.35, 0.64, 1) both; }
+  @keyframes t-toggle-on { 0% { translate: 0 0; } 55% { translate: 15px 0; } 80% { translate: 14px 0; } 100% { translate: 14px 0; } }
+  @keyframes t-toggle-off { 0% { translate: 14px 0; } 55% { translate: -1px 0; } 80% { translate: 0 0; } 100% { translate: 0 0; } }
+
+  /* theme: sun and moon cross-fade with blur and scale (transitions.dev icon swap) */
+  .theme { position: relative; width: 40px; height: 40px; border-radius: 50%; color: var(--graphite); transition: color var(--duration-fast), background-color var(--duration-fast); }
+  .theme:hover { color: var(--ink); background: var(--surface); }
+  .i { position: absolute; inset: 10px; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round;
+    transition: opacity var(--duration-fast) ease-in-out, scale var(--duration-fast) ease-in-out, filter var(--duration-fast) ease-in-out; }
+  .moon { opacity: 0; scale: .25; filter: blur(2px); }
+  :global(:root[data-theme="light"]) .sun { opacity: 0; scale: .25; filter: blur(2px); }
+  :global(:root[data-theme="light"]) .moon { opacity: 1; scale: 1; filter: none; }
+
+  .menu-btn { display: none; width: 44px; height: 44px; place-content: center; gap: 6px; }
+  .menu-btn span { display: block; width: 20px; height: 1.5px; background: currentColor; }
+  .menu { inset: 0; width: 100%; height: 100dvh; max-width: none; max-height: none; margin: 0; border: 0; padding: calc(var(--nav-h) + 24px) var(--inset) var(--inset);
+    background: var(--paper); color: var(--ink); }
+  .menu nav { display: grid; gap: 4px; }
+  .menu nav a { font-size: var(--t-head); font-weight: 500; letter-spacing: -.03em; line-height: 1.15; }
+  .menu .close { position: absolute; top: 12px; right: var(--inset); min-height: 40px; color: var(--graphite); }
+  .menu:popover-open nav a { animation: menu-in 600ms var(--ease-out-expo) both; }
+  .menu:popover-open nav a:nth-child(2) { animation-delay: 50ms; }
+  .menu:popover-open nav a:nth-child(3) { animation-delay: 100ms; }
+  @keyframes menu-in { from { opacity: 0; translate: 0 24px; filter: blur(3px); } }
+
+  :global(:root[data-motion="calm"]) .t-toggle-thumb { animation: none !important; }
+  :global(:root[data-motion="calm"]) .menu:popover-open nav a { animation-name: menu-fade; }
+  @keyframes menu-fade { from { opacity: 0; } }
+
+  @media (max-width: 720px) {
+    .links { display: none; }
+    .menu-btn { display: grid; }
+    .t-label { display: none; }
+  }
+</style>

@@ -1,0 +1,39 @@
+{
+  "hook": {
+    "enabled": true,
+    "limits": {
+      "maxFindings": 5,
+      "maxChars": 8000
+    }
+  },
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "geist mono",
+        "createdAt": "2026-10-24T11:16:35.246Z",
+        "reason": "Agent: label face of the incumbent red/black world (Archivo + Geist Mono), which the user pinned on 2026-10-24; refinement keeps it"
+      },
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "CodeFiles/src/styles/motion.css"
+        ],
+        "createdAt": "2026-10-24T11:16:35.675Z",
+        "reason": "Agent: hard-edged ink-over-graphite fill that tracks reading progress on scroll, not a decorative colour gradient"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/**"
+        ],
+        "createdAt": "2026-10-24T11:39:06.388Z",
+        "reason": "Agent: decision-round sketches for rejected directions (terminal, dossier, teletext), not shipping UI"
+      }
+    ]
+  }
+}

@@ -1,15 +1,14 @@
 ---
 import '../styles/global.css';
 import '../styles/motion.css';
-import Chrome from '../components/Chrome.astro';
+import '../styles/islands.css';
+import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
-import GridOverlay from '../components/GridOverlay.astro';
 import Toast from '../components/Toast.astro';
-import Hud from '../components/Hud.astro';
 import { site } from '../site';
 
-interface Props { title?: string; description?: string; section: string; image?: string; noindex?: boolean }
-const { title, description = site.description, section, image = '/og.png', noindex = false } = Astro.props;
+interface Props { title?: string; description?: string; image?: string; noindex?: boolean }
+const { title, description = site.description, image = '/og.png', noindex = false } = Astro.props;
 const fullTitle = title ? `${title} | ${site.name}` : `${site.name}, ${site.role}`;
 const canonical = new URL(Astro.url.pathname.replace(/(\/index)?\.html$/, '') || '/', Astro.site);
 ---
@@ -28,70 +27,32 @@ const canonical = new URL(Astro.url.pathname.replace(/(\/index)?\.html$/, '') ||
   <meta property="og:url" content={canonical} />
   <meta property="og:image" content={new URL(image, Astro.site)} />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="theme-color" content="#0B0D12" />
+  <meta name="theme-color" content="#0E0E0E" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="preload" href="/fonts/archivo-var.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="preload" href="/fonts/geist-mono-400.woff2" as="font" type="font/woff2" crossorigin />
-  <!-- Apply the saved theme before first paint, so there is no flash of the wrong one -->
+  <!-- Theme and motion are set before first paint. Motion follows the OS setting until the visitor flips the switch. -->
   <script is:inline>
+    const root = document.documentElement;
     try {
       const t = localStorage.getItem('theme');
-      if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
-      if (t === 'light') document.querySelector('meta[name="theme-color"]').content = '#F3F2EE';
+      if (t === 'light' || t === 'dark') root.dataset.theme = t;
+      if (t === 'light') document.querySelector('meta[name="theme-color"]').content = '#F4F4F2';
     } catch {}
-    // Reveal-on-scroll elements start hidden only when JS runs; if the motion script never arrives, show everything
-    document.documentElement.classList.add('js');
-    setTimeout(() => { if (!document.documentElement.classList.contains('motion-ready')) document.documentElement.classList.add('reveal-all'); }, 2500);
+    let m = null;
+    try { m = localStorage.getItem('motion'); } catch {}
+    root.dataset.motion = m === 'full' || m === 'calm' ? m : matchMedia('(prefers-reduced-motion: reduce)').matches ? 'calm' : 'full';
+    // Entrances start hidden only when JS runs; if the motion script never arrives, show everything
+    root.classList.add('js');
+    setTimeout(() => { if (!root.classList.contains('motion-ready')) root.classList.add('reveal-all'); }, 2500);
   </script>
   <slot name="head" />
 </head>
-<body id="top">
+<body>
   <a class="skip" href="#main">Skip to content</a>
-  <div class="ambient" aria-hidden="true"></div>
-  <div class="grain" aria-hidden="true"></div>
-  <div class="progress" aria-hidden="true"></div>
-  <Chrome />
+  <Nav />
   <main id="main"><slot /></main>
   <Footer />
-  <GridOverlay />
   <Toast />
-  <Hud section={section} />
-  <script>
-    // Theme toggle: flips between light and dark from whatever is showing now, and remembers the choice.
-    const root = document.documentElement;
-    const isDark = () => root.dataset.theme !== 'light';   // dark is the default theme
-    const label = () => document.querySelectorAll('[data-theme-label]').forEach((el) => (el.textContent = isDark() ? 'Light' : 'Dark'));
-    label();
-    document.querySelectorAll('[data-theme-toggle]').forEach((b) => b.addEventListener('click', () => {
-      root.dataset.theme = isDark() ? 'light' : 'dark';
-      try { localStorage.setItem('theme', root.dataset.theme); } catch {}
-      document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')!.content = isDark() ? '#0B0D12' : '#F3F2EE';
-      label();
-    }));
-
-    // Copy email. The elements are real mailto links, so they still work without JS or a clipboard.
-    const toast = document.querySelector<HTMLElement>('[data-toast]');
-    document.querySelectorAll<HTMLElement>('[data-copy-email]').forEach((b) => b.addEventListener('click', async (e) => {
-      e.preventDefault();
-      const email = b.dataset.copyEmail!;
-      try { await navigator.clipboard.writeText(email); } catch { location.href = `mailto:${email}`; return; }
-      if (!toast) return;
-      toast.textContent = 'Email copied'; toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 1800);
-    }));
-
-    // The phone menu covers the page, so close it when focus leaves it (otherwise Tab lands on hidden content).
-    const menu = document.getElementById('menu');
-    menu?.addEventListener('focusout', (e) => { if (!menu.contains(e.relatedTarget as Node)) menu.hidePopover(); });
-
-    // G toggles the grid overlay (ignored while typing).
-    const overlay = document.querySelector<HTMLElement>('[data-grid-overlay]');
-    addEventListener('keydown', (e) => {
-      const t = e.target as HTMLElement;
-      if (e.key.toLowerCase() !== 'g' || e.metaKey || e.ctrlKey || e.altKey || t.closest('input, textarea, [contenteditable]')) return;
-      if (overlay) overlay.hidden = !overlay.hidden;
-    });
-  </script>
   <script>
     import '../scripts/motion';
   </script>
