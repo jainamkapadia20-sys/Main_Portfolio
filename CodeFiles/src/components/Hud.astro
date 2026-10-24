@@ -11,8 +11,7 @@ const { section } = Astro.props;
 </div>
 <style>
   .hud { position: fixed; right: var(--gutter); bottom: var(--gutter); z-index: var(--z-chrome); display: flex; align-items: center; gap: 14px;
-    padding: 8px 12px; border: 1px solid var(--rule); background: color-mix(in srgb, var(--paper) 70%, transparent);
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    padding: 8px 12px; border: 1px solid var(--rule); background: color-mix(in srgb, var(--paper) 90%, transparent);
     opacity: 0; translate: 0 6px; transition: opacity 400ms var(--ease-smooth-out), translate 400ms var(--ease-smooth-out); pointer-events: none; }
   .hud:global(.live) { opacity: 1; translate: 0 0; transition-duration: 200ms; }
   .bars { display: flex; gap: 3px; align-items: end; height: 12px; }

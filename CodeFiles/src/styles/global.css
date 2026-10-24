@@ -73,13 +73,16 @@
 
 @layer base {
   html { background: var(--paper); }
-  /* Ambient light: taillight red low left, dusk high right, pearl through the middle. It drifts with scroll (--sp). */
-  .ambient { position: fixed; inset: -20vh -10vw; z-index: -1; pointer-events: none;
+  /* Ambient light: taillight red low left, dusk high right, pearl through the middle. The gradients are painted once;
+     scroll drifts the whole layer with a transform (--sp), which the GPU moves without repainting. */
+  .ambient { position: fixed; inset: -30vh -20vw; z-index: -1; pointer-events: none; will-change: transform;
+    transform: translate3d(calc(var(--sp, 0) * -8vw), calc(var(--sp, 0) * -14vh), 0);
     background:
-      radial-gradient(40vw 40vw at calc(8% + var(--sp, 0) * 20%) calc(92% - var(--sp, 0) * 30%), var(--glow-a), transparent 70%),
-      radial-gradient(46vw 36vw at calc(92% - var(--sp, 0) * 25%) calc(6% + var(--sp, 0) * 40%), var(--glow-b), transparent 70%),
+      radial-gradient(40vw 40vw at 12% 85%, var(--glow-a), transparent 70%),
+      radial-gradient(46vw 36vw at 88% 12%, var(--glow-b), transparent 70%),
       radial-gradient(60vw 30vw at 50% 55%, var(--glow-c), transparent 70%); }
-  .grain { position: fixed; inset: 0; z-index: 100; pointer-events: none; opacity: .06; mix-blend-mode: overlay;
+  /* film grain: a plain translucent layer (a blend mode here forced a full-screen re-blend on every scroll frame) */
+  .grain { position: fixed; inset: 0; z-index: 100; pointer-events: none; opacity: .035;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
   body {
     background: transparent; color: var(--ink);

@@ -245,14 +245,14 @@ const skills = [
   /* panels swing in like pages of a carousel: turned away at the sides, flat and forward in the centre */
   .pinned .panel { flex-basis: min(42vw, 660px); opacity: calc(1 - min(1, abs(var(--d, 0))) * .6);
     transform: rotateY(calc(clamp(-1, var(--d, 0), 1) * -24deg)) translateZ(calc(min(1, abs(var(--d, 0))) * -160px)); transform-origin: 50% 50%; }
-  .pinned .panel .frame { box-shadow: 0 30px 80px -30px #000, 0 0 calc((1 - min(1, abs(var(--d, 0)))) * 60px) color-mix(in srgb, var(--accent) 25%, transparent); }
+  .pinned .panel .frame { box-shadow: 0 30px 80px -30px #000; }
 
   /* ---------- Garage ---------- */
   .garage { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); align-items: center; }
   .film { grid-column: 1 / span 7; position: relative; margin: 0; }
   .film video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; background: var(--surface); }
-  .film-btn { position: absolute; right: 12px; top: 12px; min-height: 36px; padding: 0 12px; background: color-mix(in srgb, var(--paper) 60%, transparent);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid var(--rule-strong); }
+  .film-btn { position: absolute; right: 12px; top: 12px; min-height: 36px; padding: 0 12px; background: color-mix(in srgb, var(--paper) 85%, transparent);
+    border: 1px solid var(--rule-strong); }
   .film-btn:hover { border-color: var(--ink); }
   .film figcaption { margin-top: 10px; }
   .info { grid-column: 9 / span 4; display: grid; gap: var(--s3); align-content: center; justify-items: start; }
