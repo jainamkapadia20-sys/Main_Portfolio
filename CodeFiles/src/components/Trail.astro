@@ -1,0 +1,29 @@
+---
+// A full-screen panel where photos follow the pointer and fade behind it (src/fx/trail.ts).
+// In Calm mode, and for assistive tech, the same photos sit in a plain grid.
+interface Props { items: { src: string; alt: string }[] }
+const { items } = Astro.props;
+---
+<div class="trail" data-trail data-own-pointer>
+  <p class="hint" aria-hidden="true">Move your cursor or finger here</p>
+  {items.map((it) => <img data-trail-img src={it.src} alt="" aria-hidden="true" loading="lazy" decoding="async" draggable="false" />)}
+</div>
+<ul class="grid">{items.map((it) => <li><img src={it.src} alt={it.alt} loading="lazy" /></li>)}</ul>
+
+<style>
+  .trail { position: relative; height: 100svh; overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+  .hint { position: absolute; inset: 0; display: grid; place-items: center; max-width: none; font-size: var(--t-lead); font-weight: 500; color: var(--graphite); pointer-events: none;
+    transition: opacity 600ms var(--ease-smooth-out); }
+  .trail:global(.is-live) .hint { opacity: 0; }
+  .trail img { position: absolute; left: 0; top: 0; width: clamp(180px, 20vw, 300px); aspect-ratio: 4 / 3; object-fit: cover; border-radius: 14px; opacity: 0;
+    pointer-events: none; will-change: transform, opacity; }
+  .grid { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  :global(:root[data-motion="calm"]) .trail { display: none; }
+  :global(:root[data-motion="calm"]) .grid { position: static; width: auto; height: auto; clip-path: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; padding-inline: var(--edge); }
+  :global(:root[data-motion="calm"]) .grid img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 12px; }
+</style>
+
+<script>
+  import { mountTrail } from '../fx/trail';
+  document.querySelectorAll<HTMLElement>('[data-trail]').forEach(mountTrail);
+</script>

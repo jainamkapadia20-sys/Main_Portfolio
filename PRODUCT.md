@@ -43,8 +43,8 @@ A general design portfolio, like every designer has, made distinct by its presen
 
 ## Evidence on Hand
 
-- Real project: Adaptive Cluster (HMI concept). Figma screens, Miro process, redrawn wireframes, promo film (`CodeFiles/src/assets/projects/adaptive-cluster/`, `CodeFiles/public/video/`).
-- Placeholder projects (not real, must stay labelled until replaced): Infotainment Voice Flow, Ride-Share Driver App, Brand System 01.
+- Projects (since 25 Oct 2026): four labelled placeholder slots, one each for UI/UX, HMI, graphic and service design. All earlier projects were removed from the site at the user's request; Adaptive Cluster (HMI concept: Figma screens, Miro process, wireframes, promo film) is recoverable from git history.
+- Placeholders must stay labelled until real work replaces them.
 - Not yet provided: graphic design, service design, UI/UX project files; sketches and drawings; CV; portrait. Never fabricate these.
 - Contact: jainamkapadia20@gmail.com, instagram.com/jainam05, linkedin.com/in/jainamkapadia2432.
 

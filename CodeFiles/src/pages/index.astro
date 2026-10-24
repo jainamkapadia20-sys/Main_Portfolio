@@ -3,75 +3,64 @@ import { getImage } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import WorkList from '../components/WorkList.astro';
 import Skills from '../components/Skills.astro';
-import HeroName from '../components/islands/HeroName.jsx';
-import Roles from '../components/islands/Roles.jsx';
-import HeroStage from '../components/islands/HeroStage.jsx';
-import Cta from '../components/islands/Cta.jsx';
-import Featured from '../components/islands/Featured.jsx';
-import Ideas from '../components/islands/Ideas.jsx';
-import Music from '../components/islands/Music.jsx';
-import Speed from '../components/islands/Speed.jsx';
+import HeroName from '../components/HeroName.astro';
+import Roles from '../components/Roles.astro';
+import Metal from '../components/Metal.astro';
+import Cta from '../components/Cta.astro';
+import Featured from '../components/Featured.astro';
+import Strip from '../components/Strip.astro';
+import Music from '../components/Music.astro';
+import Road from '../components/Road.astro';
 import { sortedProjects } from '../lib/projects';
-import { withBase } from '../lib/url';
 import { site } from '../site';
-
-import wfA from '../assets/projects/adaptive-cluster/wireframe-a.png';
-import wfB from '../assets/projects/adaptive-cluster/wireframe-b.png';
-import wfC from '../assets/projects/adaptive-cluster/wireframe-c.png';
-import wfD from '../assets/projects/adaptive-cluster/wireframe-d.png';
-import tabletop from '../assets/projects/adaptive-cluster/process-tabletop.png';
-import mapping from '../assets/projects/adaptive-cluster/process-mapping.png';
 import render from '../assets/car/poster-mod.png';
-import filmPoster from '../assets/projects/adaptive-cluster/film-poster.jpg';
 
 const projects = await sortedProjects();
 const lead = projects[0];
 const roles = ['interfaces', 'identities', 'services', 'in-car screens'];
-const img = async (src: ImageMetadata, width = 1400) => (await getImage({ src, width, format: 'webp' })).src;
-const ideas = await Promise.all(([
-  [wfA, 'Layout A, vitals around the road', 'Adaptive Cluster wireframe'],
-  [tabletop, 'Exit guidance, acted out with toy cars', 'Tabletop prototype'],
-  [wfB, 'Layout B, an assist strip', 'Adaptive Cluster wireframe'],
-  [mapping, 'Sensor to screen, five features', 'Process board'],
-  [wfC, 'Layout C, exit banner and arch', 'Adaptive Cluster wireframe'],
-  [render, 'My Honda City, modelled from scratch', 'Blender render'],
-  [wfD, 'Layout D, a wraparound arc', 'Adaptive Cluster wireframe'],
-] as const).map(async ([src, title, subtitle]) => ({ src: await img(src), alt: `${title}.`, title, subtitle })));
-const poster = await img(filmPoster, 1600);
+// side work: the one finished piece on hand, and labelled slots for the sketches and drawings still to come
+const ideas = [
+  { title: 'Sketchbook page', subtitle: 'Drawing', alt: '' },
+  { title: 'Poster study', subtitle: 'Graphic design', alt: '' },
+  { title: 'My Honda City, modelled from scratch', subtitle: 'Blender render', alt: 'Blender render of a grey Honda City with a rear wing.', src: (await getImage({ src: render, width: 1400, format: 'webp' })).src },
+  { title: 'Storyboard', subtitle: 'Service design', alt: '', ratio: '16 / 10' },
+  { title: 'Wireframes', subtitle: 'UI/UX', alt: '' },
+  { title: 'Product sketch', subtitle: 'Drawing', alt: '', ratio: '4 / 5' },
+];
 const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-arm t-learn-arm-top" d="M6 4L10 8" /><path class="t-learn-arm t-learn-arm-bot" d="M10 8L6 12" /></svg>';
 ---
 <Base>
-  <!-- Hero: a quiet sheet with the name, and a stage that never stops moving -->
+  <!-- Hero: one full screen. The particle monogram forms over the metal mark and bursts into the background field;
+       the name sits across the foot of the screen as a type specimen. -->
   <section class="hero" aria-labelledby="hero-h">
-    <div class="sheet">
-      <h1 id="hero-h" class="hero-name">
-        <span class="sr-only">{site.name}</span>
-        <span class="name-fx" aria-hidden="true"><HeroName client:load text={site.name} /></span>
-      </h1>
-      <p class="hero-roles" data-reveal style="--i:1">
-        <span class="sr-only">I design interfaces, identities, services and in-car screens.</span>
-        <span aria-hidden="true" class="roles-row">I design <Roles client:load items={roles} /></span>
-      </p>
-      <p class="hero-intro" data-reveal style="--i:2">A design student working across UI/UX, graphic, service and HMI design, with a sketchbook always open.</p>
-      <div class="hero-actions" data-reveal style="--i:3">
-        <Cta client:load href="#work">See my work</Cta>
-        <a class="btn" href="/about">About me</a>
+    <div class="hero-top">
+      <div class="sheet">
+        <p class="hero-roles" data-reveal style="--i:1">
+          <span class="sr-only">I design interfaces, identities, services and in-car screens.</span>
+          <span aria-hidden="true" class="roles-row">I design <Roles items={roles} /></span>
+        </p>
+        <p class="hero-intro" data-reveal style="--i:2">A design student working across UI/UX, graphic, service and HMI design, with a sketchbook always open.</p>
+        <div class="hero-actions" data-reveal style="--i:3">
+          <Cta href="#work">See my work</Cta>
+          <a class="btn" href="/about">About me</a>
+        </div>
       </div>
+      <div class="mark"><Metal anchor reform /></div>
     </div>
-    <div class="stage panel">
-      <HeroStage client:load monogram={withBase('/monogram.svg')} />
-      <div class="stage-bar small"><span><span class="dot" aria-hidden="true"></span>{site.status}</span><span class="muted">Move across the field</span></div>
-    </div>
+    <h1 id="hero-h" class="hero-name">
+      <span class="sr-only">{site.name}</span>
+      <span class="name-fx" aria-hidden="true"><HeroName text={site.name} /></span>
+    </h1>
+    <div class="hero-bar small"><span><span class="dot" aria-hidden="true"></span>{site.status}</span><span class="muted hint">Click anywhere empty to send a shockwave. Click the mark to rebuild it.</span></div>
   </section>
 
-  <!-- The lead project opens up as you scroll -->
+  <!-- The lead project opens up to the full screen as you scroll -->
   <section class="featured section" aria-labelledby="featured-h">
     <div class="wrap sec-head">
       <h2 id="featured-h" class="head" data-reveal>Latest project</h2>
-      <p class="muted" data-reveal style="--i:1">{lead.data.type}, {lead.data.year}. Keep scrolling and it opens up.</p>
+      <p class="muted" data-reveal style="--i:1">{lead.data.placeholder ? 'A slot for the next project. Keep scrolling and it opens up.' : `${lead.data.type}, ${lead.data.year}. Keep scrolling and it opens up.`}</p>
     </div>
-    <Featured client:visible src={withBase(lead.data.preview ?? '/video/adaptive-cluster-loop.mp4')} poster={poster}
-      title={lead.data.title} summary={lead.data.summary} href={withBase(`/work/${lead.id}`)} />
+    <Featured title={lead.data.title} summary={lead.data.summary} href={`/work/${lead.id}`} placeholder={lead.data.placeholder} />
   </section>
 
   <section class="section wrap" id="work" aria-labelledby="work-h">
@@ -87,7 +76,7 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
       <h2 id="ideas-h" class="head" data-reveal>Sketches and side work</h2>
       <p class="muted" data-reveal style="--i:1">Drag the strip, or click a piece to look closer.</p>
     </div>
-    <div class="ideas-strip"><Ideas client:visible items={ideas} /></div>
+    <div class="ideas-strip"><Strip items={ideas} /></div>
   </section>
 
   <section class="section wrap" aria-labelledby="skills-h"><Skills /></section>
@@ -104,38 +93,42 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
     </div>
     <aside class="panel onrepeat" aria-labelledby="music-h" data-reveal style="--i:2">
       <h3 id="music-h">On repeat while I design</h3>
-      <Music client:visible uri={site.spotify.uri} label={site.spotify.label} />
+      <Music uri={site.spotify.uri} label={site.spotify.label} />
     </aside>
   </section>
 
-  <section class="section wrap clock" aria-labelledby="clock-h">
-    <div class="panel road"><Speed client:visible /></div>
-    <div class="clock-copy">
-      <h2 id="clock-h" class="head" data-reveal>Off the clock</h2>
-      <p data-reveal style="--i:1">A 2016 Honda City that I keep changing, and a 3D model of it built from scratch in Blender. Press and hold the road to speed up.</p>
-      <a class="t-learn" href="/car" data-reveal style="--i:2">See the car <span class="t-learn-chevron" set:html={arrow} /></a>
-    </div>
+  <section class="section clock" aria-labelledby="clock-h">
+    <Road>
+      <div class="clock-copy">
+        <h2 id="clock-h" class="head" data-reveal>Off the clock</h2>
+        <p data-reveal style="--i:1">A 2016 Honda City that I keep changing, and a 3D model of it built from scratch in Blender. Press and hold the road to speed up.</p>
+        <a class="t-learn" href="/car" data-reveal style="--i:2">See the car <span class="t-learn-chevron" set:html={arrow} /></a>
+      </div>
+    </Road>
   </section>
 </Base>
 
 <style>
-  /* hero: two panels side by side, one viewport tall */
-  .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; padding: var(--nav-h) var(--edge) 0; height: 100svh; min-height: 640px; }
-  .sheet { display: flex; flex-direction: column; justify-content: center; gap: 28px; padding: var(--pad); }
-  .name-fx { display: block; height: clamp(110px, 12vw, 200px); width: calc(100% + var(--pad) * .5); margin-left: calc(var(--pad) * -.25); color: var(--ink); }
-  .hero-roles { font-size: clamp(1.5rem, 1rem + 1.6vw, 2.5rem); font-weight: 500; letter-spacing: -.025em; }
+  /* hero: one full screen. Copy and the metal mark share the top; the name spans the foot, edge to edge. */
+  .hero { position: relative; display: grid; grid-template-rows: 1fr auto auto; height: 100svh; min-height: 640px; padding: var(--nav-h) var(--edge) 0; }
+  .hero-top { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); align-items: center; gap: 24px; min-height: 0; }
+  .sheet { display: flex; flex-direction: column; gap: 28px; padding-inline: var(--pad); }
+  .mark { height: min(100%, 46svh); aspect-ratio: 1; justify-self: center; align-self: center; }
+  .name-fx { display: block; height: clamp(84px, 15vw, 260px); color: var(--ink); }
+  .hero-roles { font-size: clamp(1.75rem, 1rem + 2.2vw, 3.25rem); font-weight: 500; letter-spacing: -.03em; line-height: 1.1; }
   .roles-row { display: inline-flex; align-items: center; gap: .3em; flex-wrap: wrap; }
-  .hero-intro { color: var(--graphite); max-width: 40ch; }
+  .hero-intro { color: var(--graphite); max-width: 40ch; font-size: var(--t-lead); line-height: 1.4; }
   .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
-  .stage { position: relative; margin: 0; height: calc(100svh - var(--nav-h) - var(--edge)); min-height: 560px; }
-  .stage-bar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; gap: 16px; padding: 18px 24px; }
-  .stage-bar > span { display: inline-flex; align-items: center; gap: 10px; }
+  .hero-bar { display: flex; justify-content: space-between; gap: 16px; padding: 10px var(--pad) 18px; }
+  .hero-bar > span { display: inline-flex; align-items: center; gap: 10px; }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  :global(:root[data-motion="calm"]) .hint { display: none; }
 
   .sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px 24px; flex-wrap: wrap; margin-bottom: 48px; }
   .sec-head p { max-width: 44ch; }
   .featured .sec-head { margin-bottom: 0; }
-  .ideas-strip { height: min(72svh, 720px); }
+  .ideas .sec-head { margin-bottom: 0; }
+  .ideas-strip { height: 100svh; max-height: 980px; }
 
   .note { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 48px; align-items: start; }
   .letter { display: grid; gap: 20px; max-width: 560px; font-size: var(--t-lead); line-height: 1.45; letter-spacing: -.01em; }
@@ -145,16 +138,16 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
   .onrepeat { margin: 0; padding: 28px; display: grid; gap: 20px; }
   .onrepeat h3 { font-size: var(--t-lead); }
 
-  .clock { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 48px; align-items: center; }
-  .road { margin: 0; aspect-ratio: 16 / 10; }
-  .clock-copy { display: grid; gap: 20px; justify-items: start; }
+  .clock-copy { display: grid; gap: 20px; justify-items: start; max-width: 520px; }
 
   @media (max-width: 860px) {
-    .hero { grid-template-columns: 1fr; height: auto; min-height: 0; }
-    .stage { order: -1; height: 56svh; min-height: 360px; }
-    .sheet { padding: 40px 8px 24px; }
-    .name-fx { height: 22vw; min-height: 80px; }
-    .note, .clock { grid-template-columns: 1fr; }
-    .ideas-strip { height: 62svh; }
+    .hero { grid-template-rows: auto 1fr auto auto; height: auto; min-height: 100svh; }
+    .hero-top { grid-template-columns: 1fr; }
+    .mark { order: -1; height: auto; width: min(64vw, 300px); margin-top: 16px; }
+    .sheet { padding: 8px 8px 24px; }
+    .name-fx { height: 18vw; }
+    .hero-bar { flex-direction: column; padding-inline: 8px; }
+    .note { grid-template-columns: 1fr; }
+    .ideas-strip { height: 72svh; }
   }
 </style>

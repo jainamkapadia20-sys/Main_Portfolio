@@ -1,10 +1,10 @@
 ---
-// The close of every page: the laser contact, then links, then the name set across the full width.
-import Contact from './islands/Contact.jsx';
+// The close of every page: the full-screen laser contact, then links, then the name set across the full width.
+import Contact from './Contact.astro';
 import { site } from '../site';
 ---
 <footer class="foot" id="contact" aria-labelledby="contact-h">
-  <Contact client:visible email={site.email} heading="Have a project or an internship in mind?" />
+  <Contact email={site.email} heading="Have a project or an internship in mind?" />
 
   <div class="cols wrap">
     <div>

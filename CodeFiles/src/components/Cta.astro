@@ -1,0 +1,7 @@
+---
+// The primary action: a red pill. On hover a point of light laps its border; on press it pulses outward.
+// The shape and the effect live in global.css (.cta) so any link can carry them.
+interface Props { href: string; tone?: 'accent' | 'quiet' }
+const { href, tone = 'accent' } = Astro.props;
+---
+<a class:list={['btn', 'cta', { primary: tone === 'accent' }]} href={href}><slot /></a>

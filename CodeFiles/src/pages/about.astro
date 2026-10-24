@@ -4,10 +4,9 @@
 import { getImage } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import Skills from '../components/Skills.astro';
-import Monogram from '../components/islands/Monogram.jsx';
-import Music from '../components/islands/Music.jsx';
-import Cta from '../components/islands/Cta.jsx';
-import { withBase } from '../lib/url';
+import Metal from '../components/Metal.astro';
+import Music from '../components/Music.astro';
+import Cta from '../components/Cta.astro';
 import { site } from '../site';
 
 const found = Object.values(import.meta.glob<{ default: ImageMetadata }>('../assets/about/portrait.{jpg,jpeg,png,webp}', { eager: true }))[0];
@@ -27,9 +26,9 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
 ---
 <Base title="About" description="About Jainam Kapadia: a design student working across UI/UX, graphic, service and HMI design. Approach, skills and interests.">
   <div class="about">
-    <div class="stage panel">
+    <div class="stage">
       {portrait ? <img src={portrait} alt={`Portrait of ${site.name}`} />
-        : <div class="mono-fx"><Monogram client:load src={withBase('/monogram.svg')} /></div>}
+        : <div class="mono-fx"><Metal anchor reform /></div>}
       <p class="stage-cap small"><span class="dot" aria-hidden="true"></span>{site.status}</p>
     </div>
 
@@ -48,7 +47,7 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
         </ul>
       </section>
       <div class="actions" data-reveal>
-        <Cta client:visible href={`mailto:${site.email}?subject=${encodeURIComponent('CV request')}`}>Ask for my CV</Cta>
+        <Cta href={`mailto:${site.email}?subject=${encodeURIComponent('CV request')}`}>Ask for my CV</Cta>
         <a class="btn" href={site.linkedin} rel="me">LinkedIn</a>
       </div>
     </div>
@@ -59,7 +58,7 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
   <section class="section wrap side" aria-label="Outside the brief">
     <div class="panel onrepeat" data-reveal>
       <h2 class="h3">On repeat while I design</h2>
-      <Music client:visible uri={site.spotify.uri} label={site.spotify.label} />
+      <Music uri={site.spotify.uri} label={site.spotify.label} />
     </div>
     <div class="panel interests" data-reveal style="--i:1">
       <h2 class="h3">Off the clock</h2>
@@ -70,13 +69,13 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
 </Base>
 
 <style>
-  .about { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 12px; padding: var(--nav-h) var(--edge) 0; align-items: start; }
-  .stage { position: sticky; top: var(--nav-h); margin: 0; height: calc(100svh - var(--nav-h) - var(--edge)); }
+  .about { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 12px; padding: 0 var(--edge); align-items: start; }
+  .stage { position: sticky; top: 0; margin: 0; height: 100svh; border-radius: var(--radius); overflow: hidden; }
   .stage img { width: 100%; height: 100%; object-fit: cover; }
-  .mono-fx { position: absolute; inset: 10%; }
+  .mono-fx { position: absolute; inset: calc(var(--nav-h) + 6%) 8% 12%; }
   .stage-cap { position: absolute; left: 20px; bottom: 18px; display: inline-flex; align-items: center; gap: 10px; }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
-  .col { padding: clamp(48px, 7vw, 120px) var(--pad) 24px; display: grid; gap: 56px; }
+  .col { padding: calc(var(--nav-h) + clamp(48px, 7vw, 120px)) var(--pad) 24px; display: grid; gap: 56px; }
   .intro { display: grid; gap: 24px; }
   .lead { max-width: 34ch; }
   .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
@@ -92,7 +91,7 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
   .h3 { font-size: var(--t-lead); }
   @media (max-width: 860px) {
     .about { grid-template-columns: 1fr; }
-    .stage { position: relative; top: auto; height: 60svh; }
+    .stage { position: relative; top: auto; height: 70svh; }
     .col { padding-inline: 8px; }
     .facts, .side { grid-template-columns: 1fr; }
   }

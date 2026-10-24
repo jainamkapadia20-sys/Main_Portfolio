@@ -1,18 +1,12 @@
 import Lenis from 'lenis';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { calm } from '../lib/motion.js';
 
-gsap.registerPlugin(ScrollTrigger);
 const root = document.documentElement;
 root.classList.add('motion-ready');
 
-// Smooth scroll in full motion only, driven by GSAP's ticker so ScrollTrigger (AnimatedContent, the stage) stays in step
+// Smooth scroll in full motion only. Every scroll effect reads window.scrollY, so nothing else needs syncing.
 if (!calm()) {
-  const lenis = new Lenis({ lerp: 0.1 });
-  lenis.on('scroll', ScrollTrigger.update);
-  gsap.ticker.add((t) => lenis.raf(t * 1000));
-  gsap.ticker.lagSmoothing(0);
+  const lenis = new Lenis({ lerp: 0.1, autoRaf: true });
   (window as any).lenis = lenis;
   // in-page anchors (Contact) glide instead of jumping
   document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach((a) => a.addEventListener('click', (e) => {
@@ -22,9 +16,6 @@ if (!calm()) {
     lenis.scrollTo(target as HTMLElement, { offset: -24 });
   }));
 }
-// islands hydrate after load and change heights; re-measure once they have
-addEventListener('load', () => setTimeout(() => ScrollTrigger.refresh(), 600));
-
 // Entrances: each [data-reveal] rises in once as it arrives (CSS does the motion, see motion.css)
 const io = new IntersectionObserver((entries) => entries.forEach((e) => {
   if (!e.isIntersecting) return;

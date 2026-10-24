@@ -1,11 +1,11 @@
 ---
-// The car page, off the main nav: a side project. The 3D model holds the stage while the numbers and the build
-// scroll beside it; the photos come out only when the pointer crosses their panel.
+// The car page, off the main nav: a side project. The 3D model fills the first screen, the numbers and the build
+// follow, and the photos come out only when the pointer crosses their full-screen panel.
 import { getImage } from 'astro:assets';
 import { getEntry, render } from 'astro:content';
 import Base from '../layouts/Base.astro';
-import CarModel from '../components/islands/CarModel.jsx';
-import Trail from '../components/islands/Trail.jsx';
+import CarModel from '../components/CarModel.astro';
+import Trail from '../components/Trail.astro';
 import { withBase } from '../lib/url';
 
 const car = (await getEntry('car', 'city'))!;
@@ -18,48 +18,44 @@ const specs = [
 ];
 ---
 <Base title={`${c.make} ${c.title}`} description={`My ${c.year} ${c.make} City in ${c.colour}: specs, modifications and a 3D model built from scratch.`}>
-  <div class="car">
-    <div class="stage panel car-stage">
-      <CarModel client:visible versions={[{ label: 'Modified', url: withBase(c.model3d.modified) }, { label: 'Stock', url: withBase(c.model3d.stock) }]} />
-      <p class="stage-cap small muted">Drag to turn, scroll to zoom, double-click to reset</p>
+  <section class="showroom" aria-labelledby="car-h">
+    <CarModel versions={[{ label: 'Modified', url: withBase(c.model3d.modified) }, { label: 'Stock', url: withBase(c.model3d.stock) }]} />
+    <div class="over">
+      <h1 id="car-h" class="display" data-reveal>{c.make} City</h1>
+      <p class="small muted" data-reveal style="--i:1">Drag to turn, pinch to zoom, double-click to reset</p>
     </div>
-    <div class="col">
-      <header class="intro">
-        <p class="small muted" data-reveal>Off the clock</p>
-        <h1 class="display" data-reveal style="--i:1">{c.make} City</h1>
-        <div class="lead" data-reveal style="--i:2"><Content /></div>
-      </header>
-      <dl class="specs" data-reveal style="--i:3">
+  </section>
+
+  <div class="car wrap">
+    <header class="intro">
+      <p class="small muted" data-reveal>Off the clock</p>
+      <div class="lead" data-reveal style="--i:1"><Content /></div>
+      <dl class="specs" data-reveal style="--i:2">
         {specs.map((s) => <div><dt class="small muted">{s.k}</dt><dd>{s.v}</dd></div>)}
       </dl>
-      <section aria-labelledby="mods-h">
-        <h2 id="mods-h" class="h2">What I've changed</h2>
-        <ul class="mods">
-          {c.mods.map((m, i) => <li data-reveal style={`--i:${i % 3}`}><h3>{m.name}</h3><p class="muted">{m.note}</p></li>)}
-        </ul>
-      </section>
-    </div>
+    </header>
+    <section aria-labelledby="mods-h">
+      <h2 id="mods-h" class="h2">What I've changed</h2>
+      <ul class="mods">
+        {c.mods.map((m, i) => <li data-reveal style={`--i:${i % 3}`}><h3>{m.name}</h3><p class="muted">{m.note}</p></li>)}
+      </ul>
+    </section>
   </div>
 
-  <section class="section wrap" aria-labelledby="ph-h">
-    <div class="ph-head">
+  <section class="section" aria-labelledby="ph-h">
+    <div class="ph-head wrap">
       <h2 id="ph-h" class="head" data-reveal>On the road</h2>
-      <p class="muted" data-reveal style="--i:1">Move across the panel and the photos follow you. {c.photos.length} shots, plates blurred.</p>
+      <p class="muted" data-reveal style="--i:1">Move across the screen and the photos follow you. {c.photos.length} shots, plates blurred.</p>
     </div>
-    <div class="panel trail-panel" data-hot>
-      <Trail client:visible items={photos} alts={c.photos.map((ph) => ph.alt)} />
-      <p class="trail-hint" aria-hidden="true">Move your cursor or finger here</p>
-    </div>
-    <ul class="sr-only">{c.photos.map((ph) => <li>{ph.alt}</li>)}</ul>
+    <Trail items={photos.map((src, i) => ({ src, alt: c.photos[i].alt }))} />
   </section>
 </Base>
 
 <style>
-  .car { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 12px; padding: var(--nav-h) var(--edge) 0; align-items: start; }
-  .stage { position: sticky; top: var(--nav-h); margin: 0; height: calc(100svh - var(--nav-h) - var(--edge)); }
-  .stage-cap { position: absolute; left: 0; right: 0; bottom: 18px; text-align: center; pointer-events: none; }
-  .col { padding: clamp(48px, 7vw, 120px) var(--pad) 24px; display: grid; gap: 56px; }
-  .intro { display: grid; gap: 16px; }
+  .showroom { position: relative; height: 100svh; min-height: 560px; }
+  .over { position: absolute; left: var(--inset); right: var(--inset); bottom: clamp(24px, 4vw, 48px); display: flex; justify-content: space-between; align-items: end; gap: 16px; flex-wrap: wrap; pointer-events: none; }
+  .car { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 48px 72px; padding-top: var(--section); align-items: start; }
+  .intro { display: grid; gap: 24px; }
   .lead :global(p) { font-size: var(--t-lead); line-height: 1.4; letter-spacing: -.01em; }
   .specs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
   .specs div { padding: 16px 18px; border-radius: 14px; background: var(--surface); display: grid; gap: 2px; }
@@ -67,15 +63,9 @@ const specs = [
   .h2 { font-size: var(--t-small); font-weight: 500; letter-spacing: 0; color: var(--graphite); margin-bottom: 20px; }
   .mods { display: grid; gap: 24px; }
   .mods h3 { font-size: clamp(1.25rem, 1rem + .8vw, 1.75rem); letter-spacing: -.02em; margin-bottom: 4px; }
-  .ph-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px 24px; flex-wrap: wrap; margin-bottom: 40px; }
-  .trail-panel { position: relative; margin: 0; height: min(70svh, 680px); }
-  .trail-hint { position: absolute; inset: 0; display: grid; place-items: center; font-size: var(--t-lead); font-weight: 500; color: var(--graphite); pointer-events: none; z-index: 0; }
-  :global(:root[data-motion="calm"]) .trail-hint { display: none; }
-  :global(:root[data-motion="calm"]) .trail-panel { height: auto; background: none; }
+  .ph-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px 24px; flex-wrap: wrap; margin-bottom: 24px; }
   @media (max-width: 860px) {
     .car { grid-template-columns: 1fr; }
-    .stage { position: relative; top: auto; height: 60svh; }
-    .col { padding-inline: 8px; }
     .specs { grid-template-columns: 1fr; }
   }
 </style>

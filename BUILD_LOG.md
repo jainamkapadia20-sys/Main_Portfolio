@@ -466,3 +466,14 @@ Skills: design-motion-principles (Create mode; weighting Jakub primary, Jhey sec
   - Lighthouse: Home 99, Work 100, case study 96 (LCP 2.7 s, the header video), About 99, Car 99. Accessibility 100 everywhere.
   - Detector: only the intentional placeholder grid remains.
 - Not pushed yet.
+
+## Session 5 (25 Oct 2026): React Bits removed, custom full-screen effects
+- **User request:** stop using React Bits entirely and rebuild every component by hand; make them full screen; a full-screen "explosion" background on every page (user picked: the JK monogram as particles bursting into a drifting field); recreate the name text animation; remove all projects but keep placeholders (user picked: Adaptive Cluster removed too).
+- **No framework now:** React, React DOM, @astrojs/react, R3F, drei, motion, ogl, hugeicons and GSAP uninstalled; `components/bits`, `components/islands` and `components.json` (React Bits registry) deleted. Home JS is about 50 KB in total; three.js loads only on /car.
+- **New effects (`src/fx/`, vanilla TS + raw WebGL2 / Canvas 2D):**
+  - `field.ts`: fixed full-screen particles (dots and thin shards, ink + red). Each page opens with the JK monogram formed from them, which bursts outward on arcs into a drifting field; the pointer parts and warms it, clicks on empty space send shockwaves, scroll moves the layers at different depths. Home forms it over the metal mark; clicking the mark rebuilds and re-bursts it.
+  - `specimen.ts`: the name as a type specimen (replaces TechText): metric lines ruled in, letters inked over dashed outlines, a lens that outlines letters with side bearings, drag-and-spring letters, tap to kick, idle sweep.
+  - `metal.ts`: liquid-chrome JK (replaces MetallicPaint), dissolving in with a red-hot edge when the burst happens.
+  - `expand.ts` (scroll-expand to the full viewport), `strip.ts` (draggable liquid carousel + dialog), `slider.ts` (elastic scrubber), `road.ts` (full-screen night road, hold to boost), `beam.ts` (full-screen laser contact), `car.ts` (three.js turntable, RoomEnvironment, no HDR download; wheel scrolls the page, pinch/Ctrl-wheel zooms), `trail.ts` (full-screen photo trail). Roles and the CTA border are CSS plus a few lines of script.
+- **Content:** projects replaced by four placeholder slots; project images and videos (5.7 MB) removed from the build.
+- **Checks:** build passes, including the GitHub Pages sub-path rebase; dark, light and Calm checked in the browser at phone and desktop widths. Not committed or pushed (a push to `main` deploys).

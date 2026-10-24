@@ -1,0 +1,29 @@
+---
+// The 3D car on a full-screen turntable (src/fx/car.ts), with a switch between the two builds of the model.
+interface Props { versions: { label: string; url: string }[] }
+const { versions } = Astro.props;
+---
+<div class="car-model" data-car data-own-pointer>
+  <canvas aria-label="3D model of the car. Drag to turn, pinch to zoom, double-click to reset." role="img"></canvas>
+  <div class="switch" role="group" aria-label="Version of the model">
+    {versions.map((v, i) => <button type="button" aria-pressed={String(i === 0)} data-model={v.url}>{v.label}</button>)}
+  </div>
+  <p class="status small" data-status aria-live="polite"></p>
+</div>
+
+<style>
+  .car-model { position: absolute; inset: 0; }
+  canvas { width: 100%; height: 100%; display: block; touch-action: pan-y; cursor: grab; }
+  canvas:active { cursor: grabbing; }
+  .switch { position: absolute; top: calc(var(--nav-h) + 12px); left: 50%; translate: -50% 0; display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--paper); }
+  .switch button { min-height: 36px; padding: 0 16px; border-radius: 999px; font-size: var(--t-small); font-weight: 500; color: var(--graphite);
+    transition: color var(--duration-fast), background-color var(--duration-fast); }
+  .switch button:hover { color: var(--ink); }
+  .switch button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .status { position: absolute; inset: 50% 0 auto; text-align: center; color: var(--graphite); pointer-events: none; }
+</style>
+
+<script>
+  import { mountCar } from '../fx/car';
+  document.querySelectorAll<HTMLElement>('[data-car]').forEach(mountCar);
+</script>

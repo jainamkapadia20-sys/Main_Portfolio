@@ -1,0 +1,15 @@
+---
+// The name as a type specimen (src/fx/specimen.ts). The page keeps the real text in its h1; this is the picture of it.
+interface Props { text: string }
+const { text } = Astro.props;
+---
+<canvas class="specimen" data-specimen={text} data-own-pointer aria-hidden="true"></canvas>
+
+<style>
+  .specimen { display: block; width: 100%; height: 100%; touch-action: pan-y; }
+</style>
+
+<script>
+  import { mountSpecimen } from '../fx/specimen';
+  document.querySelectorAll<HTMLCanvasElement>('[data-specimen]').forEach((c) => mountSpecimen(c, c.dataset.specimen!));
+</script>

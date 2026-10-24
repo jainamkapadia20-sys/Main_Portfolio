@@ -7,7 +7,6 @@ import { render, type CollectionEntry } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Placeholder from '../../components/Placeholder.astro';
 import ClusterPlayer from '../../components/ClusterPlayer.astro';
-import Reveal from '../../components/islands/Reveal.jsx';
 import { sortedProjects } from '../../lib/projects';
 import { withBase } from '../../lib/url';
 
@@ -76,14 +75,14 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
           <ol class="steps">
             {steps.map((s, i) => (
               <li class="step" data-step={s.img ? i + 1 : undefined}>
-                <Reveal client:visible>
+                <div data-reveal>
                   <p class="phase small">{s.phase}</p>
                   <h3>{s.title}</h3>
                   <ul class="points">{s.points.map((pt) => <li>{pt}</li>)}</ul>
                   {s.img && <img class="inline" src={s.img} alt={s.alt} loading="lazy" />}
                   {s.thumbs.length > 0 && <div class="thumbs">{s.thumbs.map((t) => <img src={t.src} alt={t.alt} loading="lazy" />)}</div>}
                   {s.caption && <p class="cap small muted">{s.caption}</p>}
-                </Reveal>
+                </div>
               </li>
             ))}
           </ol>

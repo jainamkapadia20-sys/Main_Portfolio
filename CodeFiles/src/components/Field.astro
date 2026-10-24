@@ -1,0 +1,14 @@
+---
+// The full-screen particle field behind every page (see src/fx/field.ts). Decorative: hidden from assistive tech.
+---
+<canvas class="field" data-field aria-hidden="true"></canvas>
+
+<style>
+  .field { position: fixed; inset: 0; width: 100vw; height: 100lvh; z-index: -1; pointer-events: none; }
+</style>
+
+<script>
+  import { mountField } from '../fx/field';
+  const c = document.querySelector<HTMLCanvasElement>('[data-field]');
+  if (c) mountField(c);
+</script>

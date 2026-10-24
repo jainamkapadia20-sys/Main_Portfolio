@@ -1,6 +1,5 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
-import react from '@astrojs/react';
 
 // SITE / BASE come from the GitHub Pages workflow (https://<user>.github.io/<repo>); locally the site lives at the root.
 export default defineConfig({
@@ -8,6 +7,5 @@ export default defineConfig({
   base: process.env.BASE || undefined,
   trailingSlash: 'never',
   build: { format: 'file', inlineStylesheets: 'always' }, // ~3 KB of CSS: inlining beats a render-blocking request
-  integrations: [react()], // React islands for the React Bits components
-  vite: { esbuild: { jsx: 'automatic', jsxImportSource: 'react' } },   // .jsx islands use the automatic runtime (no global React)
+  // no UI framework: every effect is a vanilla TypeScript module in src/fx, mounted by the component that uses it
 });

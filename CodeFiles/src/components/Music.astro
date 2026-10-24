@@ -1,0 +1,76 @@
+---
+// "On repeat": a Spotify embed that loads only when asked (no third-party requests before that), with an elastic
+// scrubber wired to it through Spotify's iFrame API. The embed stays visible, as Spotify's terms require.
+interface Props { uri: string; label: string }
+const { uri, label } = Astro.props;
+---
+<div class="music" data-music={uri}>
+  <button type="button" class="btn load" data-load>
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5v9l7.5-4.5z" fill="currentColor" /></svg>
+    Load the playlist
+  </button>
+  <div class="embed" data-embed hidden><div data-host></div></div>
+  <div class="scrub" data-scrub hidden>
+    <span class="time" data-pos>0:00</span>
+    <div class="slider" role="slider" aria-label={`Scrub ${label}`} aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-disabled="true" tabindex="-1" data-slider>
+      <span class="track" data-track><span class="fill"></span><span class="thumb"></span></span>
+    </div>
+    <span class="time" data-dur>0:00</span>
+  </div>
+</div>
+
+<style>
+  .music { display: grid; gap: 18px; color: var(--ink); }
+  .load { justify-self: start; }
+  .load svg { width: 14px; height: 14px; }
+  .embed { border-radius: 12px; overflow: hidden; min-height: 152px; background: var(--surface-2); }
+  .scrub { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; }
+  .scrub[hidden] { display: none; }
+  .time { font-size: var(--t-small); font-variant-numeric: tabular-nums; min-width: 3ch; }
+  .slider { --v: 0; position: relative; height: 28px; display: grid; align-items: center; cursor: pointer; touch-action: none; }
+  .slider[aria-disabled="true"] { opacity: .5; cursor: default; }
+  .track { position: relative; height: 6px; border-radius: 99px; background: var(--surface-2);
+    transition: height 300ms var(--ease-bounce), transform 500ms var(--ease-bounce); }
+  .fill { position: absolute; inset: 0 auto 0 0; width: calc(var(--v) * 100%); border-radius: inherit; background: var(--accent); }
+  .thumb { position: absolute; top: 50%; left: calc(var(--v) * 100%); width: 14px; height: 14px; border-radius: 50%; background: var(--ink); translate: -50% -50%;
+    transition: scale 200ms var(--ease-smooth-out); }
+  .slider:hover .track, .slider:global(.is-active) .track { height: 12px; }
+  .slider:global(.is-active) .track { transition: height 300ms var(--ease-bounce); }
+  .slider:global(.is-active) .thumb { scale: 1.25; }
+</style>
+
+<script>
+  import { mountSlider } from '../fx/slider';
+  const fmt = (ms: number) => { const s = Math.max(0, Math.round(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+  type Ctrl = { seek: (s: number) => void; addListener: (n: string, f: (e: any) => void) => void };
+  document.querySelectorAll<HTMLElement>('[data-music]').forEach((root) => {
+    const q = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
+    let ctrl: Ctrl | null = null, dur = 0, scrubbing = false;
+    const pos = q('[data-pos]'), durEl = q('[data-dur]');
+    const slider = mountSlider(q('[data-slider]'),
+      (v) => { scrubbing = true; pos.textContent = fmt((v / 100) * dur); },
+      (v) => { scrubbing = false; ctrl?.seek(((v / 100) * dur) / 1000); });
+    q('[data-load]').addEventListener('click', () => {
+      q('[data-load]').hidden = true;
+      q('[data-embed]').hidden = false;
+      q('[data-scrub]').hidden = false;
+      const w = window as any;
+      const ready = (api: any) => api.createController(q('[data-host]'), { uri: root.dataset.music, width: '100%', height: 152 }, (c: Ctrl) => {
+        ctrl = c;
+        c.addListener('playback_update', (e) => {
+          dur = e.data.duration;
+          slider.disable(!dur);
+          if (scrubbing) return;
+          pos.textContent = fmt(e.data.position); durEl.textContent = fmt(dur);
+          slider.set(dur ? (e.data.position / dur) * 100 : 0);
+        });
+      });
+      if (w.SpotifyIframeApi) return ready(w.SpotifyIframeApi);
+      w.onSpotifyIframeApiReady = (api: any) => { w.SpotifyIframeApi = api; ready(api); };
+      const s = document.createElement('script');
+      s.src = 'https://open.spotify.com/embed/iframe-api/v1';
+      s.async = true;
+      document.body.appendChild(s);
+    });
+  });
+</script>

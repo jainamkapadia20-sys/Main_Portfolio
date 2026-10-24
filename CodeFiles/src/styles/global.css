@@ -22,7 +22,7 @@
 @layer tokens {
   :root {
     /* colour (user-pinned): ink, paper and one red per theme. Dark is the default; light is one toggle away.
-       Contrast on paper: ink 17.6, graphite 6.1, accent 5.3. WebGL islands read the same values from src/lib/theme.js. */
+       Contrast on paper: ink 17.6, graphite 6.1, accent 5.3. The canvas effects read the same values from src/lib/theme.ts. */
     --paper: #0E0E0E; --ink: #F2F2F0; --graphite: #8C8C8A; --surface: #171717; --surface-2: #1F1F1F; --accent: #FF3B30;
     --on-accent: #0E0E0E;
     color-scheme: dark;
@@ -61,7 +61,7 @@
 @layer base {
   html { background: var(--paper); scrollbar-color: var(--graphite) var(--paper); }
   body {
-    background: var(--paper); color: var(--ink);
+    background: transparent; color: var(--ink);   /* the particle field (Field.astro) shows through, over html's paper */
     font: 400 var(--t-body)/1.55 var(--font);
     -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility; font-kerning: normal;
@@ -101,6 +101,20 @@
   .btn.primary { background: var(--accent); color: var(--on-accent); }
   .btn.primary:hover { background: color-mix(in srgb, var(--ink) 12%, var(--accent)); }
   .tag { display: inline-block; font-size: var(--t-small); font-weight: 500; padding: 2px 10px; border-radius: 999px; background: var(--surface-2); color: var(--graphite); }
+
+  /* the primary action: a point of light laps the border on hover, and a ring pulses out on press */
+  .cta { position: relative; isolation: isolate; }
+  .cta::before { content: ""; position: absolute; inset: -2px; z-index: -1; border-radius: inherit; padding: 2px; opacity: 0;
+    background: conic-gradient(from var(--lap), transparent 0 72%, var(--ink) 86%, transparent 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+    transition: opacity var(--duration-medium) var(--ease-smooth-out); }
+  .cta:hover::before, .cta:focus-visible::before { opacity: 1; animation: cta-lap 1.6s linear infinite; }
+  .cta::after { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; box-shadow: 0 0 0 0 var(--accent); opacity: 0; }
+  .cta:active::after { animation: cta-pulse 600ms var(--ease-out-expo); }
+  @property --lap { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+  @keyframes cta-lap { to { --lap: 360deg; } }
+  @keyframes cta-pulse { from { opacity: .7; box-shadow: 0 0 0 0 var(--accent); } to { opacity: 0; box-shadow: 0 0 0 14px var(--accent); } }
+  :root[data-motion="calm"] .cta::before { animation: none; background: none; }
 
   /* transitions.dev learn-more hover: the chevron slides and its arms spread into an arrow */
   .t-learn { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }

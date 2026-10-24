@@ -1,0 +1,57 @@
+---
+// Sketches and side work in a full-width draggable strip; click a piece to open it larger (src/fx/strip.ts).
+// Pieces without a file show a labelled placeholder at the same size.
+interface Item { src?: string; title: string; subtitle: string; alt: string; ratio?: string }
+interface Props { items: Item[] }
+const { items } = Astro.props;
+---
+<div class="strip" data-strip data-own-pointer tabindex="0" role="region" aria-roledescription="carousel" aria-label="Sketches and side work. Drag, or use the arrow keys.">
+  <ol class="track" data-track>
+    {items.map((it) => (
+      <li class="card" data-title={`${it.title}. ${it.subtitle}`}>
+        <button type="button" aria-label={`Open larger: ${it.title}`}>
+          <span class="media" data-media style={`aspect-ratio:${it.ratio ?? '4 / 3'}`}>
+            {it.src ? <img src={it.src} alt={it.alt} loading="lazy" draggable="false" />
+              : <span class="ph-card" role="img" aria-label={`Placeholder: ${it.title}`}><span>Placeholder<br /><span class="muted">{it.title}</span></span></span>}
+          </span>
+        </button>
+        <p class="cap"><span class="t">{it.title}</span><span class="s">{it.subtitle}</span></p>
+      </li>
+    ))}
+  </ol>
+  <p class="count small" data-count aria-hidden="true"></p>
+  <dialog class="box" aria-label="Enlarged piece">
+    <div class="big" data-big></div>
+    <p class="big-cap" data-cap></p>
+    <button class="btn close" type="button" data-close>Close</button>
+  </dialog>
+</div>
+
+<style>
+  .strip { position: relative; overflow: hidden; height: 100%; cursor: grab; outline: none; touch-action: pan-y; user-select: none; }
+  .strip:focus-visible { box-shadow: inset 0 0 0 2px var(--accent); }
+  :global(.is-dragging) { cursor: grabbing; }
+  .track { display: flex; gap: 16px; height: 100%; align-items: center; padding-inline: var(--inset); width: max-content; will-change: transform; }
+  .card { height: 68%; display: grid; grid-template-rows: 1fr auto; gap: 12px; transform-origin: 50% 100%; }
+  .card button { height: 100%; display: block; border-radius: 14px; overflow: hidden; cursor: inherit; }
+  .media { display: block; height: 100%; background: var(--surface-2); }
+  .media img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+  .ph-card { height: 100%; display: grid; place-items: center; text-align: center; font-size: var(--t-small); font-weight: 500; line-height: 1.4; padding: 16px; }
+  .cap { display: flex; justify-content: space-between; gap: 16px; max-width: none; }
+  .t { font-weight: 500; }
+  .s { color: var(--graphite); font-size: var(--t-small); }
+  .count { position: absolute; right: var(--inset); bottom: 12px; color: var(--graphite); font-variant-numeric: tabular-nums; }
+  .box { width: min(92vw, 1200px); max-height: 92svh; padding: 16px; border: 0; border-radius: var(--radius); background: var(--surface); color: var(--ink); }
+  .box::backdrop { background: rgba(5, 5, 5, .72); backdrop-filter: blur(6px); }
+  .big :global(img), .big :global(.ph-card) { width: 100%; max-height: 74svh; object-fit: contain; border-radius: 12px; }
+  .big :global(.ph-card) { aspect-ratio: 16 / 9; background: var(--surface-2); }
+  .box[open] { animation: box-in 420ms var(--ease-out-expo); }
+  @keyframes box-in { from { opacity: 0; scale: .96; } }
+  .big-cap { margin: 14px 4px 0; font-weight: 500; }
+  .close { margin: 14px 0 0 auto; display: flex; }
+</style>
+
+<script>
+  import { mountStrip } from '../fx/strip';
+  document.querySelectorAll<HTMLElement>('[data-strip]').forEach(mountStrip);
+</script>

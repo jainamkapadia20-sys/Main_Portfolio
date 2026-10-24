@@ -1,0 +1,53 @@
+---
+// "I design ___": the word rolls letter by letter inside a red highlight that resizes to fit each word.
+// Two loops, then it rests on the first word. Hover pauses it. Calm shows the first word, still.
+interface Props { items: string[] }
+const { items } = Astro.props;
+---
+<span class="roles" data-roles={JSON.stringify(items)}><span class="word" data-word>{[...items[0]].map((c) => <span class="ch">{c === ' ' ? ' ' : c}</span>)}</span></span>
+
+<style>
+  .roles { display: inline-flex; overflow: hidden; vertical-align: bottom; padding: .04em .3em .1em; border-radius: .22em; background: var(--accent); color: var(--on-accent);
+    line-height: 1.1; transition: width 520ms var(--ease-out-expo); }
+  .word { display: inline-flex; white-space: pre; }
+  .ch { display: inline-block; transition: transform 560ms var(--ease-out-expo), opacity 380ms var(--ease-smooth-out); }
+  .ch.out { transform: translateY(-120%); opacity: 0; }
+  .ch.pre { transform: translateY(100%); opacity: 0; transition: none; }
+</style>
+
+<script>
+  import { calm } from '../lib/motion';
+  document.querySelectorAll<HTMLElement>('[data-roles]').forEach((el) => {
+    const items: string[] = JSON.parse(el.dataset.roles!);
+    if (calm() || items.length < 2) return;
+    const STAGGER = 18, HOLD = 2400;
+    let i = 0, laps = 0, paused = false;
+    el.addEventListener('pointerenter', () => (paused = true));
+    el.addEventListener('pointerleave', () => (paused = false));
+    const chars = (w: string) => [...w].map((c) => { const s = document.createElement('span'); s.className = 'ch pre'; s.textContent = c === ' ' ? ' ' : c; return s; });
+    // the highlight animates between word widths, so measure the next word before swapping
+    const widthOf = (spans: HTMLElement[]) => {
+      const probe = document.createElement('span'); probe.className = 'word'; probe.style.cssText = 'position:absolute;visibility:hidden';
+      spans.forEach((s) => probe.appendChild(s.cloneNode(true))); el.appendChild(probe);
+      const w = probe.getBoundingClientRect().width; probe.remove(); return w;
+    };
+    el.style.width = `${el.getBoundingClientRect().width}px`;
+    const step = () => {
+      if (paused) return setTimeout(step, 400);
+      const word = el.querySelector<HTMLElement>('[data-word]')!;
+      const old = [...word.children] as HTMLElement[];
+      old.reverse().forEach((c, k) => setTimeout(() => c.classList.add('out'), k * STAGGER));
+      i = (i + 1) % items.length;
+      if (i === 0) laps++;
+      const next = chars(items[i]);
+      const pad = parseFloat(getComputedStyle(el).paddingLeft) * 2;
+      setTimeout(() => {
+        el.style.width = `${widthOf(next) + pad}px`;
+        word.replaceChildren(...next);
+        next.reverse().forEach((c, k) => setTimeout(() => c.classList.remove('pre'), 20 + k * STAGGER));
+        if (laps < 2 || i !== 0) setTimeout(step, HOLD);
+      }, old.length * STAGGER + 220);
+    };
+    setTimeout(step, HOLD);
+  });
+</script>

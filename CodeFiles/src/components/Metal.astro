@@ -1,0 +1,24 @@
+---
+// The JK monogram in liquid metal (src/fx/metal.ts). With `anchor`, the background's particle monogram forms on
+// top of it and bursts away to reveal it; with `reform`, clicking it sends the particles home to burst again.
+interface Props { anchor?: boolean; reform?: boolean; label?: string }
+const { anchor = false, reform = false, label = 'Burst the monogram again' } = Astro.props;
+---
+<div class="metal" data-field-anchor={anchor ? '' : undefined}>
+  <canvas data-metal={reform ? 'reform' : ''} aria-hidden="true" data-own-pointer></canvas>
+  {reform && <button class="sr-only" type="button" data-metal-again>{label}</button>}
+</div>
+
+<style>
+  .metal { position: relative; width: 100%; height: 100%; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  canvas[data-metal="reform"] { cursor: pointer; }
+</style>
+
+<script>
+  import { mountMetal } from '../fx/metal';
+  document.querySelectorAll<HTMLCanvasElement>('[data-metal]').forEach((c) => {
+    mountMetal(c, { reform: c.dataset.metal === 'reform' });
+    c.parentElement!.querySelector('[data-metal-again]')?.addEventListener('click', () => c.click());
+  });
+</script>

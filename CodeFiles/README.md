@@ -1,6 +1,6 @@
 # Jainam Kapadia, portfolio
 
-An Astro site. The pages are static HTML, and JavaScript adds only smooth scroll, reveals and a few small interactions. Content lives in Markdown files, so adding work never means editing code.
+An Astro site with no UI framework. The pages are static HTML; every effect (the particle background, the name specimen, the metal monogram, the road, the laser, the 3D car) is a small vanilla TypeScript module in `src/fx/`, mounted by the component that uses it. Content lives in Markdown files, so adding work never means editing code.
 
 ## Run it
 
@@ -27,13 +27,16 @@ If your C: drive is full, npm fails with "nospc". Point its cache at another dri
 | Car photos, poster, blueprint drawings | `src/assets/car/` |
 | 3D models | `public/models/honda-city.glb` (modified), `public/models/honda-city-stock.glb` (stock) |
 | Colours, type sizes, spacing | `src/styles/global.css` (the `:root` tokens at the top) |
-| Animation | `src/styles/motion.css` and `src/scripts/motion.ts` |
+| Animation | `src/styles/motion.css`, `src/scripts/motion.ts`, and the effects in `src/fx/` (one file each, plus `gl.ts` helpers) |
+| Full-screen particle background | `src/fx/field.ts`, mounted on every page by `src/components/Field.astro` |
 | Pages | `src/pages/` (`index`, `work/`, `about`, `contact`, `car`, `404`, `system`) |
 | Design system sheet (not linked anywhere) | `/system` |
 
 ## Add a project
 
-1. Copy `src/content/projects/adaptive-cluster.md` and give the copy a new name, for example `dashboard-redesign.md`. The file name becomes the address (`/work/dashboard-redesign`).
+The four files in `src/content/projects/` (`project-01.md` … `project-04.md`) are labelled placeholder slots, one per discipline. Fill one in, or copy one:
+
+1. Copy a slot (or edit it in place) and give it a new name, for example `dashboard-redesign.md`. The file name becomes the address (`/work/dashboard-redesign`). Set `placeholder: false` once it is real.
 2. Put its images in `src/assets/projects/` (a subfolder per project keeps things tidy).
 3. Fill in the fields at the top:
 

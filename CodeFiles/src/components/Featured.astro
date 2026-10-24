@@ -1,0 +1,51 @@
+---
+// The lead project opens up as you scroll: a framed clip in the middle of the screen grows until it fills the
+// whole viewport, then its title arrives (src/fx/expand.ts). Without a clip, the project's placeholder fills it.
+import Placeholder from './Placeholder.astro';
+interface Props { src?: string; poster?: string; title: string; summary: string; href: string; placeholder?: boolean }
+const { src, poster, title, summary, href, placeholder = false } = Astro.props;
+---
+<div class="xp" data-expand>
+  <div class="xp-pin">
+    <div class="xp-media">
+      <div class="xp-zoom">
+        {src ? <video src={src} poster={poster} muted loop playsinline preload="metadata" data-autoplay aria-hidden="true"></video>
+          : <Placeholder ratio="16 / 9" label="Project film or cover, full screen" decorative />}
+      </div>
+      <div class="xp-scrim" aria-hidden="true"></div>
+      <div class="xp-copy">
+        <h3 class="xp-title">{title}</h3>
+        <p class="xp-sum">{summary}</p>
+        <a class="btn primary cta" href={href}>{placeholder ? 'Open the placeholder' : 'Open the case study'}</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .xp { --p: 0; position: relative; height: 260svh; }
+  .xp-pin { position: sticky; top: 0; height: 100svh; display: grid; place-items: center; overflow: hidden; }
+  /* from a framed card to the full viewport, edge to edge */
+  .xp-media { position: relative; overflow: hidden; background: #050505;
+    width: calc(46vw + 54vw * var(--p)); height: calc(52svh + 48svh * var(--p)); border-radius: calc(20px * (1 - var(--p))); }
+  .xp-zoom { position: absolute; inset: 0; scale: calc(1.2 - .2 * var(--p)); }
+  .xp-zoom video { width: 100%; height: 100%; object-fit: cover; }
+  .xp-zoom :global(.ph) { height: 100%; aspect-ratio: auto !important; font-size: var(--t-lead); }
+  .xp-scrim { position: absolute; inset: 0; background: rgba(5, 5, 5, .55); opacity: 0; transition: opacity 500ms var(--ease-smooth-out); }
+  .xp-copy { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 20px; padding: var(--pad); text-align: center; color: #F2F2F0;
+    opacity: 0; translate: 0 24px; filter: blur(6px); pointer-events: none;
+    transition: opacity 600ms var(--ease-smooth-out), translate 900ms var(--ease-out-expo), filter 600ms var(--ease-smooth-out); }
+  .xp-title { font-size: var(--t-display); letter-spacing: -.04em; line-height: .95; }
+  .xp-sum { max-width: 44ch; font-size: var(--t-lead); line-height: 1.35; color: #D9D9D6; }
+  :global(.is-open) .xp-scrim { opacity: 1; }
+  .xp-zoom :global(.ph > span) { transition: opacity 400ms var(--ease-smooth-out); }
+  :global(.is-open) .xp-zoom :global(.ph > span) { opacity: 0; }
+  :global(.is-open) .xp-copy { opacity: 1; translate: 0 0; filter: none; pointer-events: auto; }
+  :global(:root[data-motion="calm"]) .xp { height: auto; }
+  :global(:root[data-motion="calm"]) .xp-copy { transition: opacity 300ms; }
+</style>
+
+<script>
+  import { mountExpand } from '../fx/expand';
+  document.querySelectorAll<HTMLElement>('[data-expand]').forEach(mountExpand);
+</script>
