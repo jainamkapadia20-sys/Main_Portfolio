@@ -5,7 +5,7 @@
 export const palettes = {
   dark: { paper: '#0E0E0E', ink: '#F2F2F0', graphite: '#8C8C8A', surface: '#171717', accent: '#FF3B30' },
   light: { paper: '#F4F4F2', ink: '#0E0E0E', graphite: '#5E5E5C', surface: '#EAEAE7', accent: '#C81E17' },
-  apex: { paper: '#08090B', ink: '#F3F4F6', graphite: '#8A9099', surface: '#121419', accent: '#FF5A1F' },
+  apex: { paper: '#07080B', ink: '#F4F5F7', graphite: '#9AA0AA', surface: '#111318', accent: '#FF2340' },
   blueprint: { paper: '#0B3A8C', ink: '#EAF2FF', graphite: '#A9C1EA', surface: '#0E4499', accent: '#FFCC33' },
 };
 export type Theme = keyof typeof palettes;
@@ -14,7 +14,7 @@ export type Theme = keyof typeof palettes;
 export const eras = [
   { id: 'dark', year: '2026', name: 'Hyperdrive' },
   { id: 'blueprint', year: '2049', name: 'Blueprint' },
-  { id: 'apex', year: '1998', name: 'Apex' },
+  { id: 'apex', year: '1999', name: 'Wangan' },
 ] as const;
 
 export const theme = (): Theme => {

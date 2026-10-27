@@ -7,6 +7,6 @@ export default defineConfig({
   base: process.env.BASE || undefined,
   trailingSlash: 'never',
   build: { format: 'file', inlineStylesheets: 'always' }, // ~3 KB of CSS: inlining beats a render-blocking request
-  vite: { optimizeDeps: { include: ['three'] } }, // pre-bundle up front so the dev server never re-bundles mid-session and breaks a reload
+  vite: { optimizeDeps: { include: ['three', 'lenis'] } }, // pre-bundle up front so the dev server never re-bundles mid-session and breaks a reload
   // no UI framework: every effect is a vanilla TypeScript module in src/fx, mounted by the component that uses it
 });

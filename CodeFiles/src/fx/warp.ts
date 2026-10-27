@@ -5,7 +5,7 @@
 // slow drift as you scroll, so the page never cuts to black.
 // It also does the jump to lightspeed (a `warp:jump` event, sent by the JK in the navbar): the starfield rises over
 // the page, the stars stretch into long blue-white lines as it accelerates, a white flash, and out the other side.
-// Each time-jump era swaps the stars for its own world: 1998 a night drive along a low horizon,
+// Each time-jump era swaps the stars for its own world: the Wangan a night drive along Tokyo Bay,
 // 2049 a drafting grid with construction lines being drawn.
 import { program, fullscreenVS, loop } from './gl';
 import { onTheme, palettes, rgb, type Theme } from '../lib/theme';
@@ -18,7 +18,7 @@ in vec2 vUv;
 out vec4 o;
 uniform vec2 uRes;
 uniform float uTime, uGain, uJump, uFlash, uPx;
-uniform int uMode;            // 0 stars, 1 night drive (1998), 3 blueprint (2049)
+uniform int uMode;            // 0 stars, 1 Wangan night drive, 3 blueprint (2049)
 uniform vec3 uPaper, uStar, uAccent;
 
 const float LAYERS = 6.0;
@@ -61,27 +61,38 @@ const float TAU = 6.28318;
 // thin anti-aliased line at distance d (in the same units as w)
 float line(float d, float w) { return 1.0 - smoothstep(w * 0.5, w * 0.5 + fwidth(d) * 1.5, abs(d)); }
 
-// 1998: a night drive. The horizon sits low, under the hero's buttons, so the text stands on a clear night sky and
-// the road only fills the floor of the screen: a three-lane road swaying gently into the dark, dim lane dashes
-// streaming past, far-off tail lights and oncoming headlights near the vanishing point, mountains against a warm
-// sodium glow. Everything is kept dim and slow; it is a mood, not a game.
+// Wangan: the Shuto expressway along Tokyo Bay at night, modern JDM. The horizon sits low, under the hero's buttons,
+// so the text stands on a clear night sky: the city skyline in two layers with scattered lit windows and red aircraft
+// lights blinking on the towers, a cool glow over it. Below, the elevated road: sodium lamps along both edges pass
+// in a steady rhythm and pool orange on the tarmac, lane dashes stream past, tail lights run away in crimson near
+// the vanishing point. Kept dim and slow; it is a mood, not a game.
+float skyline(float x, float cols, float tall, float seed) {
+  float id = floor(x * cols + seed);
+  float hgt = 0.012 + pow(hash(vec2(id, seed)), 3.0) * tall;
+  return hgt;
+}
 vec3 apex(vec2 q) {
   float h = -0.3;                                    // horizon, below the hero's content
+  vec3 sodium = vec3(1.0, 0.6, 0.22);
   vec3 col = uPaper;
   if (q.y < h) {
     float z = 0.09 / (h - q.y);                      // distance down the road
     float travel = uTime * 5.0;
-    float sway = sin((z + travel) * 0.045) * 0.9 - sin(travel * 0.045) * 0.9;   // the bend ahead, relative to us
+    float sway = sin((z + travel) * 0.045) * 0.6 - sin(travel * 0.045) * 0.6;   // the long bend of the bay shore
     float x = q.x * z - sway;                        // across the road, in lane units (lanes are 1 wide)
     float fog = exp(-z * 0.12);
     float sharp = clamp(1.0 - fwidth(x) * 3.0, 0.0, 1.0);   // lines that shrink below a pixel fade out instead of smearing into a band
     float onRoad = 1.0 - smoothstep(1.55, 1.6, abs(x));
-    col = mix(uPaper, uPaper * 1.5 + 0.01, onRoad * fog);
+    float beat = fract((z + travel) * 0.08);         // one lamp every 12.5 units
+    float pool = 0.5 + 0.5 * cos(TAU * beat);
+    col = mix(uPaper, uPaper * 1.5 + 0.01 + sodium * 0.05 * pool, onRoad * fog);
     float w = 0.05;
     float edges = line(abs(x) - 1.5, w) * onRoad;
     float dash = step(fract((z + travel) * 0.22), 0.45);
     float lanes = (line(x - 0.5, w) + line(x + 0.5, w)) * dash;
     col += (uStar * 0.2) * (edges + lanes) * fog * sharp;
+    float lamps = line(abs(x) - 1.62, 0.12) * smoothstep(0.08, 0.0, abs(beat - 0.5));
+    col += sodium * 1.4 * lamps * fog * sharp;
     // cars as long-exposure streaks, only out near the horizon
     float lights = 0.0, heads = 0.0;
     for (int k = 0; k < 3; k++) {
@@ -92,15 +103,29 @@ vec3 apex(vec2 q) {
       if (lane > 0.5) heads += pair * car; else lights += pair * car;
     }
     float far = smoothstep(1.5, 5.0, z);
-    col += (uAccent * 0.9 * lights + vec3(1.0, 0.95, 0.85) * 0.5 * heads) * fog * far * sharp;
-    col += uAccent * 0.1 * exp((q.y - h) * 7.0);      // the sky's glow carries on over the road, so the horizon has no seam
+    col += (uAccent * 0.9 * lights + vec3(0.9, 0.95, 1.0) * 0.5 * heads) * fog * far * sharp;
+    col += vec3(0.3, 0.36, 0.55) * 0.08 * exp((q.y - h) * 7.0);   // the city glow carries on over the road, so the horizon has no seam
   } else {
-    float ridge = h + 0.03 + 0.025 * sin(q.x * 6.0 + 1.3) + 0.012 * sin(q.x * 17.0) + 0.006 * sin(q.x * 41.0);
-    float glow = exp(-(q.y - h) * 7.0);
-    col = mix(uPaper, uPaper + uAccent * 0.1, glow);
-    col = mix(col, uPaper * 0.55, step(q.y, ridge));  // the mountains
-    vec2 sp = q * 55.0; vec2 id = floor(sp);
-    col += (hash(id) > 0.993 ? smoothstep(0.1, 0.0, length(fract(sp) - 0.5)) * 0.3 : 0.0) * smoothstep(ridge, ridge + 0.1, q.y);
+    vec3 cool = vec3(0.3, 0.36, 0.55);
+    col = uPaper + cool * 0.08 * exp(-(q.y - h) * 6.0);
+    float y = q.y - h;
+    float aa = fwidth(q.y) * 1.5;
+    // back layer: wide, tall towers; front layer: narrower, lower blocks
+    float hb = skyline(q.x, 16.0, 0.12, 7.0), hf = skyline(q.x, 34.0, 0.07, 3.0);
+    float back = smoothstep(hb + aa, hb, y), front = smoothstep(hf + aa, hf, y);
+    vec3 bcol = uPaper * 0.75 + cool * 0.035, fcol = uPaper * 0.5;
+    // scattered lit windows, warm, a few per tower
+    vec2 wc = vec2(q.x * 260.0, y * 180.0);
+    float win = step(0.93, hash(floor(wc) + 11.0)) * step(0.25, fract(wc.x)) * step(0.3, fract(wc.y));
+    col = mix(col, bcol + vec3(1.0, 0.85, 0.6) * 0.16 * win, back);
+    col = mix(col, fcol + vec3(1.0, 0.9, 0.7) * 0.22 * win, front);
+    // red aircraft lights on the tallest towers, each on its own slow blink
+    float id = floor(q.x * 16.0 + 7.0), r = hash(vec2(id, 7.0));
+    if (r > 0.72) {
+      vec2 tip = vec2((id - 7.0 + 0.5) / 16.0, h + hb + 0.006);   // same column, so hb is this tower's height
+      float blink = smoothstep(0.55, 0.9, sin(uTime * 1.6 + r * 40.0));
+      col += uAccent * smoothstep(0.004, 0.0, length(q - tip)) * blink;
+    }
   }
   return mix(uPaper, col, uGain);
 }

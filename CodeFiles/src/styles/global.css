@@ -3,9 +3,11 @@
 
 /* Type (all OFL, self-hosted, Latin subsets; a face only downloads when something on screen uses it).
    Present day: Instrument Sans for every static word, Syne ExtraBold for the name.
-   Eras (time jumps): 1998 Apex Barlow alone (it is drawn from US highway signs), 2049 IBM Plex Sans Condensed + Big Shoulders Stencil. */
-@font-face { font-family: "Barlow"; src: url("/fonts/barlow-500.woff2") format("woff2"); font-weight: 400 500; font-display: swap; }
-@font-face { font-family: "Barlow"; src: url("/fonts/barlow-600.woff2") format("woff2"); font-weight: 600 700; font-display: swap; }
+   Eras (time jumps): Wangan (JDM night) Archivo with Archivo Expanded for display, the name in katakana in Noto Sans JP, 2049 IBM Plex Sans Condensed + Big Shoulders Stencil. */
+@font-face { font-family: "Archivo"; src: url("/fonts/archivo-400.woff2") format("woff2"); font-weight: 400 500; font-display: swap; }
+@font-face { font-family: "Archivo"; src: url("/fonts/archivo-600.woff2") format("woff2"); font-weight: 600 700; font-display: swap; }
+@font-face { font-family: "Archivo Expanded"; src: url("/fonts/archivo-exp-800.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+@font-face { font-family: "Noto Sans JP Name"; src: url("/fonts/notojp-900-name.woff2") format("woff2"); font-weight: 900; font-display: swap; }   /* only the katakana of my name */
 @font-face { font-family: "Instrument Sans"; src: url("/fonts/instrument-sans.woff2") format("woff2"); font-weight: 400 700; font-display: swap; }
 @font-face { font-family: "Syne"; src: url("/fonts/syne-800.woff2") format("woff2"); font-weight: 800; font-display: swap; }
 @font-face { font-family: "IBM Plex Sans Condensed"; src: url("/fonts/plex-cond-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
@@ -66,11 +68,11 @@
   }
   /* eras: time jumps (click the JK). Each is its own world: palette, type, shape. Textures and glows sit below,
      outside the layers; backgrounds live in src/fx/warp.ts. Eras win over the light switch. */
-  :root[data-era="apex"] {    /* 1998, Apex: a night drive, one family set like road signage, one papaya accent */
-    --paper: #08090B; --ink: #F3F4F6; --graphite: #9AA0A8; --surface: #121419; --surface-2: #1A1D24; --accent: #FF5A1F;
-    --on-accent: #08090B; color-scheme: dark;
-    --font: "Barlow", sans-serif; --font-display: "Barlow", sans-serif; --display-weight: 600;
-    --t-body: 1.08rem; --name-size: clamp(2.6rem, 7.6vw, 8.75rem); --name-track: -.035em;
+  :root[data-era="apex"] {    /* Wangan: modern JDM at night, the Shuto expressway along Tokyo Bay; wide type, one crimson */
+    --paper: #07080B; --ink: #F4F5F7; --graphite: #9AA0AA; --surface: #111318; --surface-2: #191C23; --accent: #FF2340;
+    --on-accent: #07080B; color-scheme: dark;
+    --font: "Archivo", sans-serif; --font-display: "Archivo Expanded", sans-serif; --display-weight: 800;
+    --t-body: 1.0625rem; --name-size: clamp(1.7rem, 6.2vw, 7.2rem); --name-track: -.02em;
   }
   :root[data-era="blueprint"] {   /* 2049, Blueprint: a technical drawing, white line on drafting blue */
     --paper: #0B3A8C; --ink: #EAF2FF; --graphite: #A9C1EA; --surface: #0E4499; --surface-2: #1250AE; --accent: #FFCC33;
@@ -170,9 +172,16 @@ html.arrived::after { content: ""; position: fixed; inset: 0; z-index: 1200; bac
 @keyframes arrive { to { opacity: 0; visibility: hidden; } }
 
 /* era textures and glows (outside the layers so they sit over component styles) */
-/* 1998: the name stands plain on the night sky; no glitch, and the primary action loses its glow ring */
+/* Wangan: the name stands plain on the night sky, wide like a badge; headings go wide too. No glitch, no glow ring.
+   The name runs down the right edge in katakana, like a windscreen banner. */
 html[data-era="apex"] .hname::before, html[data-era="apex"] .hname::after, html[data-era="apex"] .cta::before { display: none; }
-html[data-era="apex"] h2 { font-weight: 600; letter-spacing: -.035em; }
+html[data-era="apex"] h2 { font-family: var(--font-display); font-weight: 800; letter-spacing: -.03em; }
+.kana { display: none; }
+html[data-era="apex"] .kana { display: block; position: absolute; right: var(--inset); top: 50%; translate: 0 -50%; writing-mode: vertical-rl;
+  font: 900 clamp(1rem, 1.5vw, 1.4rem)/1 "Noto Sans JP Name", sans-serif; letter-spacing: .3em; color: var(--accent); animation: kana-in 900ms var(--ease-out-expo) 300ms both; }
+@keyframes kana-in { from { opacity: 0; translate: 0 calc(-50% - 24px); } }
+:root[data-motion="calm"] .kana { animation: none; }
+@media (max-width: 720px) { html[data-era="apex"] .kana { display: none; } }
 /* 2049: everything reads like a drawing sheet: uppercase headings, hairline outlines on the surfaces */
 html[data-era="blueprint"] h2, html[data-era="blueprint"] h3, html[data-era="blueprint"] .label { text-transform: uppercase; letter-spacing: .04em; }
 html[data-era="blueprint"] .btn { border: 1px dashed color-mix(in srgb, var(--ink) 55%, transparent); }

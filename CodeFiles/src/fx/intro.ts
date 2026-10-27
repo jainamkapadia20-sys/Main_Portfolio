@@ -63,7 +63,7 @@ const clamp = (v: number) => Math.min(1, Math.max(0, v));
 
 // the phrase, drawn once into a wide strip of texture
 async function phraseTexture(gl: WebGL2RenderingContext) {
-  // broad heavy capitals, like tejj's: the name's face in the current era (Syne ExtraBold today, Barlow in 1998,
+  // broad heavy capitals, like tejj's: the name's face in the current era (Syne ExtraBold today, Archivo Expanded on the Wangan,
   // Big Shoulders Stencil in 2049)
   const css = getComputedStyle(document.documentElement);
   const font = css.getPropertyValue('--font-display').trim() || '"Syne", sans-serif';
