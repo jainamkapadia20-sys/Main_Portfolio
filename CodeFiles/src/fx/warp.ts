@@ -1,8 +1,8 @@
 // The site's background, one fixed canvas behind every page.
-// Today: a ribbon of fine glowing wires drifting and twisting across the dark (after React Bits' Interference
-// Ribbons, drawn from scratch). Each pixel works out which of the ribbon's strands is nearest, so 64 strands cost
-// the same as one; where the ribbon turns edge-on the strands crowd into bright knots. It is full strength on the
-// first screen and fades out completely as you scroll on to the projects, then stops drawing.
+// Today: glowing ridges in deep wine reds, like folded silk catching the light (after React Bits' Glowing Ridges,
+// rebuilt by eye). Twelve layers of the same folds, each churning its own fine fibres, stack into one shimmering
+// film. It is full strength on the first screen and fades out completely as you scroll on to the projects, then
+// stops drawing.
 // The time-jump eras swap it for their own world: 2049 a drafting grid with construction lines being drawn; the
 // Wangan a plain night ground under its own road canvas (fx/hyperspeed.ts).
 import { program, fullscreenVS, loop } from './gl';
@@ -11,57 +11,88 @@ import { calm } from '../lib/motion';
 
 const MAX_PIXELS = 1.4e6;   // cap the fill on big or dense screens; soft light doesn't need more
 
-// the ribbon's two colours per theme (the strands cycle between them); light pages get ink strands, not light
-const RIBBON: Partial<Record<Theme, [string, string]>> = { dark: ['#6B3CFF', '#D46BFF'], light: ['#5B2BE0', '#B44BE0'] };
 
 const FS = `
 in vec2 vUv;
 out vec4 o;
 uniform vec2 uRes;
 uniform float uTime, uGain, uPx;
-uniform int uMode;            // 0 ribbon (today), 1 Wangan (plain ground), 3 blueprint (2049)
-uniform vec3 uPaper, uStar, uAccent, uRibA, uRibB;
+uniform int uMode;            // 0 ridges (today), 1 Wangan (plain ground), 3 blueprint (2049)
+uniform vec3 uPaper, uStar, uAccent;
 uniform float uInk;           // 1 on light pages: strands are drawn as ink instead of added as light
 
 const float TAU = 6.28318;
 // thin anti-aliased line at distance d (in the same units as w)
 float line(float d, float w) { return 1.0 - smoothstep(w * 0.5, w * 0.5 + fwidth(d) * 1.5, abs(d)); }
 
-const float WIRES = 64.0;
-const float WIDTH = 1.6;       // strand width facing the viewer, css px
-const float HALF = 0.12;       // half the ribbon's width, in screen heights
-const float ANGLE = 0.22;      // how steeply it runs across the frame (radians, ~13 degrees), low enough to stay under the copy on wide screens
+// Glowing ridges (after React Bits' Glowing Ridges, rebuilt by eye): thin contour lines of a slowly rolling field,
+// folded by a few octaves of flowing noise, stacked as twelve slightly offset layers in three colours, so where they
+// overlap they read as iridescent film. A soft tone curve, then a touch of grain riding on the light.
+const float LAYERS = 12.0;
+const float ZOOM = 1.1;
+const float DENSITY = 11.0;     // scale of the flow inside the ridges
+const float TURB = 0.6;         // how hard the flow folds them
+const float FREQ = 1.0;         // ridges across the frame
+const float PHASE = 2.0;
+const float FLOW = 0.1;         // colours drifting along the ridges
+const float CHURN = 1.0;        // fine detail churning
+const float SWIRL = 16.0;
+const float EXPOSURE = 0.25;
+const float GAIN = 2.0;
+const float CYCLE = 0.4;        // palette steps per layer
+const float GRAIN = 0.25;
+const float OPACITY = 0.75;
+// deep wine reds: a hot red core, crimson, and wine in the shadows
+const vec3 COL_A = vec3(0.95, 0.12, 0.17), COL_B = vec3(0.62, 0.04, 0.13), COL_C = vec3(0.32, 0.02, 0.09);
 
-vec3 ribbon(vec2 q) {
+float hash(vec2 p) { p = fract(p * vec2(234.34, 435.345)); p += dot(p, p + 34.23); return fract(p.x * p.y); }
+vec3 tri(float k) {             // A -> B -> C -> A
+  k = fract(k) * 3.0;
+  return k < 1.0 ? mix(COL_A, COL_B, k) : k < 2.0 ? mix(COL_B, COL_C, k - 1.0) : mix(COL_C, COL_A, k - 2.0);
+}
+
+vec3 ridges(vec2 q) {
   float t = uTime;
-  // run along the ribbon's own axis, lower left to upper right; it crosses the middle low, under the hero's copy
-  float ca = cos(ANGLE), sa = sin(ANGLE);
-  vec2 p = vec2(ca * q.x + sa * q.y, -sa * q.x + ca * q.y) + vec2(0.0, 0.32);
-  float x = p.x;
-  float mid = 0.07 * sin(x * 1.6 + t * 0.35) + 0.04 * sin(x * 3.1 - t * 0.27 + 1.7);   // the centre line swings
-  float turn = x * 2.6 + t * 0.25;                                                      // it rolls over along its length
-  float c = cos(turn), s = sin(turn);
-  float halfW = HALF * (0.85 + 0.15 * sin(x * 0.9 - t * 0.2));
-  float span = max(abs(c), 0.02) * halfW;                                                // how wide it looks here
-  float across = (p.y - mid) / span;                                                     // -1..1 inside the ribbon
-  float k = clamp(floor((across * 0.5 + 0.5) * (WIRES - 1.0) + 0.5), 0.0, WIRES - 1.0);  // nearest strand
-  float w = k / (WIRES - 1.0) * 2.0 - 1.0;
-  float px = uPx / uRes.y;                                                               // one css px, in screen heights
-  float d = (p.y - mid - w * span) / px;                                                 // distance to that strand, px
-  float gap = 2.0 * span / (WIRES - 1.0) / px;                                           // strand spacing, px
-  float crisp = clamp(1.0 - (abs(d) - WIDTH * 0.5), 0.0, 1.0);
-  float dense = WIDTH / max(gap, 0.05);                                                  // edge-on: strands pile into a knot
-  float lit = mix(min(dense, 6.0), crisp, smoothstep(1.2, 3.0, gap));
-  lit *= smoothstep(1.0 + 1.5 / WIRES, 1.0, abs(across));
-  float depth = w * s * sign(c);                                                         // the far side fades and thins
-  lit *= mix(1.0, 0.35, smoothstep(-0.2, 1.0, depth));
-  lit *= 0.75 + 0.25 * mod(k, 2.0);                                                      // neighbours never read as one band
-  lit *= 0.65 + 0.35 * sin(x * 4.0 - t * 0.9 + w * 1.5);                                 // light drifts along the strands
-  vec3 col = mix(uRibA, uRibB, 0.5 + 0.5 * sin((w * 2.2 + t * 0.04) * 3.14159));
-  float haze = exp(-abs(p.y - mid) / (halfW * 0.9)) * 0.22;                             // soft glow around the whole ribbon
-  if (uInk > 0.5) return mix(uPaper, col * 0.8, clamp((lit * 0.8 + haze) * uGain, 0.0, 1.0));
-  vec3 light = col * (lit * 0.9 + haze);
-  return uPaper + (vec3(1.0) - exp(-light * 1.6)) * uGain;                               // soft tone curve: knots glow, never clip
+  vec2 p = q * ZOOM;
+  // a slow swirl folds the whole sheet
+  p += vec2(sin(p.y * 1.7 + t * FLOW * 1.3), cos(p.x * 1.3 - t * FLOW * 1.1)) * 0.05 * TURB;
+  vec3 acc = vec3(0.0);
+  for (float i = 0.0; i < LAYERS; i++) {
+    // each layer churns its own fine fibres, so the stack shimmers instead of banding
+    vec2 v = p;
+    float s = 1.0;
+    for (int j = 0; j < 3; j++) {
+      v += sin(v.yx * DENSITY * s + vec2(t * CHURN * 0.6 + i * 0.7 + float(j) * 1.3, -t * CHURN * 0.45 + i * 0.4)) * (0.006 * TURB / s);
+      s *= 2.1;
+    }
+    // Each ridge is a fold: it drops steeply from the top, turns at a bright tip, and hooks briefly back up. The folds
+    // are one shape repeated sideways, their tips along a line that rises gently to the right. For any point, the
+    // two arms give which fold it lies on (c), and the ridges sit where c is a whole number.
+    float y = v.y + 0.34 - 0.16 * v.x;                    // height above the tips' line, low under the hero's copy
+    float h = abs(y);                                     // below the line the fold curls back under, briefly
+    float lean = v.x + 0.55 * h;                          // arms sweep left as they rise
+    float spread = sqrt(h / 4.5);
+    float drift = t * FLOW * 0.9 + i * 0.012 + PHASE * 0.1;
+    float cl = (lean + spread) / 0.32 * FREQ - drift;     // the long arm, rising up and to the left
+    float cr = (v.x + 0.08 * h - spread) / 0.32 * FREQ - drift;   // the short hook, curling up to the right
+    float rl = abs(sin(3.14159 * cl)), rr = abs(sin(3.14159 * cr));
+    float below = exp(min(y, 0.0) * 40.0);                // and fades out, so the tips round off softly
+    float wl = exp(-h * 1.6) * below, wr = exp(-h * 9.0) * below * 0.45;
+    vec3 tint = tri(i * CYCLE / 3.0 + t * FLOW * 0.15);
+    acc += tint * ((0.012 / (rl + 0.012)) * wl + (0.012 / (rr + 0.012)) * wr);
+    acc += COL_C * (0.004 / (rl + 0.4)) * wl;                     // a faint haze between the ridges
+  }
+  // strongest through the middle of the frame, falling away to the edges
+  float fall = smoothstep(1.3, 0.1, length((q - vec2(0.1, -0.05)) * vec2(0.7, 1.0)));
+  vec3 col = (vec3(1.0) - exp(-acc * EXPOSURE * 3.6 * fall)) * GAIN * 0.6;
+  col += (hash(gl_FragCoord.xy + fract(t) * 91.0) - 0.5) * GRAIN * 0.5 * dot(col, vec3(0.33));
+  return max(col, 0.0) * OPACITY;
+}
+
+vec3 today(vec2 q) {
+  vec3 light = ridges(q);
+  if (uInk > 0.5) return mix(uPaper, uPaper * (1.0 - light), clamp(uGain, 0.0, 1.0));
+  return uPaper + light * uGain;
 }
 
 // 2049: a blueprint. A minor and major drafting grid, then construction lines drawn in: a circle, its centre
@@ -89,7 +120,7 @@ void main() {
   vec3 col;
   if (uMode == 1) col = uPaper;           // the Wangan's road is its own canvas
   else if (uMode == 3) col = blueprint(uv);
-  else col = ribbon(uv);
+  else col = today(uv);
   o = vec4(col, 1.0);
 }`;
 
@@ -105,11 +136,11 @@ export function mountWarp(canvas: HTMLCanvasElement) {
   function draw(dt: number) {
     // the opening covers the whole screen: nothing to draw under it
     if (root.classList.contains('intro')) return;
-    // the ribbon fades out completely over the first screen; the eras' worlds settle to a whisper instead
+    // the ridges fade out completely over the first screen; the eras' worlds settle to a whisper instead
     const k = Math.min(1, scrollY / (innerHeight * 0.85));
     const target = 1 - k * k * (3 - 2 * k) * (mode === 0 ? 1 : 0.78);
     gain += (target - gain) * Math.min(1, dt * 5);
-    // nothing moves once the ribbon has faded out, or on the Wangan's plain ground: skip the work
+    // nothing moves once the ridges have faded out, or on the Wangan's plain ground: skip the work
     const idle = (mode === 0 && gain < 0.004) || mode === 1;
     if (idle && drawn === mode) return;
     const cw = canvas.clientWidth, ch = canvas.clientHeight;
@@ -129,12 +160,9 @@ export function mountWarp(canvas: HTMLCanvasElement) {
 
   onTheme((t: Theme) => {
     const c = palettes[t];
-    const [a, b] = RIBBON[t] ?? RIBBON.dark!;
     gl.uniform3fv(u('uPaper'), rgb(c.paper));
     gl.uniform3fv(u('uStar'), rgb(c.ink));
     gl.uniform3fv(u('uAccent'), rgb(c.accent));
-    gl.uniform3fv(u('uRibA'), rgb(a));
-    gl.uniform3fv(u('uRibB'), rgb(b));
     gl.uniform1f(u('uInk'), t === 'light' ? 1 : 0);
     mode = ({ apex: 1, blueprint: 3 } as Record<string, number>)[t] ?? 0;
     drawn = -1;

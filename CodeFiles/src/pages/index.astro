@@ -54,11 +54,10 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
     <div class="hero-bar small"><span><span class="dot" aria-hidden="true"></span>{site.status}</span></div>
   </section>
 
-  <!-- A neon tube lights up over the title, then every project on a spinning orbit: point to focus, click to bring
+  <!-- A neon tube lights up over the title, then every project on a spinning ring: point to focus, click to bring
        forward, click again to open -->
   <section class="featured" id="work" aria-labelledby="featured-h">
     <NeonReveal title="My Projects" id="featured-h" />
-    <p class="wrap muted hint" data-reveal>Point at a card to focus it. Click to bring it forward, click again to open.</p>
     <SpinShutter />
   </section>
 
@@ -124,7 +123,6 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
   .sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px 24px; flex-wrap: wrap; margin-bottom: 48px; }
   .sec-head p { max-width: 44ch; }
   .featured { padding-top: clamp(48px, 8vw, 120px); }
-  .featured .hint { margin: 8px auto 0; text-align: center; }
   .ideas .sec-head { margin-bottom: 0; }
   .ideas-strip { height: 100svh; max-height: 980px; }
 

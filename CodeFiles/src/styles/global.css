@@ -30,12 +30,12 @@
 @layer tokens {
   :root {
     /* colour (user-pinned): ink, paper and one red per theme. Dark is the default; light is one toggle away.
-       Contrast on paper: ink 17.6, graphite 6.1, accent 5.3. The canvas effects read the same values from src/lib/theme.ts. */
-    --paper: #0E0E0E; --ink: #F2F2F0; --graphite: #8C8C8A; --surface: #171717; --surface-2: #1F1F1F; --accent: #FF3B30;
+       Contrast on paper: ink 17.6, graphite 6.1, accent 5.4. The canvas effects read the same values from src/lib/theme.ts. */
+    --paper: #0E0E0E; --ink: #F2F2F0; --graphite: #8C8C8A; --surface: #171717; --surface-2: #1F1F1F; --accent: #FF3355;
     --on-accent: #0E0E0E;
     color-scheme: dark;
     /* the projects' neon tube (NeonReveal.astro): tube, the light it pours, and the heading cut out of it */
-    --neon-tube: #FF9FFC; --neon-light: #B163E9; --neon-title: var(--paper);
+    --neon-tube: #FFC9D2; --neon-light: #E0203F; --neon-title: #FFF1F3;
     --neon-deep: color-mix(in srgb, var(--neon-light) 28%, var(--paper));
 
     /* type: one family, five sizes, lighter weights (display 500, text 400) */
@@ -68,7 +68,7 @@
     --paper: #F4F4F2; --ink: #0E0E0E; --graphite: #5E5E5C; --surface: #EAEAE7; --surface-2: #E1E1DD; --accent: #C81E17;
     --on-accent: #F4F4F2;
     color-scheme: light;
-    --neon-tube: #E070E0; --neon-light: #9B4FD6; --neon-title: #160A2B;
+    --neon-tube: #FF8FA3; --neon-light: #C8102E; --neon-title: #2A0610;
   }
   /* eras: time jumps (click the JK). Each is its own world: palette, type, shape. Textures and glows sit below,
      outside the layers; backgrounds live in src/fx/warp.ts. Eras win over the light switch. */

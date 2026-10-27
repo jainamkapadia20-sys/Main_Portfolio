@@ -15,7 +15,7 @@ export type ShutterItem = { title: string; subtitle: string; tag: string; href: 
 
 const REPEAT = 2;            // the projects go round twice, so the ring is full (7 projects → 14 cards)
 const ASPECT = 1.45;         // card width ÷ height
-const SIZE = 0.38;           // card height, × ring radius
+const SIZE = 0.46;           // card height, × ring radius
 const CORNER = 14;           // corner radius in px at the front
 const TILT = 14;             // camera height above the ring, degrees
 const ROLL = 24;             // the ring's roll on the page, degrees: high on the left, low on the right

@@ -3,7 +3,7 @@
 // each is its own world (palette here; fonts, textures and shapes in global.css; background in fx/warp.ts).
 // Every load starts in the base theme.
 export const palettes = {
-  dark: { paper: '#0E0E0E', ink: '#F2F2F0', graphite: '#8C8C8A', surface: '#171717', accent: '#FF3B30' },
+  dark: { paper: '#0E0E0E', ink: '#F2F2F0', graphite: '#8C8C8A', surface: '#171717', accent: '#FF3355' },
   light: { paper: '#F4F4F2', ink: '#0E0E0E', graphite: '#5E5E5C', surface: '#EAEAE7', accent: '#C81E17' },
   apex: { paper: '#07080B', ink: '#F4F5F7', graphite: '#9AA0AA', surface: '#111318', accent: '#FF2340' },
   blueprint: { paper: '#0B3A8C', ink: '#EAF2FF', graphite: '#A9C1EA', surface: '#0E4499', accent: '#FFCC33' },
