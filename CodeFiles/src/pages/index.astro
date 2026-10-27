@@ -6,6 +6,7 @@ import HeroName from '../components/HeroName.astro';
 import Intro from '../components/Intro.astro';
 import Roles from '../components/Roles.astro';
 import Cta from '../components/Cta.astro';
+import NeonReveal from '../components/NeonReveal.astro';
 import SpinShutter from '../components/SpinShutter.astro';
 import Strip from '../components/Strip.astro';
 import Music from '../components/Music.astro';
@@ -26,15 +27,9 @@ const ideas = [
 const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-arm t-learn-arm-top" d="M6 4L10 8" /><path class="t-learn-arm t-learn-arm-bot" d="M10 8L6 12" /></svg>';
 ---
 <Base>
-  <!-- the opening plays on every load and after every jump to lightspeed (out of its white flash, in the new
-       era), never for reduced motion; decided before first paint so the page never flashes -->
+  <!-- the opening plays on every load, never for reduced motion; decided before first paint so the page never flashes -->
   <script is:inline slot="head">
-    try {
-      const jumped = sessionStorage.getItem('jumped');
-      sessionStorage.removeItem('jumped');
-      if (jumped) document.documentElement.classList.add('arrived');
-      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('intro');
-    } catch {}
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('intro');
   </script>
   <Intro slot="intro" />
   <!-- Hero: one full screen over the glitter warp (the site background, strongest here);
@@ -59,12 +54,11 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
     <div class="hero-bar small"><span><span class="dot" aria-hidden="true"></span>{site.status}</span></div>
   </section>
 
-  <!-- Every project on a spinning orbit: point to focus, click to bring forward, click again to open -->
-  <section class="featured section" id="work" aria-labelledby="featured-h">
-    <div class="wrap sec-head">
-      <h2 id="featured-h" class="head" data-reveal>Projects</h2>
-      <p class="muted" data-reveal style="--i:1">Point at a card to focus it. Click to bring it forward, click again to open.</p>
-    </div>
+  <!-- A neon tube lights up over the title, then every project on a spinning orbit: point to focus, click to bring
+       forward, click again to open -->
+  <section class="featured" id="work" aria-labelledby="featured-h">
+    <NeonReveal title="My Projects" id="featured-h" />
+    <p class="wrap muted hint" data-reveal>Point at a card to focus it. Click to bring it forward, click again to open.</p>
     <SpinShutter />
   </section>
 
@@ -109,6 +103,9 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
 <style>
   /* hero: one full screen. The name sits in the middle, edge to edge; the copy stacks centred under it. */
   .hero { position: relative; isolation: isolate; display: grid; grid-template-rows: 1fr auto auto 1fr auto; min-height: max(100svh, 640px); padding: var(--nav-h) var(--edge) 0; }
+  /* a soft scrim in the page's own ground keeps the copy readable while the background moves behind it */
+  .hero::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: radial-gradient(ellipse 46% 38% at 50% 48%, color-mix(in srgb, var(--paper) 85%, transparent), color-mix(in srgb, var(--paper) 50%, transparent) 55%, transparent 80%); }
   .hero-name { grid-row: 2; margin-bottom: clamp(12px, 2.4vw, 32px); }
   .sheet { grid-row: 3; display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 24px var(--pad) 0; text-align: center; }
   .hero-intro { margin-inline: auto; }
@@ -126,8 +123,8 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
 
   .sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px 24px; flex-wrap: wrap; margin-bottom: 48px; }
   .sec-head p { max-width: 44ch; }
-  .featured { padding-top: clamp(24px, 3vw, 48px); }   /* sits right under the hero: no full section gap */
-  .featured .sec-head { margin-bottom: 0; }
+  .featured { padding-top: clamp(48px, 8vw, 120px); }
+  .featured .hint { margin: 8px auto 0; text-align: center; }
   .ideas .sec-head { margin-bottom: 0; }
   .ideas-strip { height: 100svh; max-height: 980px; }
 

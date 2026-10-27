@@ -128,7 +128,6 @@ const current = (href: string) => href !== '#contact' && (path === href || path.
 </style>
 
 <script>
-  import { playJump } from '../fx/sfx';
   import { eras } from '../lib/theme';
   // Build the displacement map for the pill's current size and switch to the refracting glass where it works.
   const glass = document.querySelector<HTMLElement>('[data-glass]');
@@ -198,41 +197,23 @@ const current = (href: string) => href !== '#contact' && (path === href || path.
     }, { once: true });
   }
 
-  // Clicking the JK is a time jump: lightspeed (src/fx/warp.ts) with its sound (src/fx/sfx.ts). At the white flash
-  // the site lands in the next era of the cycle (src/lib/theme.ts) and the page underneath changes: back to the
-  // top if we're home, otherwise on to the home page, which arrives out of the flash; either way the opening room
-  // (Intro.astro) plays again, in the new era. The era holds for the rest of
-  // the visit; a reload starts back in the present. New-tab clicks and reduced motion just follow the link.
-  if (jk && document.documentElement.dataset.motion !== 'calm') {
+  // Clicking the JK switches the site to the next era of the cycle (src/lib/theme.ts), right where you are, and a
+  // toast names it. The era holds for the rest of the visit; a reload starts back in the present. New-tab clicks
+  // just follow the link.
+  if (jk) {
     jk.addEventListener('click', (e) => {
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
       e.preventDefault();
-      playJump();
       const root = document.documentElement;
       const now = eras.findIndex((x) => x.id === (root.dataset.era ?? 'dark'));
       const next = eras[(now + 1) % eras.length];
-      const home = new URL(jk.href, location.href).pathname.replace(/\/$/, '') === location.pathname.replace(/\/$/, '');
-      document.dispatchEvent(new CustomEvent('warp:jump', { detail: { peak: () => {
-        if (next.id === 'dark') delete root.dataset.era; else root.dataset.era = next.id;
-        try {
-          if (next.id === 'dark') sessionStorage.removeItem('era'); else sessionStorage.setItem('era', next.id);
-          sessionStorage.setItem('landed', `${next.year} · ${next.name}`);
-        } catch {}
-        // out of the flash, the opening room plays again in the new era; the toast says where we landed after it
-        if (home) { scrollTo({ top: 0, behavior: 'instant' }); document.dispatchEvent(new Event('intro:replay')); }
-        else { try { sessionStorage.setItem('jumped', '1'); } catch {} setTimeout(() => (location.href = jk.href), 250); }   // let the boom land first
-      } } }));
+      if (next.id === 'dark') delete root.dataset.era; else root.dataset.era = next.id;
+      try { if (next.id === 'dark') sessionStorage.removeItem('era'); else sessionStorage.setItem('era', next.id); } catch {}
+      const toast = document.querySelector<HTMLElement>('[data-toast]');
+      if (!toast) return;
+      toast.textContent = `${next.year} · ${next.name}`;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 1800);
     });
   }
-  // say where we landed, once
-  function announce() {
-    let msg: string | null = null;
-    try { msg = sessionStorage.getItem('landed'); sessionStorage.removeItem('landed'); } catch {}
-    const toast = document.querySelector<HTMLElement>('[data-toast]');
-    if (!msg || !toast) return;
-    toast.textContent = `Jumped to ${msg}`;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 2200);
-  }
-  document.addEventListener('intro:done', () => setTimeout(announce, 900));
 </script>

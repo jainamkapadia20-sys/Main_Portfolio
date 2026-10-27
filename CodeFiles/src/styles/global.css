@@ -34,6 +34,9 @@
     --paper: #0E0E0E; --ink: #F2F2F0; --graphite: #8C8C8A; --surface: #171717; --surface-2: #1F1F1F; --accent: #FF3B30;
     --on-accent: #0E0E0E;
     color-scheme: dark;
+    /* the projects' neon tube (NeonReveal.astro): tube, the light it pours, and the heading cut out of it */
+    --neon-tube: #FF9FFC; --neon-light: #B163E9; --neon-title: var(--paper);
+    --neon-deep: color-mix(in srgb, var(--neon-light) 28%, var(--paper));
 
     /* type: one family, five sizes, lighter weights (display 500, text 400) */
     --font: "Instrument Sans", system-ui, sans-serif;   /* every static word; chosen over Satoshi, Switzer, Hanken Grotesk */
@@ -65,18 +68,21 @@
     --paper: #F4F4F2; --ink: #0E0E0E; --graphite: #5E5E5C; --surface: #EAEAE7; --surface-2: #E1E1DD; --accent: #C81E17;
     --on-accent: #F4F4F2;
     color-scheme: light;
+    --neon-tube: #E070E0; --neon-light: #9B4FD6; --neon-title: #160A2B;
   }
   /* eras: time jumps (click the JK). Each is its own world: palette, type, shape. Textures and glows sit below,
      outside the layers; backgrounds live in src/fx/warp.ts. Eras win over the light switch. */
   :root[data-era="apex"] {    /* Wangan: modern JDM at night, the Shuto expressway along Tokyo Bay; wide type, one crimson */
     --paper: #07080B; --ink: #F4F5F7; --graphite: #9AA0AA; --surface: #111318; --surface-2: #191C23; --accent: #FF2340;
     --on-accent: #07080B; color-scheme: dark;
+    --neon-tube: #FFC2CB; --neon-light: #FF2340;
     --font: "Archivo", sans-serif; --font-display: "Archivo Expanded", sans-serif; --display-weight: 800;
     --t-body: 1.0625rem; --name-size: clamp(1.7rem, 6.2vw, 7.2rem); --name-track: -.02em;
   }
   :root[data-era="blueprint"] {   /* 2049, Blueprint: a technical drawing, white line on drafting blue */
     --paper: #0B3A8C; --ink: #EAF2FF; --graphite: #A9C1EA; --surface: #0E4499; --surface-2: #1250AE; --accent: #FFCC33;
     --on-accent: #0B3A8C; color-scheme: dark;
+    --neon-tube: #FFF4C7; --neon-light: #FFCC33;
     --font: "IBM Plex Sans Condensed", sans-serif; --font-display: "Big Shoulders Stencil Display", sans-serif; --display-weight: 800;
     --t-body: 1.08rem; --radius: 0px; --name-size: clamp(2.8rem, 10vw, 11rem); --name-track: .01em;
   }
@@ -128,18 +134,16 @@
 
   /* the primary action: a point of light laps the border on hover, and a ring pulses out on press */
   .cta { position: relative; isolation: isolate; }
-  /* glow effect: a blurred ring of reds turns slowly behind the pill; on hover it flares wider and brighter */
+  /* glow effect: a blurred ring of reds sits behind the pill; on hover it flares wider and brighter. It holds still:
+     a turning blurred layer would be repainted every frame, which costs more than it gives */
   .cta::before { content: ""; position: absolute; inset: -3px; z-index: -1; border-radius: inherit;
-    background: conic-gradient(from var(--lap), var(--accent), color-mix(in oklab, var(--accent) 65%, #fff), color-mix(in oklab, var(--accent) 70%, #ff2d6f), color-mix(in oklab, var(--accent) 75%, #000), var(--accent));   /* shades of the era's accent */
-    filter: blur(10px); opacity: .6; animation: cta-lap 5s linear infinite;
+    background: conic-gradient(from 210deg, var(--accent), color-mix(in oklab, var(--accent) 65%, #fff), color-mix(in oklab, var(--accent) 70%, #ff2d6f), color-mix(in oklab, var(--accent) 75%, #000), var(--accent));   /* shades of the era's accent */
+    filter: blur(10px); opacity: .6;
     transition: opacity 400ms var(--ease-smooth-out), filter 400ms var(--ease-smooth-out), scale 500ms var(--ease-out-expo); }
   .cta:hover::before, .cta:focus-visible::before { opacity: 1; filter: blur(20px); scale: 1.18; }
   .cta::after { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; box-shadow: 0 0 0 0 var(--accent); opacity: 0; }
   .cta:active::after { animation: cta-pulse 600ms var(--ease-out-expo); }
-  @property --lap { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
-  @keyframes cta-lap { to { --lap: 360deg; } }
   @keyframes cta-pulse { from { opacity: .7; box-shadow: 0 0 0 0 var(--accent); } to { opacity: 0; box-shadow: 0 0 0 14px var(--accent); } }
-  :root[data-motion="calm"] .cta::before { animation: none; }
 
   /* border trail: a short bright run travels round a card's edge while it is hovered (add <span class="bt"> inside) */
   .bt { position: absolute; inset: 0; z-index: 2; border-radius: inherit; border: 2px solid transparent; filter: drop-shadow(0 0 4px var(--accent)); pointer-events: none; opacity: 0;
@@ -167,18 +171,12 @@
   :root[data-motion="calm"] .t-learn-chevron, :root[data-motion="calm"] .t-learn-arm { transition: none; }
 }
 
-/* arriving from a jump to lightspeed: the page comes out of the white flash */
-html.arrived::after { content: ""; position: fixed; inset: 0; z-index: 1200; background: #fff; pointer-events: none; animation: arrive 700ms ease-out forwards; }
-@keyframes arrive { to { opacity: 0; visibility: hidden; } }
 
 /* era textures and glows (outside the layers so they sit over component styles) */
 /* Wangan: the name stands plain on the night sky, wide like a badge; headings go wide too. No glitch, no glow ring.
    The name runs down the right edge in katakana, like a windscreen banner. */
 html[data-era="apex"] .hname::before, html[data-era="apex"] .hname::after, html[data-era="apex"] .cta::before { display: none; }
 html[data-era="apex"] h2 { font-family: var(--font-display); font-weight: 800; letter-spacing: -.03em; }
-/* a soft dark scrim keeps the hero copy readable while the light trails sweep behind it */
-html[data-era="apex"] .hero::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-  background: radial-gradient(ellipse 46% 40% at 50% 46%, rgb(7 8 11 / .82), rgb(7 8 11 / .5) 55%, transparent 80%); }
 .kana { display: none; }
 html[data-era="apex"] .kana { display: block; position: absolute; right: var(--inset); top: 50%; translate: 0 -50%; writing-mode: vertical-rl;
   font: 900 clamp(1rem, 1.5vw, 1.4rem)/1 "Noto Sans JP Name", sans-serif; letter-spacing: .3em; color: var(--accent); animation: kana-in 900ms var(--ease-out-expo) 300ms both; }

@@ -137,7 +137,7 @@ export async function playIntro(canvas: HTMLCanvasElement, signal: { skipped: bo
   gl.useProgram(p);
   await phraseTexture(gl);
 
-  const W = innerWidth, H = innerHeight, dpr = Math.min(devicePixelRatio || 1, 1.5);   // 1.5x is crisp enough for moving type
+  const W = innerWidth, H = innerHeight, dpr = Math.min(devicePixelRatio || 1, 1.25);   // crisp enough for moving type
   canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
   gl.viewport(0, 0, canvas.width, canvas.height);
   const cam = H / 2 / Math.tan(FOV / 2);       // the screen rectangle exactly fills the view at z = 0

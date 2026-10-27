@@ -464,7 +464,7 @@ export function mountHyperspeed(container: HTMLElement) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
   renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
   renderer.autoClear = false;
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));   // bloom passes are full-screen: keep the fill down
+  renderer.setPixelRatio(1);   // bloom passes are full-screen: keep the fill down
   container.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();

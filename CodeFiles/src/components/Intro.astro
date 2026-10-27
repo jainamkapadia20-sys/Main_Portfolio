@@ -1,8 +1,7 @@
 ---
 // The home page's opening (src/fx/intro.ts): my name, small, in the middle of a black screen (as tejj.in shows
-// "TEJJ"), then the room of type, then the whole layer fades away over the finished page. Plays on every load and
-// again after every time jump (an `intro:replay` event), in that era's type and colours; a click or any key skips
-// it; reduced motion never sees it. The page decides whether to play before first paint,
+// "TEJJ"), then the room of type, then the whole layer fades away over the finished page. Plays on every load;
+// a click or any key skips it; reduced motion never sees it. The page decides whether to play before first paint,
 // by the inline script in index.astro, which puts `intro` on <html>.
 import { site } from '../site';
 ---
@@ -61,7 +60,5 @@ import { site } from '../site';
       });
     };
     if (root.classList.contains('intro')) { root.classList.remove('intro'); play(); }
-    // a time jump lands here: the room plays again, set in the new era's type and colours
-    document.addEventListener('intro:replay', play);
   }
 </script>

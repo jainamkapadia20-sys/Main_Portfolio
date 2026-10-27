@@ -116,7 +116,7 @@ export function mountShutter(root: HTMLElement, items: ShutterItem[]) {
   }
   // fit the whole ring, cards included, inside the canvas
   function layout() {
-    W = canvas.clientWidth; H = canvas.clientHeight; dpr = Math.min(devicePixelRatio || 1, 2);
+    W = canvas.clientWidth; H = canvas.clientHeight; dpr = Math.min(devicePixelRatio || 1, 1.5);   // crisp enough for moving cards, half the fill of 2x
     canvas.width = Math.max(1, Math.round(W * dpr)); canvas.height = Math.max(1, Math.round(H * dpr));
     let x0 = 0, x1 = 0, y0 = 0, y1 = 0;
     for (let a = 0; a < TAU; a += TAU / 90) {

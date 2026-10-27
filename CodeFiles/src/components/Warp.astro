@@ -1,16 +1,12 @@
 ---
-// The site's background: the glitter warp (src/fx/warp.ts), fixed behind every page. Strong on the first screen,
-// a faint slow drift everywhere else. Decorative.
+// The site's background (src/fx/warp.ts), fixed behind every page: the ribbon on the first screen, fading out as
+// you scroll. Decorative.
 ---
 <canvas class="warp" data-warp aria-hidden="true"></canvas>
 <div class="road" data-hyperspeed aria-hidden="true"></div>
 
 <style>
   .warp { position: fixed; inset: 0; width: 100vw; height: 100lvh; z-index: -1; pointer-events: none; }
-  /* the jump to lightspeed: the starfield rises over the page, then sinks back behind it */
-  .warp.jump { z-index: 1100; opacity: 0; transition: opacity 250ms ease-out; }
-  .warp.jump.jump-on { opacity: 1; }
-  .warp.jump:not(.jump-on) { transition-duration: 450ms; }
   /* the Wangan era's light-trail highway, over the warp's plain ground and under the page */
   .road { position: fixed; inset: 0; z-index: -1; pointer-events: none; display: none; }
   :global(html[data-era="apex"]) .road { display: block; }
