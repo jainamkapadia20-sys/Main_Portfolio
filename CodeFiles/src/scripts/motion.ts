@@ -8,7 +8,13 @@ root.classList.add('motion-ready');
 // Smooth scrolling, tuned light: lerp .16 (Lenis defaults to .1, which trails the wheel) so the page settles in a
 // few frames and never feels behind your hand. Touch keeps the phone's own scrolling. Anchors glide and respect
 // scroll-margin. In Calm, the browser's own scrolling is left alone.
-if (!calm()) new Lenis({ autoRaf: true, lerp: 0.16, anchors: true });
+if (!calm()) {
+  const lenis = new Lenis({ autoRaf: true, lerp: 0.16, anchors: true });
+  // the page holds still while the opening room covers it
+  const hold = () => (root.classList.contains('intro') ? lenis.stop() : lenis.start());
+  hold();
+  new MutationObserver(hold).observe(root, { attributes: true, attributeFilter: ['class'] });
+}
 // Entrances: each [data-reveal] rises in once as it arrives (CSS does the motion, see motion.css)
 const io = new IntersectionObserver((entries) => entries.forEach((e) => {
   if (!e.isIntersecting) return;

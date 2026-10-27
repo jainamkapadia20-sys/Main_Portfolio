@@ -200,7 +200,8 @@ const current = (href: string) => href !== '#contact' && (path === href || path.
 
   // Clicking the JK is a time jump: lightspeed (src/fx/warp.ts) with its sound (src/fx/sfx.ts). At the white flash
   // the site lands in the next era of the cycle (src/lib/theme.ts) and the page underneath changes: back to the
-  // top if we're home, otherwise on to the home page, which arrives out of the flash. The era holds for the rest of
+  // top if we're home, otherwise on to the home page, which arrives out of the flash; either way the opening room
+  // (Intro.astro) plays again, in the new era. The era holds for the rest of
   // the visit; a reload starts back in the present. New-tab clicks and reduced motion just follow the link.
   if (jk && document.documentElement.dataset.motion !== 'calm') {
     jk.addEventListener('click', (e) => {
@@ -217,7 +218,8 @@ const current = (href: string) => href !== '#contact' && (path === href || path.
           if (next.id === 'dark') sessionStorage.removeItem('era'); else sessionStorage.setItem('era', next.id);
           sessionStorage.setItem('landed', `${next.year} · ${next.name}`);
         } catch {}
-        if (home) { scrollTo({ top: 0, behavior: 'instant' }); announce(); }
+        // out of the flash, the opening room plays again in the new era; the toast says where we landed after it
+        if (home) { scrollTo({ top: 0, behavior: 'instant' }); document.dispatchEvent(new Event('intro:replay')); }
         else { try { sessionStorage.setItem('jumped', '1'); } catch {} setTimeout(() => (location.href = jk.href), 250); }   // let the boom land first
       } } }));
     });
@@ -232,5 +234,5 @@ const current = (href: string) => href !== '#contact' && (path === href || path.
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 2200);
   }
-  if (document.documentElement.classList.contains('arrived')) setTimeout(announce, 400);
+  document.addEventListener('intro:done', () => setTimeout(announce, 900));
 </script>

@@ -149,7 +149,19 @@ export function mountWarp(canvas: HTMLCanvasElement) {
   let mode = 0, px = 1;
 
   function draw(dt: number) {
-    // the opening covers the whole screen: nothing to draw under it
+    // the jump: accelerate and stretch (0.15–1.35s), flash white (1.25–1.45s), arrive, then settle (to 2.1s)
+    let J = 0, flash = 0;
+    if (jumpAt >= 0) {
+      jumpAt += dt;
+      const t = jumpAt;
+      J = Math.pow(smooth(0.15, 1.35, t), 2.2) * (1 - smooth(1.5, 1.7, t));
+      flash = smooth(1.25, 1.45, t) * (1 - smooth(1.6, 2.1, t));
+      if (t >= 1.45 && jumpPeak) { const f = jumpPeak; jumpPeak = null; f(); }
+      if (t >= 1.9 && canvas.classList.contains('jump-on')) canvas.classList.remove('jump-on');
+      if (t >= 2.4) { jumpAt = -1; canvas.classList.remove('jump'); }
+    }
+    // the opening covers the whole screen: nothing to draw under it (a jump still runs its clock, so it ends on
+    // time behind the room instead of flashing again afterwards)
     if (root.classList.contains('intro')) return;
     const cw = canvas.clientWidth, ch = canvas.clientHeight;
     const dpr = Math.min(devicePixelRatio || 1, 1.25, Math.sqrt(MAX_PIXELS / Math.max(1, cw * ch)));
@@ -163,17 +175,6 @@ export function mountWarp(canvas: HTMLCanvasElement) {
     speed += (1 - ease * 0.85 - speed) * Math.min(1, dt * 4);
     gain += (1 - ease * 0.78 - gain) * Math.min(1, dt * 4);
 
-    // the jump: accelerate and stretch (0.15–1.35s), flash white (1.25–1.45s), arrive, then settle (to 2.1s)
-    let J = 0, flash = 0;
-    if (jumpAt >= 0) {
-      jumpAt += dt;
-      const t = jumpAt;
-      J = Math.pow(smooth(0.15, 1.35, t), 2.2) * (1 - smooth(1.5, 1.7, t));
-      flash = smooth(1.25, 1.45, t) * (1 - smooth(1.6, 2.1, t));
-      if (t >= 1.45 && jumpPeak) { const f = jumpPeak; jumpPeak = null; f(); }
-      if (t >= 1.9 && canvas.classList.contains('jump-on')) canvas.classList.remove('jump-on');
-      if (t >= 2.4) { jumpAt = -1; canvas.classList.remove('jump'); }
-    }
     time += dt * speed * (1 + J * J * 30);
 
     gl!.viewport(0, 0, w, h);

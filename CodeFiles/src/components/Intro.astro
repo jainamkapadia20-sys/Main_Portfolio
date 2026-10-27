@@ -1,7 +1,8 @@
 ---
 // The home page's opening (src/fx/intro.ts): my name, small, in the middle of a black screen (as tejj.in shows
-// "TEJJ"), then the room of type, then the whole layer fades away over the finished page. Plays on every load;
-// a click or any key skips it; reduced motion never sees it. The page decides whether to play before first paint,
+// "TEJJ"), then the room of type, then the whole layer fades away over the finished page. Plays on every load and
+// again after every time jump (an `intro:replay` event), in that era's type and colours; a click or any key skips
+// it; reduced motion never sees it. The page decides whether to play before first paint,
 // by the inline script in index.astro, which puts `intro` on <html>.
 import { site } from '../site';
 ---
@@ -29,23 +30,38 @@ import { site } from '../site';
   import { playIntro } from '../fx/intro';
   const el = document.querySelector<HTMLElement>('[data-intro]');
   const root = document.documentElement;
-  if (el && root.classList.contains('intro')) {
-    const signal = { skipped: false };
+  if (el) {
+    const mark = el.querySelector('.mark')!;
+    const canvas = el.querySelector('canvas')!;
+    let signal = { skipped: true }, playing = false;
     const skip = () => { signal.skipped = true; };
     el.addEventListener('click', skip);
     el.addEventListener('keydown', (e) => { if (['Enter', ' ', 'Escape'].includes(e.key)) { e.preventDefault(); skip(); } });
-    el.focus({ preventScroll: true });
-    // the name holds alone for a beat, then fades as the room begins
-    const mark = el.querySelector('.mark')!;
-    new Promise((r) => setTimeout(r, 900)).then(() => {
-      mark.classList.add('gone');
-      return signal.skipped ? undefined : playIntro(el.querySelector('canvas')!, signal);
-    }).finally(() => {
-      // hand over: the page is revealed underneath and starts its own entrances (name, navbar)
-      el.classList.add('leaving');
-      root.classList.remove('intro');
-      document.dispatchEvent(new CustomEvent('intro:done'));
-      setTimeout(() => el.remove(), 1900);
-    });
+    const play = () => {
+      if (playing) return;
+      playing = true;
+      signal = { skipped: false };
+      const back = document.activeElement as HTMLElement | null;   // a replay hands focus back to whatever started it
+      el.classList.remove('leaving');
+      mark.classList.remove('gone');
+      root.classList.add('intro');
+      el.focus({ preventScroll: true });
+      const run = signal;
+      // the name holds alone for a beat, then fades as the room begins
+      new Promise((r) => setTimeout(r, 900)).then(() => {
+        mark.classList.add('gone');
+        return run.skipped ? undefined : playIntro(canvas, run);
+      }).finally(() => {
+        // hand over: the page is revealed underneath and starts its own entrances (name, navbar)
+        el.classList.add('leaving');
+        root.classList.remove('intro');
+        if (back && back !== document.body) back.focus({ preventScroll: true });
+        document.dispatchEvent(new CustomEvent('intro:done'));
+        setTimeout(() => { el.classList.remove('leaving'); playing = false; }, 1900);
+      });
+    };
+    if (root.classList.contains('intro')) { root.classList.remove('intro'); play(); }
+    // a time jump lands here: the room plays again, set in the new era's type and colours
+    document.addEventListener('intro:replay', play);
   }
 </script>

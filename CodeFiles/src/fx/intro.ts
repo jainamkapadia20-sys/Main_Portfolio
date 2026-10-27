@@ -63,15 +63,18 @@ const clamp = (v: number) => Math.min(1, Math.max(0, v));
 
 // the phrase, drawn once into a wide strip of texture
 async function phraseTexture(gl: WebGL2RenderingContext) {
-  // broad heavy capitals, like tejj's: the name's face, Syne ExtraBold
-  const font = '"Syne", sans-serif';
-  await document.fonts.load(`800 100px ${font}`).catch(() => {});
+  // broad heavy capitals, like tejj's: the name's face in the current era (Syne ExtraBold today, Barlow in 1998,
+  // Big Shoulders Stencil in 2049)
+  const css = getComputedStyle(document.documentElement);
+  const font = css.getPropertyValue('--font-display').trim() || '"Syne", sans-serif';
+  const weight = css.getPropertyValue('--display-weight').trim() || '800';
+  await document.fonts.load(`${weight} 100px ${font}`).catch(() => {});
   const h = 192, c = document.createElement('canvas'), g = c.getContext('2d')!;
   const w = Math.round(h * ASPECT);
   c.width = w; c.height = h;
   // stretch the letters wide until the phrase spans exactly the room's floor and one wall (tejj's face is an
   // extended gothic; widening a heavy grotesque gets the same tight, broad capitals)
-  g.font = `800 ${h * 0.78}px ${font}`;
+  g.font = `${weight} ${h * 0.78}px ${font}`;
   const sx = w / g.measureText(PHRASE).width;
   g.setTransform(sx, 0, 0, 1, 0, 0);
   g.fillStyle = '#fff'; g.textBaseline = 'middle';
