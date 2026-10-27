@@ -63,10 +63,10 @@ const clamp = (v: number) => Math.min(1, Math.max(0, v));
 
 // the phrase, drawn once into a wide strip of texture
 async function phraseTexture(gl: WebGL2RenderingContext) {
-  // broad heavy capitals, like tejj's: the name's face in the current era (Syne ExtraBold today, Archivo Expanded on the Wangan,
+  // broad heavy capitals, like tejj's: the name's face in the current era (SF Pro Display Bold today, Archivo Expanded on the Wangan,
   // Big Shoulders Stencil in 2049)
   const css = getComputedStyle(document.documentElement);
-  const font = css.getPropertyValue('--font-display').trim() || '"Syne", sans-serif';
+  const font = css.getPropertyValue('--font-display').trim() || 'system-ui, sans-serif';
   const weight = css.getPropertyValue('--display-weight').trim() || '800';
   await document.fonts.load(`${weight} 100px ${font}`).catch(() => {});
   const h = 192, c = document.createElement('canvas'), g = c.getContext('2d')!;

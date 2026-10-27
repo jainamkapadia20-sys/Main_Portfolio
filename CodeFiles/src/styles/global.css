@@ -2,14 +2,14 @@
 @layer reset, tokens, base, layout, utilities;
 
 /* Type (all OFL, self-hosted, Latin subsets; a face only downloads when something on screen uses it).
-   Present day: Instrument Sans for every static word, Syne ExtraBold for the name.
+   Present day: SF Pro, the system face on Apple devices (its licence doesn't allow hosting it, so the stack asks the
+   device for it), with Inter, the closest open face, everywhere else. The name itself is drawn (HeroName.astro).
    Eras (time jumps): Wangan (JDM night) Archivo with Archivo Expanded for display, the name in katakana in Noto Sans JP, 2049 IBM Plex Sans Condensed + Big Shoulders Stencil. */
 @font-face { font-family: "Archivo"; src: url("/fonts/archivo-400.woff2") format("woff2"); font-weight: 400 500; font-display: swap; }
 @font-face { font-family: "Archivo"; src: url("/fonts/archivo-600.woff2") format("woff2"); font-weight: 600 700; font-display: swap; }
 @font-face { font-family: "Archivo Expanded"; src: url("/fonts/archivo-exp-800.woff2") format("woff2"); font-weight: 800; font-display: swap; }
 @font-face { font-family: "Noto Sans JP Name"; src: url("/fonts/notojp-900-name.woff2") format("woff2"); font-weight: 900; font-display: swap; }   /* only the katakana of my name */
-@font-face { font-family: "Instrument Sans"; src: url("/fonts/instrument-sans.woff2") format("woff2"); font-weight: 400 700; font-display: swap; }
-@font-face { font-family: "Syne"; src: url("/fonts/syne-800.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+@font-face { font-family: "Inter"; src: url("/fonts/inter-var.woff2") format("woff2"); font-weight: 300 700; font-display: swap; }
 @font-face { font-family: "IBM Plex Sans Condensed"; src: url("/fonts/plex-cond-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
 @font-face { font-family: "IBM Plex Sans Condensed"; src: url("/fonts/plex-cond-500.woff2") format("woff2"); font-weight: 500 700; font-display: swap; }
 @font-face { font-family: "Big Shoulders Stencil Display"; src: url("/fonts/bigshoulders-stencil-800.woff2") format("woff2"); font-weight: 800; font-display: swap; }
@@ -38,10 +38,12 @@
     --neon-tube: #F1DDFF; --neon-light: #9D5CFF; --neon-title: #F8F1FF;
     --neon-deep: color-mix(in srgb, var(--neon-light) 28%, var(--paper));
 
-    /* type: one family, five sizes, lighter weights (display 500, text 400) */
-    --font: "Instrument Sans", system-ui, sans-serif;   /* every static word; chosen over Satoshi, Switzer, Hanken Grotesk */
-    --font-display: "Syne", var(--font);                 /* the name, at 800; chosen over Clash Display, Unbounded, Big Shoulders */
-    --display-weight: 800;
+    /* type: one family, five sizes. SF Pro on Apple devices, Inter elsewhere. */
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", system-ui, sans-serif;
+    --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, sans-serif;
+    --display-weight: 700;
+    /* space: one 8-point scale; related things sit a step apart, groups two or three */
+    --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px;
     --t-small: .875rem;
     --t-body: 1.0625rem;
     --t-lead: clamp(1.25rem, 1.05rem + .7vw, 1.625rem);

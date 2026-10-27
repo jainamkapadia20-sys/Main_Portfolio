@@ -4,10 +4,13 @@
 // After the home page's opening, the bar makes its own entrance: as the page fades in, the liquid-metal JK sits
 // dead centre in a small circle of glass; then the links glide out from behind it to the right while the JK slides
 // left and the pill widens around them, until the group settles in the middle. Below 720px the links move into a menu.
-// The glass is an SVG filter used as a backdrop-filter: a displacement map (red ramp across, blue ramp down, a
-// soft bright core) pushes the backdrop sideways near the rim, once per colour channel at slightly different
-// strengths, so the edge refracts with a hint of colour fringing. Safari and Firefox can't run SVG backdrop
-// filters, so they get frosted glass instead.
+// The glass works like Apple's Liquid Glass. It is an SVG filter used as a backdrop-filter, driven by a lens map
+// worked out from the pill's own shape: through the middle the page shows straight through, and across the rounded
+// rim it bends, more and more steeply toward the edge, the way light does through the curved edge of a lens; each
+// colour channel bends a touch differently, so the rim fringes. Light catches the rim and turns to follow the
+// pointer, a soft glint follows it across the glass, a liquid highlight slides between the links with a little
+// overshoot, and the glass gives slightly when pressed. Safari and Firefox can't run SVG backdrop filters, so they get
+// frosted glass with the same light.
 import { site } from '../site';
 import Metal from './Metal.astro';
 const path = Astro.url.pathname.replace(/\.html$/, '');
@@ -19,20 +22,21 @@ const current = (href: string) => href !== '#contact' && (path === href || path.
       <defs>
         <filter id="nav-glass" color-interpolation-filters="sRGB" x="0%" y="0%" width="100%" height="100%">
           <feImage x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="map" data-glass-map />
-          <feDisplacementMap in="SourceGraphic" in2="map" scale="-180" xChannelSelector="R" yChannelSelector="G" result="dR" />
+          <feDisplacementMap in="SourceGraphic" in2="map" scale="62" xChannelSelector="R" yChannelSelector="G" result="dR" />
           <feColorMatrix in="dR" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="red" />
-          <feDisplacementMap in="SourceGraphic" in2="map" scale="-170" xChannelSelector="R" yChannelSelector="G" result="dG" />
+          <feDisplacementMap in="SourceGraphic" in2="map" scale="56" xChannelSelector="R" yChannelSelector="G" result="dG" />
           <feColorMatrix in="dG" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="green" />
-          <feDisplacementMap in="SourceGraphic" in2="map" scale="-160" xChannelSelector="R" yChannelSelector="G" result="dB" />
+          <feDisplacementMap in="SourceGraphic" in2="map" scale="50" xChannelSelector="R" yChannelSelector="G" result="dB" />
           <feColorMatrix in="dB" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="blue" />
           <feBlend in="red" in2="green" mode="screen" result="rg" />
           <feBlend in="rg" in2="blue" mode="screen" result="out" />
-          <feGaussianBlur in="out" stdDeviation="0.7" />
+          <feGaussianBlur in="out" stdDeviation="0.4" />
         </filter>
       </defs>
     </svg>
     <span class="sheen" aria-hidden="true"></span>
     <span class="rim" aria-hidden="true"></span>
+    <span class="blob" aria-hidden="true" data-blob></span>
 
     <a class="monogram" href="/" aria-label={`${site.name}, home`} data-nav-jk><Metal /></a>
     <nav class="links" aria-label="Main">
@@ -61,7 +65,8 @@ const current = (href: string) => href !== '#contact' && (path === href || path.
 <style>
   .nav { position: fixed; inset: 12px 0 auto; z-index: var(--z-chrome); padding-inline: var(--edge); pointer-events: none; }
   .glass { position: relative; isolation: isolate; display: flex; align-items: center; gap: 4px; width: max-content; max-width: 100%; height: 56px; margin-inline: auto;
-    padding: 0 6px 0 8px; border-radius: 999px; pointer-events: auto;
+    padding: 0 6px 0 8px; border-radius: 999px; pointer-events: auto; --la: -40deg; --mx: 30%; --my: 0%; --glint: 0;
+    transition: scale 500ms cubic-bezier(.3, 1.6, .4, 1);
     /* fallback: frosted glass (Safari, Firefox) */
     background: hsl(0 0% 100% / .05);
     -webkit-backdrop-filter: blur(12px) saturate(1.4) brightness(1.04); backdrop-filter: blur(12px) saturate(1.4) brightness(1.04);
@@ -79,18 +84,33 @@ const current = (href: string) => href !== '#contact' && (path === href || path.
     box-shadow: inset 0 0 2px 1px hsl(0 0% 0% / .15), inset 0 0 10px 4px hsl(0 0% 0% / .1), 0 4px 16px rgba(17, 17, 26, .05),
       0 8px 24px rgba(17, 17, 26, .05), 0 16px 56px rgba(17, 17, 26, .05); }
   .glass-filter { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; pointer-events: none; z-index: -1; }
+  /* pressing the glass makes it give a little, then spring back */
+  .glass:active { scale: .985; }
   .sheen, .rim { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1; }
-  .sheen { background: linear-gradient(135deg, hsl(0 0% 100% / .14) 0%, transparent 42%, transparent 64%, hsl(0 0% 100% / .05) 100%); }
-  .rim { padding: 1.5px; background: linear-gradient(150deg, hsl(0 0% 100% / .34), hsl(0 0% 100% / .03) 45%, hsl(0 0% 100% / .02) 60%, hsl(0 0% 100% / .18));
+  /* a soft glint that follows the pointer across the glass, over a faint top-lit sheen */
+  .sheen { background: radial-gradient(140px 70px at var(--mx) var(--my), hsl(0 0% 100% / calc(.14 * var(--glint))), transparent 70%),
+    linear-gradient(180deg, hsl(0 0% 100% / .07), transparent 45%);
+    transition: --glint 400ms ease; }
+  /* the rim catches the light on the side facing it and, fainter, on the far side; the light turns with the pointer */
+  .rim { padding: 1.25px; background: conic-gradient(from calc(var(--la) - 70deg), hsl(0 0% 100% / .08), hsl(0 0% 100% / .62) 70deg, hsl(0 0% 100% / .08) 140deg,
+      hsl(0 0% 100% / .06) 180deg, hsl(0 0% 100% / .3) 250deg, hsl(0 0% 100% / .06) 320deg);
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
     mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+  @property --la { syntax: "<angle>"; inherits: true; initial-value: -40deg; }
+  @property --glint { syntax: "<number>"; inherits: true; initial-value: 0; }
+  /* the liquid highlight under the link you point at: it slides between links and overshoots a little, like a drop */
+  .blob { position: absolute; top: 8px; left: 0; z-index: -1; width: 0; height: 40px; border-radius: 999px; pointer-events: none; opacity: 0; scale: .9;
+    background: hsl(0 0% 100% / .09); box-shadow: inset 0 1px 0 hsl(0 0% 100% / .22), inset 0 -1px 0 hsl(0 0% 100% / .05), 0 2px 10px hsl(0 0% 0% / .25);
+    transition: translate 520ms cubic-bezier(.3, 1.35, .4, 1), width 520ms cubic-bezier(.3, 1.35, .4, 1), opacity 220ms ease, scale 320ms cubic-bezier(.3, 1.5, .4, 1); }
+  .blob.on { opacity: 1; scale: 1; }
+  :global(:root[data-motion="calm"]) .blob { transition: opacity 150ms ease; }
 
   /* the JK: the home link, in liquid metal; it sits above the links so they can slide out from behind it */
   .monogram { position: relative; z-index: 2; display: block; width: 44px; height: 44px; margin-right: 6px; }
   .links { display: flex; gap: 2px; }
   .links a { position: relative; padding: 8px 14px; border-radius: 999px; color: var(--graphite); white-space: nowrap;
     transition: color var(--duration-fast) var(--ease-smooth-out), background-color var(--duration-fast) var(--ease-smooth-out); }
-  .links a:hover { color: var(--ink); background: hsl(0 0% 100% / .06); }
+  .links a:hover, .links a:focus-visible { color: var(--ink); }
   .links a[aria-current] { color: var(--ink); }
   /* a red dot under the current page */
   .links a[aria-current]::after { content: ""; position: absolute; left: 50%; bottom: 2px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--accent); }
@@ -135,24 +155,70 @@ const current = (href: string) => href !== '#contact' && (path === href || path.
   const ua = navigator.userAgent;
   const svgOk = !(/Safari/.test(ua) && !/Chrome/.test(ua)) && !/Firefox/.test(ua) && CSS.supports('backdrop-filter', 'url(#nav-glass)');
   if (glass && map && svgOk) {
+    // The lens map: for each pixel, how far it sits in from the rim of the pill. Across the rounded bevel the page is
+    // pulled in from further toward the middle, harder the nearer the edge (a lens's curved edge); inside the bevel it
+    // shows straight through. Red carries the sideways pull, green the vertical; 128 is no pull.
+    const canvas = document.createElement('canvas');
     const draw = () => {
-      const w = glass.clientWidth, h = glass.clientHeight, r = h / 2, edge = Math.min(w, h) * 0.035;
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
-        <defs>
-          <linearGradient id="r" x1="100%" y1="0%" x2="0%" y2="0%"><stop offset="0%" stop-color="#0000"/><stop offset="100%" stop-color="red"/></linearGradient>
-          <linearGradient id="b" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#0000"/><stop offset="100%" stop-color="blue"/></linearGradient>
-          <filter id="s" filterUnits="userSpaceOnUse" x="0" y="0" width="${w}" height="${h}"><feGaussianBlur stdDeviation="11"/></filter>
-        </defs>
-        <rect width="${w}" height="${h}" fill="black"/>
-        <rect width="${w}" height="${h}" rx="${r}" fill="url(#r)"/>
-        <rect width="${w}" height="${h}" rx="${r}" fill="url(#b)" style="mix-blend-mode:difference"/>
-        <rect x="${edge}" y="${edge}" width="${w - edge * 2}" height="${h - edge * 2}" rx="${r}" fill="hsl(0 0% 50% / .93)" filter="url(#s)"/>
-      </svg>`;
-      map.setAttribute('href', `data:image/svg+xml,${encodeURIComponent(svg)}`);
+      const w = Math.max(1, Math.round(glass.clientWidth)), h = Math.max(1, Math.round(glass.clientHeight));
+      canvas.width = w; canvas.height = h;
+      const g = canvas.getContext('2d')!, img = g.createImageData(w, h), r = h / 2, bevel = Math.min(20, h * 0.38);
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const px = x + 0.5, py = y + 0.5;
+        const cx = Math.min(Math.max(px, r), w - r), dx = px - cx, dy = py - r, d = Math.hypot(dx, dy);
+        const inside = r - d;                          // distance in from the rim
+        let ux = 0, uy = 0;
+        if (inside > 0 && inside < bevel && d > 0) {
+          const k = Math.pow(1 - inside / bevel, 2);   // steeper toward the edge
+          ux = (-dx / d) * k; uy = (-dy / d) * k;      // pull from inward
+        }
+        const i = (y * w + x) * 4;
+        img.data[i] = 128 + ux * 127; img.data[i + 1] = 128 + uy * 127; img.data[i + 2] = 128; img.data[i + 3] = 255;
+      }
+      g.putImageData(img, 0, 0);
+      map.setAttribute('href', canvas.toDataURL());
     };
     draw();
     new ResizeObserver(draw).observe(glass);
     glass.classList.add('svg');
+  }
+
+  // Light: the rim's highlight turns toward the pointer, and a glint follows it across the glass while it is near.
+  // The liquid highlight slides to whichever link the pointer is on.
+  const blob = document.querySelector<HTMLElement>('[data-blob]');
+  if (glass) {
+    let la = -40, target = -40, raf = 0;
+    const turn = () => {
+      la += (target - la) * 0.12;
+      glass.style.setProperty('--la', `${la}deg`);
+      raf = Math.abs(target - la) > 0.3 ? requestAnimationFrame(turn) : 0;
+    };
+    addEventListener('pointermove', (e) => {
+      const b = glass.getBoundingClientRect();
+      let a = (Math.atan2(e.clientY - (b.top + b.height / 2), e.clientX - (b.left + b.width / 2)) * 180) / Math.PI + 90;
+      while (a - la > 180) a -= 360;
+      while (a - la < -180) a += 360;
+      target = a;
+      if (!raf) raf = requestAnimationFrame(turn);
+      const near = e.clientY < b.bottom + 80;
+      glass.style.setProperty('--glint', near ? '1' : '0');
+      if (near) { glass.style.setProperty('--mx', `${e.clientX - b.left}px`); glass.style.setProperty('--my', `${e.clientY - b.top}px`); }
+    }, { passive: true });
+    if (blob) {
+      const links = [...glass.querySelectorAll<HTMLElement>('.links a')];
+      const moveTo = (a: HTMLElement) => {
+        const g = glass.getBoundingClientRect(), r = a.getBoundingClientRect();
+        blob.style.translate = `${r.left - g.left}px 0`;
+        blob.style.width = `${r.width}px`;
+        blob.classList.add('on');
+      };
+      links.forEach((a) => {
+        a.addEventListener('pointerenter', () => moveTo(a));
+        a.addEventListener('focus', () => moveTo(a));
+        a.addEventListener('blur', () => blob.classList.remove('on'));
+      });
+      glass.querySelector('.links')?.addEventListener('pointerleave', () => blob.classList.remove('on'));
+    }
   }
 
   // The entrance, after the home page's opening: the JK dead centre in a small circle of glass while the page fades

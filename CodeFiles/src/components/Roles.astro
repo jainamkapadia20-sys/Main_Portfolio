@@ -1,13 +1,12 @@
 ---
-// "I design ___": the word morphs into the next one. Two copies cross-fade through a heavy blur, and an SVG
-// threshold filter snaps the blurred edges back to crisp ink, so the letters seem to melt into each other.
-// The red highlight eases between word widths. Calm shows the first word, still.
-interface Props { items: string[] }
-const { items } = Astro.props;
+// "Designing things that feel ___." (after Edwin Vakayil's Morph Text): a light sentence whose last word, in bold,
+// melts into the next. Two copies cross-fade through a heavy blur, and an SVG threshold filter snaps the blurred
+// edges back to crisp ink, so the letters seem to flow into each other. The word's box eases between widths so the
+// full stop follows it. Calm shows the first word, still.
+interface Props { lead: string; items: string[] }
+const { lead, items } = Astro.props;
 ---
-<span class="roles" data-roles={JSON.stringify(items)}>
-  <span class="morph"><span class="w" data-a>{items[0]}</span><span class="w" data-b aria-hidden="true"></span></span>
-</span>
+<span class="line" aria-hidden="true">{lead} <span class="roles" data-roles={JSON.stringify(items)}><span class="morph"><span class="w" data-a>{items[0]}</span><span class="w" data-b></span></span></span><span class="stop">.</span></span>
 <svg class="goo" aria-hidden="true" focusable="false">
   <defs>
     <filter id="roles-goo">
@@ -17,25 +16,26 @@ const { items } = Astro.props;
 </svg>
 
 <style>
-  .roles { position: relative; display: inline-block; vertical-align: bottom; padding: .04em .3em .1em; border-radius: .22em;
-    background: var(--accent); color: var(--on-accent); line-height: 1.1; white-space: nowrap; transition: width 900ms var(--ease-out-expo); }
+  .line { font-weight: 300; }
+  .roles { position: relative; display: inline-block; vertical-align: bottom; white-space: nowrap; font-weight: 650; color: var(--ink);
+    transition: width 900ms var(--ease-out-expo); }
   .morph { position: relative; display: inline-block; filter: url(#roles-goo) blur(.4px); }
   .w { display: inline-block; white-space: nowrap; }
   [data-b] { position: absolute; left: 0; top: 0; opacity: 0; }
+  .stop { margin-left: .02em; }
   .goo { position: absolute; width: 0; height: 0; }
 </style>
 
 <script>
   import { calm } from '../lib/motion';
-  const MORPH = 1.5, HOLD = 1.6; // seconds: the cross-fade, then the rest on each word
+  const MORPH = 1.2, HOLD = 1.8; // seconds: the melt, then the rest on each word
   document.querySelectorAll<HTMLElement>('[data-roles]').forEach((el) => {
     const items: string[] = JSON.parse(el.dataset.roles!);
     if (calm() || items.length < 2) return;
     const a = el.querySelector<HTMLElement>('[data-a]')!, b = el.querySelector<HTMLElement>('[data-b]')!;
-    const pad = () => parseFloat(getComputedStyle(el).paddingLeft) * 2;
-    const widthOf = (t: string) => { b.textContent = t; const w = b.getBoundingClientRect().width; return w; };
+    const widthOf = (t: string) => { b.textContent = t; return b.getBoundingClientRect().width; };
     let i = 0, t0 = performance.now(), phase: 'hold' | 'morph' = 'hold', visible = true, raf = 0;
-    el.style.width = `${a.getBoundingClientRect().width + pad()}px`;
+    el.style.width = `${a.getBoundingClientRect().width}px`;
     new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible && !raf) raf = requestAnimationFrame(tick); }).observe(el);
 
     // each copy's blur grows as it fades; the threshold filter turns the overlap into a melt
@@ -53,8 +53,7 @@ const { items } = Astro.props;
       const s = (now - t0) / 1000;
       if (phase === 'hold' && s > HOLD) {
         phase = 'morph'; t0 = now;
-        const next = items[(i + 1) % items.length];
-        el.style.width = `${widthOf(next) + pad()}px`;
+        el.style.width = `${widthOf(items[(i + 1) % items.length])}px`;
       } else if (phase === 'morph') {
         const f = Math.min(1, s / MORPH);
         set(f);
