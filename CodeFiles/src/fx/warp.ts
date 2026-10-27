@@ -5,8 +5,8 @@
 // slow drift as you scroll, so the page never cuts to black.
 // It also does the jump to lightspeed (a `warp:jump` event, sent by the JK in the navbar): the starfield rises over
 // the page, the stars stretch into long blue-white lines as it accelerates, a white flash, and out the other side.
-// Each time-jump era swaps the stars for its own world: 1969 a radar scope with a sweeping beam and blips, 1984 a
-// synthwave grid floor running into a striped sun, 2049 a drafting grid with construction lines being drawn.
+// Each time-jump era swaps the stars for its own world: 1998 a night drive along a low horizon,
+// 2049 a drafting grid with construction lines being drawn.
 import { program, fullscreenVS, loop } from './gl';
 import { onTheme, palettes, rgb, type Theme } from '../lib/theme';
 import { calm } from '../lib/motion';
@@ -18,7 +18,7 @@ in vec2 vUv;
 out vec4 o;
 uniform vec2 uRes;
 uniform float uTime, uGain, uJump, uFlash, uPx;
-uniform int uMode;            // 0 stars, 1 radar (1969), 2 synthwave (1984), 3 blueprint (2049)
+uniform int uMode;            // 0 stars, 1 night drive (1998), 3 blueprint (2049)
 uniform vec3 uPaper, uStar, uAccent;
 
 const float LAYERS = 6.0;
@@ -61,51 +61,46 @@ const float TAU = 6.28318;
 // thin anti-aliased line at distance d (in the same units as w)
 float line(float d, float w) { return 1.0 - smoothstep(w * 0.5, w * 0.5 + fwidth(d) * 1.5, abs(d)); }
 
-// 1969: a radar scope. Range rings, a crosshair, a beam sweeping round with a fading wake, and contacts that light
-// up as the beam passes and slowly fade.
-vec3 radar(vec2 q) {
-  float r = length(q), a = atan(q.y, q.x);
-  float R = 0.62, inside = step(r, R);
-  float rings = line(mod(r + 0.06, 0.124) - 0.062, 0.0016) * inside;
-  float cross = (line(q.x, 0.0012) + line(q.y, 0.0012) + line(q.x - q.y, 0.001) * 0.4 + line(q.x + q.y, 0.001) * 0.4) * inside;
-  float sweep = mod(uTime * 0.9, TAU);
-  float behind = mod(sweep - a + TAU, TAU);
-  float wake = exp(-behind * 2.6) * inside;
-  float edge = line(r - R, 0.003);
-  float blips = 0.0;
-  for (int k = 0; k < 9; k++) {
-    float fk = float(k);
-    vec2 c = vec2(hash(vec2(fk, 1.3)) - 0.5, hash(vec2(fk, 7.9)) - 0.5) * 1.05;
-    if (length(c) > R * 0.95) continue;
-    float since = mod(sweep - atan(c.y, c.x) + TAU, TAU);
-    blips += smoothstep(0.012, 0.0, length(q - c)) * exp(-since * 0.55);
-  }
-  float v = rings * 0.22 + cross * 0.14 + wake * 0.45 + edge * 0.5 + blips * 1.2;
-  return mix(uPaper, uAccent, clamp(v * uGain, 0.0, 1.0));
-}
-
-// 1984: a synthwave horizon. A neon grid floor rushing toward a striped sun, a few stars above.
-vec3 synth(vec2 q) {
-  float h = -0.08;                                   // horizon
-  vec3 cyan = vec3(0.18, 0.89, 0.9), col = uPaper;
+// 1998: a night drive. The horizon sits low, under the hero's buttons, so the text stands on a clear night sky and
+// the road only fills the floor of the screen: a three-lane road swaying gently into the dark, dim lane dashes
+// streaming past, far-off tail lights and oncoming headlights near the vanishing point, mountains against a warm
+// sodium glow. Everything is kept dim and slow; it is a mood, not a game.
+vec3 apex(vec2 q) {
+  float h = -0.3;                                    // horizon, below the hero's content
+  vec3 col = uPaper;
   if (q.y < h) {
-    float z = 0.32 / (h - q.y);                      // depth into the floor
-    float gx = q.x * z * 2.2, gz = z + uTime * 1.6;
-    float g = line(fract(gx + 0.5) - 0.5, 0.06 * z * 0.25 + 0.02) + line(fract(gz) - 0.5, 0.05);
-    float fade = smoothstep(h, h - 0.55, q.y) * 0.6 + 0.4 * smoothstep(h - 0.02, h, q.y);
-    col = mix(col, mix(uAccent, cyan, 0.35), clamp(g * fade, 0.0, 1.0) * 0.85);
-    col += uAccent * 0.18 * exp((q.y - h) * 14.0);   // haze at the horizon
+    float z = 0.09 / (h - q.y);                      // distance down the road
+    float travel = uTime * 5.0;
+    float sway = sin((z + travel) * 0.045) * 0.9 - sin(travel * 0.045) * 0.9;   // the bend ahead, relative to us
+    float x = q.x * z - sway;                        // across the road, in lane units (lanes are 1 wide)
+    float fog = exp(-z * 0.12);
+    float sharp = clamp(1.0 - fwidth(x) * 3.0, 0.0, 1.0);   // lines that shrink below a pixel fade out instead of smearing into a band
+    float onRoad = 1.0 - smoothstep(1.55, 1.6, abs(x));
+    col = mix(uPaper, uPaper * 1.5 + 0.01, onRoad * fog);
+    float w = 0.05;
+    float edges = line(abs(x) - 1.5, w) * onRoad;
+    float dash = step(fract((z + travel) * 0.22), 0.45);
+    float lanes = (line(x - 0.5, w) + line(x + 0.5, w)) * dash;
+    col += (uStar * 0.2) * (edges + lanes) * fog * sharp;
+    // cars as long-exposure streaks, only out near the horizon
+    float lights = 0.0, heads = 0.0;
+    for (int k = 0; k < 3; k++) {
+      float lane = -1.0 + float(k);                  // -1 and 0 run away from you, +1 comes at you
+      float runs = fract(z * 0.035 - uTime * (lane > 0.5 ? 0.6 : 0.18) + float(k) * 0.37);
+      float car = smoothstep(0.0, 0.03, runs) * smoothstep(0.55, 0.3, runs);
+      float pair = line(abs(x - lane) - 0.2, 0.05);
+      if (lane > 0.5) heads += pair * car; else lights += pair * car;
+    }
+    float far = smoothstep(1.5, 5.0, z);
+    col += (uAccent * 0.9 * lights + vec3(1.0, 0.95, 0.85) * 0.5 * heads) * fog * far * sharp;
+    col += uAccent * 0.1 * exp((q.y - h) * 7.0);      // the sky's glow carries on over the road, so the horizon has no seam
   } else {
-    vec2 c = vec2(0.0, h + 0.2);
-    float d = length(q - c);
-    float sun = smoothstep(0.215, 0.2, d);
-    float k = (q.y - (c.y - 0.2)) / 0.4;             // 0 at the sun's foot, 1 at its top
-    float bands = step(k, 0.55) * step(0.5, fract(k * 9.0 + uTime * 0.25)) ;
-    vec3 sunCol = mix(uAccent, vec3(1.0, 0.78, 0.25), clamp(k, 0.0, 1.0));
-    col = mix(col, sunCol, sun * (1.0 - bands) * 0.7);   // softened: the hero copy sits over it
-    col += uAccent * 0.25 * exp(-d * 6.0) * (1.0 - sun);
-    vec2 sp = q * 40.0; vec2 id = floor(sp);
-    col += vec3(hash(id) > 0.985 ? smoothstep(0.08, 0.0, length(fract(sp) - 0.5)) * 0.8 : 0.0) * smoothstep(h, h + 0.2, q.y);
+    float ridge = h + 0.03 + 0.025 * sin(q.x * 6.0 + 1.3) + 0.012 * sin(q.x * 17.0) + 0.006 * sin(q.x * 41.0);
+    float glow = exp(-(q.y - h) * 7.0);
+    col = mix(uPaper, uPaper + uAccent * 0.1, glow);
+    col = mix(col, uPaper * 0.55, step(q.y, ridge));  // the mountains
+    vec2 sp = q * 55.0; vec2 id = floor(sp);
+    col += (hash(id) > 0.993 ? smoothstep(0.1, 0.0, length(fract(sp) - 0.5)) * 0.3 : 0.0) * smoothstep(ridge, ridge + 0.1, q.y);
   }
   return mix(uPaper, col, uGain);
 }
@@ -134,8 +129,7 @@ void main() {
   vec2 uv = (vUv - 0.5) * vec2(uRes.x / uRes.y, 1.0);
   vec3 col;
   // the jump itself is always through stars, whatever era we leave from
-  if (uMode == 1 && uJump < 0.001 && uFlash < 0.001) col = radar(uv);
-  else if (uMode == 2 && uJump < 0.001 && uFlash < 0.001) col = synth(uv);
+  if (uMode == 1 && uJump < 0.001 && uFlash < 0.001) col = apex(uv);
   else if (uMode == 3 && uJump < 0.001 && uFlash < 0.001) col = blueprint(uv);
   else col = stars(uv);
   o = vec4(mix(col, vec3(1.0), uFlash), 1.0);
@@ -198,7 +192,7 @@ export function mountWarp(canvas: HTMLCanvasElement) {
     gl.uniform3fv(u('uPaper'), rgb(c.paper));
     gl.uniform3fv(u('uStar'), rgb(c.ink));
     gl.uniform3fv(u('uAccent'), rgb(c.accent));
-    mode = ({ amber: 1, neon: 2, blueprint: 3 } as Record<string, number>)[t] ?? 0;
+    mode = ({ apex: 1, blueprint: 3 } as Record<string, number>)[t] ?? 0;
     if (still) draw(0);
   });
 

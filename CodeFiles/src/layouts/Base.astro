@@ -4,6 +4,7 @@ import '../styles/motion.css';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import Warp from '../components/Warp.astro';
+import Tacho from '../components/Tacho.astro';
 import Toast from '../components/Toast.astro';
 import { site } from '../site';
 
@@ -60,6 +61,7 @@ const canonical = new URL(Astro.url.pathname.replace(/(\/index)?\.html$/, '') ||
   <main id="main"><slot /></main>
   <Footer />
   <Toast />
+  <Tacho />
   <script>
     import '../scripts/motion';
   </script>

@@ -3,15 +3,11 @@
 
 /* Type (all OFL, self-hosted, Latin subsets; a face only downloads when something on screen uses it).
    Present day: Instrument Sans for every static word, Syne ExtraBold for the name.
-   Eras (time jumps): 1969 IBM Plex Mono + VT323, 1984 Rajdhani + Monoton, 2049 IBM Plex Sans Condensed + Big Shoulders Stencil. */
+   Eras (time jumps): 1998 Apex Barlow alone (it is drawn from US highway signs), 2049 IBM Plex Sans Condensed + Big Shoulders Stencil. */
+@font-face { font-family: "Barlow"; src: url("/fonts/barlow-500.woff2") format("woff2"); font-weight: 400 500; font-display: swap; }
+@font-face { font-family: "Barlow"; src: url("/fonts/barlow-600.woff2") format("woff2"); font-weight: 600 700; font-display: swap; }
 @font-face { font-family: "Instrument Sans"; src: url("/fonts/instrument-sans.woff2") format("woff2"); font-weight: 400 700; font-display: swap; }
 @font-face { font-family: "Syne"; src: url("/fonts/syne-800.woff2") format("woff2"); font-weight: 800; font-display: swap; }
-@font-face { font-family: "IBM Plex Mono"; src: url("/fonts/plex-mono-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
-@font-face { font-family: "IBM Plex Mono"; src: url("/fonts/plex-mono-500.woff2") format("woff2"); font-weight: 500 700; font-display: swap; }
-@font-face { font-family: "VT323"; src: url("/fonts/vt323.woff2") format("woff2"); font-weight: 400; font-display: swap; }
-@font-face { font-family: "Rajdhani"; src: url("/fonts/rajdhani-500.woff2") format("woff2"); font-weight: 400 500; font-display: swap; }
-@font-face { font-family: "Rajdhani"; src: url("/fonts/rajdhani-600.woff2") format("woff2"); font-weight: 600 700; font-display: swap; }
-@font-face { font-family: "Monoton"; src: url("/fonts/monoton.woff2") format("woff2"); font-weight: 400; font-display: swap; }
 @font-face { font-family: "IBM Plex Sans Condensed"; src: url("/fonts/plex-cond-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
 @font-face { font-family: "IBM Plex Sans Condensed"; src: url("/fonts/plex-cond-500.woff2") format("woff2"); font-weight: 500 700; font-display: swap; }
 @font-face { font-family: "Big Shoulders Stencil Display"; src: url("/fonts/bigshoulders-stencil-800.woff2") format("woff2"); font-weight: 800; font-display: swap; }
@@ -70,17 +66,11 @@
   }
   /* eras: time jumps (click the JK). Each is its own world: palette, type, shape. Textures and glows sit below,
      outside the layers; backgrounds live in src/fx/warp.ts. Eras win over the light switch. */
-  :root[data-era="amber"] {   /* 1969, Mission Control: a CRT terminal in amber phosphor */
-    --paper: #0B0803; --ink: #FFD18A; --graphite: #A8803F; --surface: #170F05; --surface-2: #211608; --accent: #FFAA1D;
-    --on-accent: #0B0803; color-scheme: dark;
-    --font: "IBM Plex Mono", ui-monospace, monospace; --font-display: "VT323", monospace; --display-weight: 400;
-    --t-body: .98rem; --radius: 0px; --name-size: clamp(2.6rem, 9.5vw, 10rem); --name-track: .02em;
-  }
-  :root[data-era="neon"] {    /* 1984, Neon: synthwave, a grid floor running into a striped sun */
-    --paper: #0D0221; --ink: #F8E9FF; --graphite: #9C86C9; --surface: #1A0B36; --surface-2: #24104A; --accent: #FF2BD6;
-    --on-accent: #0D0221; color-scheme: dark;
-    --font: "Rajdhani", sans-serif; --font-display: "Monoton", sans-serif; --display-weight: 400;
-    --t-body: 1.2rem; --name-size: clamp(1.9rem, 5.6vw, 6.6rem); --name-track: .03em;
+  :root[data-era="apex"] {    /* 1998, Apex: a night drive, one family set like road signage, one papaya accent */
+    --paper: #08090B; --ink: #F3F4F6; --graphite: #9AA0A8; --surface: #121419; --surface-2: #1A1D24; --accent: #FF5A1F;
+    --on-accent: #08090B; color-scheme: dark;
+    --font: "Barlow", sans-serif; --font-display: "Barlow", sans-serif; --display-weight: 600;
+    --t-body: 1.08rem; --name-size: clamp(2.6rem, 7.6vw, 8.75rem); --name-track: -.035em;
   }
   :root[data-era="blueprint"] {   /* 2049, Blueprint: a technical drawing, white line on drafting blue */
     --paper: #0B3A8C; --ink: #EAF2FF; --graphite: #A9C1EA; --surface: #0E4499; --surface-2: #1250AE; --accent: #FFCC33;
@@ -180,19 +170,13 @@ html.arrived::after { content: ""; position: fixed; inset: 0; z-index: 1200; bac
 @keyframes arrive { to { opacity: 0; visibility: hidden; } }
 
 /* era textures and glows (outside the layers so they sit over component styles) */
-/* 1969: scanlines over everything, a faint phosphor bloom on text, a slow flicker */
-html[data-era="amber"] body { text-shadow: 0 0 6px color-mix(in srgb, var(--accent) 35%, transparent); }
-html[data-era="amber"] body::after { content: ""; position: fixed; inset: 0; z-index: 1050; pointer-events: none;
-  background: repeating-linear-gradient(to bottom, rgb(0 0 0 / .28) 0 1px, transparent 1px 3px);
-  box-shadow: inset 0 0 160px rgb(0 0 0 / .65); animation: crt-flicker 6s steps(1) infinite; }
-@keyframes crt-flicker { 0%, 100% { opacity: 1; } 47% { opacity: .9; } 48% { opacity: 1; } 81% { opacity: .94; } }
-/* 1984: the name burns like a neon tube, magenta with a cyan halo */
-html[data-era="neon"] .hname { text-shadow: 0 0 6px #FF2BD6, 0 0 22px #FF2BD6, 0 0 42px #2DE2E6; }
-/* the sun sits behind the hero copy: a dark halo keeps the words readable over it */
-html[data-era="neon"] .sheet { text-shadow: 0 0 3px #0D0221, 0 1px 14px #0D0221, 0 0 28px #0D0221; }
-html[data-era="neon"] h2, html[data-era="neon"] .cap-title { text-transform: uppercase; letter-spacing: .06em; }
+/* 1998: the name stands plain on the night sky; no glitch, and the primary action loses its glow ring */
+html[data-era="apex"] .hname::before, html[data-era="apex"] .hname::after, html[data-era="apex"] .cta::before { display: none; }
+html[data-era="apex"] h2 { font-weight: 600; letter-spacing: -.035em; }
 /* 2049: everything reads like a drawing sheet: uppercase headings, hairline outlines on the surfaces */
 html[data-era="blueprint"] h2, html[data-era="blueprint"] h3, html[data-era="blueprint"] .label { text-transform: uppercase; letter-spacing: .04em; }
 html[data-era="blueprint"] .btn { border: 1px dashed color-mix(in srgb, var(--ink) 55%, transparent); }
-:root[data-motion="calm"][data-era="amber"] body::after { animation: none; }
+
+/* in-page anchors glide; once Lenis runs (scripts/motion.ts) it does the gliding, so native smoothing steps aside */
+:root[data-motion="full"]:not(.lenis) { scroll-behavior: smooth; }
 

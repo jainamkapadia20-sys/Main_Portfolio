@@ -1,21 +1,18 @@
 ---
 import { getImage } from 'astro:assets';
 import Base from '../layouts/Base.astro';
-import WorkList from '../components/WorkList.astro';
 import Skills from '../components/Skills.astro';
 import HeroName from '../components/HeroName.astro';
 import Intro from '../components/Intro.astro';
 import Roles from '../components/Roles.astro';
 import Cta from '../components/Cta.astro';
-import ConcaveCarousel from '../components/ConcaveCarousel.astro';
+import SpinShutter from '../components/SpinShutter.astro';
 import Strip from '../components/Strip.astro';
 import Music from '../components/Music.astro';
 import Road from '../components/Road.astro';
-import { sortedProjects } from '../lib/projects';
 import { site } from '../site';
 import render from '../assets/car/poster-mod.png';
 
-const projects = await sortedProjects();
 const roles = ['interfaces', 'identities', 'services', 'in-car screens'];
 // side work: the one finished piece on hand, and labelled slots for the sketches and drawings still to come
 const ideas = [
@@ -61,22 +58,15 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
     <div class="hero-bar small"><span><span class="dot" aria-hidden="true"></span>{site.status}</span></div>
   </section>
 
-  <!-- Every project on a wall that curves around the viewer: drag or use the arrows, click the centre panel to open -->
-  <section class="featured section" aria-labelledby="featured-h">
+  <!-- Every project on a spinning orbit: point to focus, click to bring forward, click again to open -->
+  <section class="featured section" id="work" aria-labelledby="featured-h">
     <div class="wrap sec-head">
       <h2 id="featured-h" class="head" data-reveal>Projects</h2>
-      <p class="muted" data-reveal style="--i:1">Drag the wall or use the arrows. Click the centre panel to open it.</p>
+      <p class="muted" data-reveal style="--i:1">Point at a card to focus it. Click to bring it forward, click again to open.</p>
     </div>
-    <ConcaveCarousel />
+    <SpinShutter />
   </section>
 
-  <section class="section wrap" id="work" aria-labelledby="work-h">
-    <div class="sec-head">
-      <h2 id="work-h" class="head" data-reveal>Selected work</h2>
-      <a class="t-learn muted" href="/work" data-reveal style="--i:1">All projects and filters <span class="t-learn-chevron" set:html={arrow} /></a>
-    </div>
-    <WorkList projects={projects} />
-  </section>
 
   <section class="section ideas" aria-labelledby="ideas-h">
     <div class="wrap sec-head">
@@ -135,6 +125,7 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
 
   .sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px 24px; flex-wrap: wrap; margin-bottom: 48px; }
   .sec-head p { max-width: 44ch; }
+  .featured { padding-top: clamp(24px, 3vw, 48px); }   /* sits right under the hero: no full section gap */
   .featured .sec-head { margin-bottom: 0; }
   .ideas .sec-head { margin-bottom: 0; }
   .ideas-strip { height: 100svh; max-height: 980px; }

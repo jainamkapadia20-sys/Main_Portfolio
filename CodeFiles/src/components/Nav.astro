@@ -217,7 +217,7 @@ const current = (href: string) => href !== '#contact' && (path === href || path.
           if (next.id === 'dark') sessionStorage.removeItem('era'); else sessionStorage.setItem('era', next.id);
           sessionStorage.setItem('landed', `${next.year} · ${next.name}`);
         } catch {}
-        if (home) { const l = (window as any).lenis; l ? l.scrollTo(0, { immediate: true }) : scrollTo(0, 0); announce(); }
+        if (home) { scrollTo({ top: 0, behavior: 'instant' }); announce(); }
         else { try { sessionStorage.setItem('jumped', '1'); } catch {} setTimeout(() => (location.href = jk.href), 250); }   // let the boom land first
       } } }));
     });

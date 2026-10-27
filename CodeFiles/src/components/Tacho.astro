@@ -1,0 +1,98 @@
+---
+// The 1998 Apex era's dashboard: a tachometer in the corner that the page drives. Scrolling is the throttle: the
+// needle revs with how fast you scroll and settles back to idle when you stop; moving down the page works up
+// through the gears, and each upshift drops the revs like a real one. Past 7,400 rpm the readout turns red. Shows
+// only in the Apex era, on screens wide enough to keep it off the text; decorative.
+const ticks = Array.from({ length: 10 }, (_, i) => {
+  const a = ((-225 + i * 30) * Math.PI) / 180;      // 270° sweep, 0 at bottom-left to 9 at bottom-right
+  return { i, x1: 50 + Math.cos(a) * 40, y1: 50 + Math.sin(a) * 40, x2: 50 + Math.cos(a) * 33, y2: 50 + Math.sin(a) * 33,
+    tx: 50 + Math.cos(a) * 26, ty: 50 + Math.sin(a) * 26 };
+});
+const arc = (from: number, to: number, r: number) => {
+  const p = (d: number) => [50 + Math.cos((d * Math.PI) / 180) * r, 50 + Math.sin((d * Math.PI) / 180) * r];
+  const [x1, y1] = p(from), [x2, y2] = p(to);
+  return `M${x1.toFixed(2)} ${y1.toFixed(2)} A${r} ${r} 0 ${to - from > 180 ? 1 : 0} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
+};
+---
+<div class="tacho" aria-hidden="true" data-tacho>
+  <svg viewBox="0 0 100 100">
+    <path class="track" d={arc(-225, 45, 44)} />
+    <path class="redline" d={arc(-225 + 7.4 * 30, 45, 44)} />
+    {ticks.map((t) => <g><line x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} /><text x={t.tx} y={t.ty + 3}>{t.i}</text></g>)}
+    <g class="needle" data-needle><line x1="50" y1="50" x2="50" y2="12" /></g>
+    <circle cx="50" cy="50" r="4" class="hub" />
+  </svg>
+  <div class="readout">
+    <span class="gear" data-gear>N</span>
+    <span class="speed"><b data-speed>0</b> km/h</span>
+    <span class="rpm">×1000 rpm</span>
+  </div>
+</div>
+
+<style>
+  .tacho { position: fixed; right: var(--edge); bottom: var(--edge); z-index: -1;   /* scenery, like the road: content passes over it */
+    display: none; align-items: center; gap: 10px;
+    padding: 10px 18px 10px 10px; border-radius: var(--radius); background: var(--surface); pointer-events: none;
+    font-family: var(--font); color: var(--ink); }
+  :global(html[data-era="apex"]) .tacho { display: flex; animation: tacho-in 700ms var(--ease-out-expo) both; }
+  @keyframes tacho-in { from { opacity: 0; translate: 0 16px; } }
+  :global(:root[data-motion="calm"]) .tacho { animation: none; }
+  svg { width: 84px; height: 84px; overflow: visible; }
+  .track { fill: none; stroke: color-mix(in srgb, var(--ink) 18%, transparent); stroke-width: 3; }
+  .redline { fill: none; stroke: var(--accent); stroke-width: 3; }
+  line { stroke: var(--ink); stroke-width: 1.4; }
+  text { fill: var(--graphite); font-size: 8px; text-anchor: middle; }
+  .needle { transform-origin: 50px 50px; }
+  .needle line { stroke: var(--accent); stroke-width: 2.4; stroke-linecap: round; }
+  .hub { fill: var(--ink); }
+  .readout { display: grid; gap: 2px; line-height: 1; }
+  .gear { font-size: 1.9rem; font-weight: 600; }
+  .speed { font-size: .95rem; }
+  .speed b { font-size: 1.15rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .rpm { font-size: .75rem; color: var(--graphite); }
+  .tacho.red .gear, .tacho.red .speed b { color: var(--accent); }
+  @media (max-width: 720px) { :global(html[data-era="apex"]) .tacho { display: none; } }   /* no room on a phone; it would sit on the text */
+</style>
+
+<script>
+  import { calm } from '../lib/motion';
+  const el = document.querySelector<HTMLElement>('[data-tacho]');
+  const needle = el?.querySelector<SVGGElement>('[data-needle]');
+  const gearEl = el?.querySelector<HTMLElement>('[data-gear]');
+  const speedEl = el?.querySelector<HTMLElement>('[data-speed]');
+  const root = document.documentElement;
+  if (el && needle && gearEl && speedEl) {
+    const IDLE = 900, REDLINE = 7400;
+    let rpm = IDLE, gear = 1, vel = 0, lastY = scrollY, last = 0, raf = 0;
+    const angle = (r: number) => -135 + (Math.min(r, 9000) / 9000) * 270;   // 0 rpm at bottom-left, 9,000 at bottom-right
+    const frame = (now: number) => {
+      const dt = last ? Math.min(0.05, (now - last) / 1000) : 0.016;
+      last = now;
+      // throttle: how fast the page is moving, smoothed
+      const v = Math.abs(scrollY - lastY) / Math.max(dt, 1e-3);
+      lastY = scrollY;
+      vel += (v - vel) * Math.min(1, dt * 6);
+      // gear: how far down the page we are; an upshift drops the revs
+      const max = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+      const g = Math.min(6, 1 + Math.floor((scrollY / max) * 6));
+      if (g > gear) rpm *= 0.62;
+      gear = g;
+      const target = IDLE + Math.min(1, vel / 3500) * 7800 + Math.sin(now / 180) * 25;   // a little idle burble
+      rpm += (target - rpm) * Math.min(1, dt * (target > rpm ? 5 : 2.2));                // revs climb faster than they fall
+      needle.style.transform = `rotate(${angle(rpm).toFixed(1)}deg)`;
+      gearEl.textContent = scrollY < 40 && vel < 30 ? 'N' : String(gear);
+      speedEl.textContent = String(Math.round((rpm / 1000) * gear * 9 * (vel > 30 || scrollY > 40 ? 1 : 0)));
+      el.classList.toggle('red', rpm > REDLINE);
+      raf = requestAnimationFrame(frame);
+    };
+    // run only while the Apex era is on
+    const sync = () => {
+      const on = root.dataset.era === 'apex';
+      if (on && !raf) { last = 0; lastY = scrollY; raf = requestAnimationFrame(frame); }
+      if (!on && raf) { cancelAnimationFrame(raf); raf = 0; }
+      if (on && calm()) { cancelAnimationFrame(raf); raf = 0; needle.style.transform = `rotate(${angle(IDLE)}deg)`; }
+    };
+    sync();
+    new MutationObserver(sync).observe(root, { attributes: true, attributeFilter: ['data-era'] });
+  }
+</script>

@@ -1,21 +1,14 @@
 import Lenis from 'lenis';
+import 'lenis/dist/lenis.css';
 import { calm } from '../lib/motion.js';
 
 const root = document.documentElement;
 root.classList.add('motion-ready');
 
-// Smooth scroll in full motion only. Every scroll effect reads window.scrollY, so nothing else needs syncing.
-if (!calm()) {
-  const lenis = new Lenis({ lerp: 0.1, autoRaf: true });
-  (window as any).lenis = lenis;
-  // in-page anchors (Contact) glide instead of jumping
-  document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach((a) => a.addEventListener('click', (e) => {
-    const target = document.querySelector(a.getAttribute('href')!);
-    if (!target) return;
-    e.preventDefault();
-    lenis.scrollTo(target as HTMLElement, { offset: -24 });
-  }));
-}
+// Smooth scrolling, tuned light: lerp .16 (Lenis defaults to .1, which trails the wheel) so the page settles in a
+// few frames and never feels behind your hand. Touch keeps the phone's own scrolling. Anchors glide and respect
+// scroll-margin. In Calm, the browser's own scrolling is left alone.
+if (!calm()) new Lenis({ autoRaf: true, lerp: 0.16, anchors: true });
 // Entrances: each [data-reveal] rises in once as it arrives (CSS does the motion, see motion.css)
 const io = new IntersectionObserver((entries) => entries.forEach((e) => {
   if (!e.isIntersecting) return;

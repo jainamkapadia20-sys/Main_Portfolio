@@ -5,8 +5,7 @@
 export const palettes = {
   dark: { paper: '#0E0E0E', ink: '#F2F2F0', graphite: '#8C8C8A', surface: '#171717', accent: '#FF3B30' },
   light: { paper: '#F4F4F2', ink: '#0E0E0E', graphite: '#5E5E5C', surface: '#EAEAE7', accent: '#C81E17' },
-  amber: { paper: '#0B0803', ink: '#FFD18A', graphite: '#A8803F', surface: '#170F05', accent: '#FFAA1D' },
-  neon: { paper: '#0D0221', ink: '#F8E9FF', graphite: '#9C86C9', surface: '#1A0B36', accent: '#FF2BD6' },
+  apex: { paper: '#08090B', ink: '#F3F4F6', graphite: '#8A9099', surface: '#121419', accent: '#FF5A1F' },
   blueprint: { paper: '#0B3A8C', ink: '#EAF2FF', graphite: '#A9C1EA', surface: '#0E4499', accent: '#FFCC33' },
 };
 export type Theme = keyof typeof palettes;
@@ -14,8 +13,7 @@ export type Theme = keyof typeof palettes;
 /** The time-jump cycle, in order. `dark` is home: the present day. */
 export const eras = [
   { id: 'dark', year: '2026', name: 'Hyperdrive' },
-  { id: 'amber', year: '1969', name: 'Mission Control' },
-  { id: 'neon', year: '1984', name: 'Neon' },
+  { id: 'apex', year: '1998', name: 'Apex' },
   { id: 'blueprint', year: '2049', name: 'Blueprint' },
 ] as const;
 
