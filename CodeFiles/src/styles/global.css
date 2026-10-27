@@ -30,12 +30,12 @@
 @layer tokens {
   :root {
     /* colour (user-pinned): ink, paper and one red per theme. Dark is the default; light is one toggle away.
-       Contrast on paper: ink 17.6, graphite 6.1, accent 5.4. The canvas effects read the same values from src/lib/theme.ts. */
-    --paper: #0E0E0E; --ink: #F2F2F0; --graphite: #8C8C8A; --surface: #171717; --surface-2: #1F1F1F; --accent: #FF3355;
-    --on-accent: #0E0E0E;
+       Purple and black. Contrast on paper: ink 18, graphite 5.9, accent 6.0. The canvas effects read the same values from src/lib/theme.ts. */
+    --paper: #0A0910; --ink: #F4F1FA; --graphite: #8F8A9E; --surface: #15131C; --surface-2: #1D1A27; --accent: #A970FF;
+    --on-accent: #0A0910;
     color-scheme: dark;
     /* the projects' neon tube (NeonReveal.astro): tube, the light it pours, and the heading cut out of it */
-    --neon-tube: #FFC9D2; --neon-light: #E0203F; --neon-title: #FFF1F3;
+    --neon-tube: #F1DDFF; --neon-light: #9D5CFF; --neon-title: #F8F1FF;
     --neon-deep: color-mix(in srgb, var(--neon-light) 28%, var(--paper));
 
     /* type: one family, five sizes, lighter weights (display 500, text 400) */
@@ -65,10 +65,10 @@
     --z-chrome: 20; --z-cursor: 60; --z-toast: 70;
   }
   :root[data-theme="light"] {
-    --paper: #F4F4F2; --ink: #0E0E0E; --graphite: #5E5E5C; --surface: #EAEAE7; --surface-2: #E1E1DD; --accent: #C81E17;
+    --paper: #F4F4F2; --ink: #0E0E0E; --graphite: #5E5E5C; --surface: #EAEAE7; --surface-2: #E1E1DD; --accent: #6D28D9;
     --on-accent: #F4F4F2;
     color-scheme: light;
-    --neon-tube: #FF8FA3; --neon-light: #C8102E; --neon-title: #2A0610;
+    --neon-tube: #C7A2FF; --neon-light: #7C3AED; --neon-title: #1A0B33;
   }
   /* eras: time jumps (click the JK). Each is its own world: palette, type, shape. Textures and glows sit below,
      outside the layers; backgrounds live in src/fx/warp.ts. Eras win over the light switch. */
@@ -137,7 +137,7 @@
   /* glow effect: a blurred ring of reds sits behind the pill; on hover it flares wider and brighter. It holds still:
      a turning blurred layer would be repainted every frame, which costs more than it gives */
   .cta::before { content: ""; position: absolute; inset: -3px; z-index: -1; border-radius: inherit;
-    background: conic-gradient(from 210deg, var(--accent), color-mix(in oklab, var(--accent) 65%, #fff), color-mix(in oklab, var(--accent) 70%, #ff2d6f), color-mix(in oklab, var(--accent) 75%, #000), var(--accent));   /* shades of the era's accent */
+    background: conic-gradient(from 210deg, var(--accent), color-mix(in oklab, var(--accent) 65%, #fff), color-mix(in oklab, var(--accent) 70%, #ff6ad5), color-mix(in oklab, var(--accent) 75%, #000), var(--accent));   /* shades of the era's accent */
     filter: blur(10px); opacity: .6;
     transition: opacity 400ms var(--ease-smooth-out), filter 400ms var(--ease-smooth-out), scale 500ms var(--ease-out-expo); }
   .cta:hover::before, .cta:focus-visible::before { opacity: 1; filter: blur(20px); scale: 1.18; }
@@ -175,10 +175,11 @@
 /* era textures and glows (outside the layers so they sit over component styles) */
 /* Wangan: the name stands plain on the night sky, wide like a badge; headings go wide too. No glitch, no glow ring.
    The name runs down the right edge in katakana, like a windscreen banner. */
-html[data-era="apex"] .hname::before, html[data-era="apex"] .hname::after, html[data-era="apex"] .cta::before { display: none; }
+html[data-era="apex"] .cta::before { display: none; }
 html[data-era="apex"] h2 { font-family: var(--font-display); font-weight: 800; letter-spacing: -.03em; }
 .kana { display: none; }
-html[data-era="apex"] .kana { display: block; position: absolute; right: var(--inset); top: 50%; translate: 0 -50%; writing-mode: vertical-rl;
+html[data-era="apex"] .kana { display: block; position: absolute; right: var(--inset); top: 64%; translate: 0 -50%;   /* below the written name */
+  writing-mode: vertical-rl;
   font: 900 clamp(1rem, 1.5vw, 1.4rem)/1 "Noto Sans JP Name", sans-serif; letter-spacing: .3em; color: var(--accent); animation: kana-in 900ms var(--ease-out-expo) 300ms both; }
 @keyframes kana-in { from { opacity: 0; translate: 0 calc(-50% - 24px); } }
 :root[data-motion="calm"] .kana { animation: none; }

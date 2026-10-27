@@ -44,7 +44,7 @@ themeBtn?.addEventListener('click', () => {
   if (root.dataset.era) { delete root.dataset.era; try { sessionStorage.removeItem('era'); } catch {} return; }
   root.dataset.theme = root.dataset.theme === 'light' ? 'dark' : 'light';
   try { localStorage.setItem('theme', root.dataset.theme); } catch {}
-  document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')!.content = root.dataset.theme === 'light' ? '#F4F4F2' : '#0E0E0E';
+  document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')!.content = root.dataset.theme === 'light' ? '#F4F4F2' : '#0A0910';
   themeLabel();
 });
 
