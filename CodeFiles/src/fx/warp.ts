@@ -1,8 +1,6 @@
 // The site's background, one fixed canvas behind every page.
-// Today: glowing ridges in deep wine reds, like folded silk catching the light (after React Bits' Glowing Ridges,
-// rebuilt by eye). Twelve layers of the same folds, each churning its own fine fibres, stack into one shimmering
-// film. It is full strength on the first screen and fades out completely as you scroll on to the projects, then
-// stops drawing.
+// Today: a curved horizon of square voxels rolling like a calm sea (see voxels() below). It is full strength on the
+// first screen and fades out completely as you scroll on to the projects, then stops drawing.
 // The time-jump eras swap it for their own world: 2049 a drafting grid with construction lines being drawn; the
 // Wangan a plain night ground under its own road canvas (fx/hyperspeed.ts).
 import { program, fullscreenVS, loop } from './gl';
@@ -17,7 +15,7 @@ in vec2 vUv;
 out vec4 o;
 uniform vec2 uRes;
 uniform float uTime, uGain, uPx;
-uniform int uMode;            // 0 ridges (today), 1 Wangan (plain ground), 3 blueprint (2049)
+uniform int uMode;            // 0 voxel sea (today), 1 Wangan (plain ground), 3 blueprint (2049)
 uniform vec3 uPaper, uStar, uAccent;
 uniform float uInk;           // 1 on light pages: strands are drawn as ink instead of added as light
 
@@ -25,75 +23,87 @@ const float TAU = 6.28318;
 // thin anti-aliased line at distance d (in the same units as w)
 float line(float d, float w) { return 1.0 - smoothstep(w * 0.5, w * 0.5 + fwidth(d) * 1.5, abs(d)); }
 
-// Glowing ridges (after React Bits' Glowing Ridges, rebuilt by eye): thin contour lines of a slowly rolling field,
-// folded by a few octaves of flowing noise, stacked as twelve slightly offset layers in three colours, so where they
-// overlap they read as iridescent film. A soft tone curve, then a touch of grain riding on the light.
-const float LAYERS = 12.0;
-const float ZOOM = 1.1;
-const float DENSITY = 11.0;     // scale of the flow inside the ridges
-const float TURB = 0.6;         // how hard the flow folds them
-const float FREQ = 1.0;         // ridges across the frame
-const float PHASE = 2.0;
-const float FLOW = 0.1;         // colours drifting along the ridges
-const float CHURN = 1.0;        // fine detail churning
-const float SWIRL = 16.0;
-const float EXPOSURE = 0.25;
-const float GAIN = 2.0;
-const float CYCLE = 0.4;        // palette steps per layer
+// Voxel arc (after React Bits' Voxel Arc, rebuilt by eye): a sea of small rounded square voxels lying on rolling
+// waves, seen from above, its horizon curving away at the sides like a planet's limb. Crests catch the light in
+// red, troughs fall to deep red, far rows soften into a glowing band along the horizon, and a wine haze
+// rises behind it. Each pixel marches its ray onto the waves, then draws the voxel grid where it lands.
+const vec3 VOX = vec3(1.0, 0.004, 0.0);          // #FF0100: troughs and distance
+const vec3 VOX_HI = vec3(0.941, 0.0, 0.082);     // #F00015: crests and the horizon light
+const float HORIZON = 0.56;                      // from the top of the frame
+const float CURVE = 0.5;                         // how much the horizon bends away at the sides
+const float SIZE = 0.55;                         // a voxel, as a share of the grid spacing
+const float ROUND = 0.2;                         // its corner rounding
+const float SPACING = 0.07;                      // grid spacing on the sea, in world units
 const float GRAIN = 0.25;
-const float OPACITY = 0.75;
-// deep wine reds: a hot red core, crimson, and wine in the shadows
-const vec3 COL_A = vec3(0.95, 0.12, 0.17), COL_B = vec3(0.62, 0.04, 0.13), COL_C = vec3(0.32, 0.02, 0.09);
 
 float hash(vec2 p) { p = fract(p * vec2(234.34, 435.345)); p += dot(p, p + 34.23); return fract(p.x * p.y); }
-vec3 tri(float k) {             // A -> B -> C -> A
-  k = fract(k) * 3.0;
-  return k < 1.0 ? mix(COL_A, COL_B, k) : k < 2.0 ? mix(COL_B, COL_C, k - 1.0) : mix(COL_C, COL_A, k - 2.0);
-}
 
-vec3 ridges(vec2 q) {
-  float t = uTime;
-  vec2 p = q * ZOOM;
-  // a slow swirl folds the whole sheet
-  p += vec2(sin(p.y * 1.7 + t * FLOW * 1.3), cos(p.x * 1.3 - t * FLOW * 1.1)) * 0.05 * TURB;
-  vec3 acc = vec3(0.0);
-  for (float i = 0.0; i < LAYERS; i++) {
-    // each layer churns its own fine fibres, so the stack shimmers instead of banding
-    vec2 v = p;
-    float s = 1.0;
-    for (int j = 0; j < 3; j++) {
-      v += sin(v.yx * DENSITY * s + vec2(t * CHURN * 0.6 + i * 0.7 + float(j) * 1.3, -t * CHURN * 0.45 + i * 0.4)) * (0.006 * TURB / s);
-      s *= 2.1;
-    }
-    // Each ridge is a fold: it drops steeply from the top, turns at a bright tip, and hooks briefly back up. The folds
-    // are one shape repeated sideways, their tips along a line that rises gently to the right. For any point, the
-    // two arms give which fold it lies on (c), and the ridges sit where c is a whole number.
-    float y = v.y + 0.34 - 0.16 * v.x;                    // height above the tips' line, low under the hero's copy
-    float h = abs(y);                                     // below the line the fold curls back under, briefly
-    float lean = v.x + 0.55 * h;                          // arms sweep left as they rise
-    float spread = sqrt(h / 4.5);
-    float drift = t * FLOW * 0.9 + i * 0.012 + PHASE * 0.1;
-    float cl = (lean + spread) / 0.32 * FREQ - drift;     // the long arm, rising up and to the left
-    float cr = (v.x + 0.08 * h - spread) / 0.32 * FREQ - drift;   // the short hook, curling up to the right
-    float rl = abs(sin(3.14159 * cl)), rr = abs(sin(3.14159 * cr));
-    float below = exp(min(y, 0.0) * 40.0);                // and fades out, so the tips round off softly
-    float wl = exp(-h * 1.6) * below, wr = exp(-h * 9.0) * below * 0.45;
-    vec3 tint = tri(i * CYCLE / 3.0 + t * FLOW * 0.15);
-    acc += tint * ((0.012 / (rl + 0.012)) * wl + (0.012 / (rr + 0.012)) * wr);
-    acc += COL_C * (0.004 / (rl + 0.4)) * wl;                     // a faint haze between the ridges
+// the swell rolls in toward the viewer; smaller crossing waves ride on it
+float waves(vec2 p, float t) {
+  return 0.34 * sin(p.y * 1.15 + p.x * 0.3 + t * 1.6)
+       + 0.24 * sin(p.y * 0.85 - p.x * 0.7 + t * 1.25 + 1.3)
+       + 0.13 * sin(p.x * 1.4 + p.y * 0.45 - t * 0.9 + 2.1)
+       + 0.05 * sin(p.x * 3.4 + p.y * 2.9 - t * 2.4);
+}
+const float BEND = 0.002 * CURVE / 0.5;
+float sea(vec3 p, float t) { return waves(p.xz, t) - BEND * (p.x * p.x + p.z * p.z); }   // the planet's curve
+
+vec3 voxels(vec2 q) {
+  float t = uTime * 0.5;
+  float yh = 0.5 - HORIZON;
+  // the sky: dark overhead, a wine haze rising from the middle of the horizon
+  vec3 sky = uPaper + VOX * 0.22 * exp(-max(q.y - yh, 0.0) * 4.0) * exp(-q.x * q.x * 0.7);
+  // and a thin arc of light hugging the far edge, bending down at the sides with the planet's curve
+  float limb = q.y - yh + 0.16 * q.x * q.x;
+  sky += VOX_HI * 0.32 * exp(-abs(limb) * 26.0) * exp(-q.x * q.x * 0.5);
+  // the curve drops the true horizon below eye level; aim up by as much so it sits at HORIZON in the frame
+  vec3 ro = vec3(0.0, 3.0, 0.0), rd = normalize(vec3(q.x, q.y - yh - sqrt(12.0 * BEND) * 1.25, 1.25));
+  if (rd.y > 0.0) return sky;
+  // march down the ray until it dips under the waves, then home in on the surface
+  float d = 0.4, prev = d;
+  bool hit = false;
+  for (int i = 0; i < 64; i++) {
+    vec3 p = ro + rd * d;
+    float above = p.y - sea(p, t);
+    if (above < 0.0) { hit = true; break; }
+    prev = d;
+    d += max(above * 0.6, 0.03 * d);
+    if (d > 120.0) break;
   }
-  // strongest through the middle of the frame, falling away to the edges
-  float fall = smoothstep(1.3, 0.1, length((q - vec2(0.1, -0.05)) * vec2(0.7, 1.0)));
-  vec3 col = (vec3(1.0) - exp(-acc * EXPOSURE * 3.6 * fall)) * GAIN * 0.6;
-  col += (hash(gl_FragCoord.xy + fract(t) * 91.0) - 0.5) * GRAIN * 0.5 * dot(col, vec3(0.33));
-  return max(col, 0.0) * OPACITY;
+  if (!hit) return sky;   // (only rays that clear every crest)
+  float lo = prev, hi = d;
+  for (int i = 0; i < 5; i++) { float m = (lo + hi) * 0.5; vec3 p = ro + rd * m; if (p.y - sea(p, t) < 0.0) hi = m; else lo = m; }
+  d = hi;
+  vec3 p = ro + rd * d;
+  // light: tops facing up and away catch it, so the crests glow and the faces toward us stay dark
+  float e = 0.05, h = waves(p.xz, t);
+  vec3 n = normalize(vec3(waves(p.xz - vec2(e, 0.0), t) - waves(p.xz + vec2(e, 0.0), t), 2.0 * e,
+                          waves(p.xz - vec2(0.0, e), t) - waves(p.xz + vec2(0.0, e), t)));
+  float lit = pow(clamp(dot(n, normalize(vec3(0.0, 1.0, 0.6))), 0.0, 1.0), 6.0);
+  float crest = smoothstep(-0.4, 0.6, h);
+  vec3 col = mix(VOX * 0.4, VOX_HI, clamp(lit * lit * (0.4 + 1.1 * crest), 0.0, 1.0));
+  col *= 0.8 + 2.0 * lit * crest + 0.5 * lit;
+  col += vec3(1.0, 0.75, 0.75) * 0.35 * pow(lit * crest, 3.0);   // the brightest crests bloom toward white
+  // the voxel: a rounded square in its grid cell; once cells shrink under a pixel they blur into an even glow
+  vec2 cell = p.xz / SPACING;
+  vec2 local = fract(cell) - 0.5;
+  float fw = length(fwidth(cell));
+  float half_ = SIZE * 0.5, r = ROUND * half_;
+  float sd = length(max(abs(local) - (half_ - r), 0.0)) - r;
+  float dot_ = 1.0 - smoothstep(-fw * 0.5, fw * 0.5, sd);
+  float mask = mix(dot_, SIZE * SIZE * 1.6, smoothstep(0.3, 0.9, fw));
+  vec3 field = mix(uPaper, col, mask);
+  // distance: far rows fade into the horizon's glow
+  float far = 1.0 - exp(-d * 0.028);
+  vec3 glow = mix(VOX, VOX_HI, 0.6);
+  field = mix(field, glow * (0.55 + 0.6 * crest), far * 0.85);
+  field = mix(field, sky, smoothstep(22.0, 60.0, d));           // the farthest rows melt into the sky's glow
+  field += VOX_HI * 0.3 * far * far * far;                                // the arc of light right along the horizon
+  field += (hash(gl_FragCoord.xy + fract(uTime) * 91.0) - 0.5) * GRAIN * 0.12 * mask;
+  return field;
 }
 
-vec3 today(vec2 q) {
-  vec3 light = ridges(q);
-  if (uInk > 0.5) return mix(uPaper, uPaper * (1.0 - light), clamp(uGain, 0.0, 1.0));
-  return uPaper + light * uGain;
-}
+vec3 today(vec2 q) { return mix(uPaper, voxels(q), uGain); }
 
 // 2049: a blueprint. A minor and major drafting grid, then construction lines drawn in: a circle, its centre
 // lines and a dimensioned box, redrawing slowly.
@@ -132,19 +142,24 @@ export function mountWarp(canvas: HTMLCanvasElement) {
   const { p, u } = program(gl, fullscreenVS, FS);
   gl.useProgram(p);
   let time = 3, gain = 1, mode = 0, drawn = -1;
+  let quality = 1, slow = 0;   // resolution scale, eased down on a machine that can't keep up
 
   function draw(dt: number) {
     // the opening covers the whole screen: nothing to draw under it
     if (root.classList.contains('intro')) return;
-    // the ridges fade out completely over the first screen; the eras' worlds settle to a whisper instead
+    // the sea fades out completely over the first screen; the eras' worlds settle to a whisper instead
     const k = Math.min(1, scrollY / (innerHeight * 0.85));
     const target = 1 - k * k * (3 - 2 * k) * (mode === 0 ? 1 : 0.78);
     gain += (target - gain) * Math.min(1, dt * 5);
-    // nothing moves once the ridges have faded out, or on the Wangan's plain ground: skip the work
+    // nothing moves once the sea has faded out, or on the Wangan's plain ground: skip the work
     const idle = (mode === 0 && gain < 0.004) || mode === 1;
     if (idle && drawn === mode) return;
     const cw = canvas.clientWidth, ch = canvas.clientHeight;
-    const dpr = Math.min(devicePixelRatio || 1, 1, Math.sqrt(MAX_PIXELS / Math.max(1, cw * ch)));   // soft light: 1x is plenty
+    // under ~45 fps for a moment, render a little smaller; back up again once there's headroom
+    slow += ((dt > 1 / 45 ? 1 : 0) - slow) * 0.05;
+    if (slow > 0.6 && quality > 0.6) { quality = Math.max(0.6, quality - 0.1); slow = 0; }
+    else if (slow < 0.02 && dt < 1 / 70 && quality < 1) quality = Math.min(1, quality + 0.002);
+    const dpr = Math.min(devicePixelRatio || 1, 1, Math.sqrt(MAX_PIXELS / Math.max(1, cw * ch))) * quality;
     const w = Math.max(1, Math.round(cw * dpr)), h = Math.max(1, Math.round(ch * dpr));
     if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
     time += dt;

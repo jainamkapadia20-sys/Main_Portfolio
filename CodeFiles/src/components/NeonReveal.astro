@@ -1,6 +1,6 @@
 ---
 // The projects' title card (after React Bits' Neon Reveal, built from scratch in CSS so it costs nothing to run):
-// a neon tube along the top flickers on as it scrolls into view, runs out from the middle, and pours its light down
+// a neon tube along the top flickers on when the line from the hero reaches it, runs out from that point, and pours its light down
 // over the heading, which lights up in it. Scroll back up past it and it all plays in reverse: the light draws back
 // up, the tube shrinks into its middle and goes out. The light fades before the stage ends, so the carousel
 // underneath sits on plain ground. Colours come from the era (--neon-* in global.css).
@@ -14,11 +14,11 @@ const { title, id } = Astro.props;
 </div>
 
 <style>
-  .neon { position: relative; isolation: isolate; display: grid; place-items: center; height: clamp(300px, 50svh, 540px); }
-  .tube { position: absolute; top: 24px; left: 6%; right: 6%; height: 3px; border-radius: 3px; background: var(--neon-tube);
+  .neon { position: relative; isolation: isolate; display: grid; place-items: center; height: clamp(300px, 46svh, 500px); }
+  .tube { position: absolute; top: 24px; left: 6%; right: 6%; height: 3px; border-radius: 3px; background: var(--neon-tube); transform-origin: var(--ox, 50%) 50%;
     box-shadow: 0 0 4px 1px var(--neon-tube), 0 0 16px 3px var(--neon-light), 0 0 44px 10px color-mix(in srgb, var(--neon-light) 55%, transparent); }
   /* the light it pours: brightest under the tube, through the light colour into a deep shade, then nothing */
-  .spill { position: absolute; inset: 24px 0 0; z-index: -1; transform-origin: 50% 0;
+  .spill { position: absolute; inset: 24px 0 0; z-index: -1; transform-origin: var(--ox, 50%) 0;
     background: radial-gradient(70% 100% at 50% 0%, color-mix(in srgb, var(--neon-tube) 55%, var(--neon-light)) 0%, var(--neon-light) 26%,
       var(--neon-deep) 56%, transparent 86%);
     /* feathered at the sides, so the light has no box edge */
@@ -48,7 +48,10 @@ const { title, id } = Astro.props;
 </style>
 
 <script>
-  // lights up as it scrolls in, and goes out again once it has scrolled away (either way)
-  document.querySelectorAll<HTMLElement>('[data-neon]').forEach((el) =>
-    new IntersectionObserver(([e]) => el.classList.toggle('lit', e.isIntersecting), { threshold: 0.3 }).observe(el));
+  import { calm } from '../lib/motion';
+  // On the home page the line from "See my work" switches it on (index.astro). Anywhere else, or with reduced motion,
+  // it lights up as it scrolls in and goes out once it has scrolled away.
+  if (calm() || !document.querySelector('[data-wire]'))
+    document.querySelectorAll<HTMLElement>('[data-neon]').forEach((el) =>
+      new IntersectionObserver(([e]) => el.classList.toggle('lit', e.isIntersecting), { threshold: 0.3 }).observe(el));
 </script>
