@@ -1,42 +1,103 @@
 ---
-// The close of every page: the full-screen laser contact, then links, then the name set across the full width.
+// The close of every page: the full-screen laser contact, then an editorial footer (after Wensity's "footer with
+// editorial tagline"): the name as a small spaced running head, one sentence set large as the headline, three
+// short link columns, a hairline rule with the copyright and socials, and the name as a light outlined wordmark
+// stretched across the full width. Hovering the wordmark fills it with red through a soft circle that follows
+// the pointer.
 import Contact from './Contact.astro';
 import { site } from '../site';
+const year = new Date().getFullYear();
 ---
 <footer class="foot" id="contact" aria-labelledby="contact-h">
   <Contact email={site.email} heading="Have a project or an internship in mind?" />
 
-  <div class="cols wrap">
-    <div>
-      <h3>Pages</h3>
-      <a href="/work">Work</a><a href="/about">About</a><a href="/car">Off the clock</a>
+  <div class="ed wrap">
+    <p class="label">{site.name}</p>
+    <p class="tagline">Designing where people meet machines: interfaces, identities and the in-car screens that make a drive feel effortless.</p>
+
+    <div class="cols">
+      <div>
+        <h3>Pages</h3>
+        <a href="/work">Work</a><a href="/about">About</a><a href="/car">Off the clock</a>
+      </div>
+      <div>
+        <h3>Practice</h3>
+        {site.disciplines.slice(0, 4).map((d) => <span>{d}</span>)}
+      </div>
+      <div>
+        <h3>Contact</h3>
+        <a href={`mailto:${site.email}`} data-copy-email={site.email}>Email</a>
+        <a href={site.instagram} rel="me">Instagram <span class="ext" aria-hidden="true">↗</span></a>
+        <a href={site.linkedin} rel="me">LinkedIn <span class="ext" aria-hidden="true">↗</span></a>
+      </div>
     </div>
-    <div>
-      <h3>Elsewhere</h3>
-      <a href={site.instagram} rel="me">Instagram</a><a href={site.linkedin} rel="me">LinkedIn</a>
-      <a href={`mailto:${site.email}`} data-copy-email={site.email}>Copy my email</a>
+
+    <div class="strip">
+      <p>© {year} {site.name}</p>
+      <p class="status"><span class="dot" aria-hidden="true"></span>{site.status}</p>
     </div>
-    <p class="status"><span class="dot" aria-hidden="true"></span>{site.status}</p>
   </div>
 
-  <p class="name" aria-hidden="true">{site.name}</p>
-  <p class="legal wrap small muted">© {new Date().getFullYear()} {site.name}</p>
+  <svg class="word" data-word viewBox="0 0 1000 120" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+    <defs>
+      <linearGradient id="word-fill" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" style="stop-color: color-mix(in oklab, var(--accent) 65%, #fff)" /><stop offset="55%" style="stop-color: var(--accent)" /><stop offset="100%" style="stop-color: color-mix(in oklab, var(--accent) 75%, #000)" />
+      </linearGradient>
+      <radialGradient id="word-spot" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(500 60) scale(260)" data-word-spot>
+        <stop offset="0%" stop-color="#fff" /><stop offset="100%" stop-color="#fff" stop-opacity="0" />
+      </radialGradient>
+      <mask id="word-mask"><rect width="1000" height="120" fill="url(#word-spot)" /></mask>
+    </defs>
+    <text class="outline" x="500" y="100" text-anchor="middle" textLength="940" lengthAdjust="spacingAndGlyphs">{site.name.toUpperCase()}</text>
+    <text class="fill" x="500" y="100" text-anchor="middle" textLength="940" lengthAdjust="spacingAndGlyphs" mask="url(#word-mask)">{site.name.toUpperCase()}</text>
+  </svg>
 </footer>
 
 <style>
   .foot { margin-top: var(--section); padding-bottom: var(--edge); overflow: hidden; }
-  .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; padding-block: 72px 48px; }
-  .cols div { display: grid; align-content: start; gap: 8px; }
-  h3 { font-size: var(--t-small); font-weight: 500; letter-spacing: 0; color: var(--graphite); margin-bottom: 4px; }
-  .cols a { justify-self: start; transition: color var(--duration-fast) var(--ease-smooth-out); }
-  .cols a:hover { color: var(--accent); }
-  .status { justify-self: end; display: inline-flex; align-items: center; gap: 10px; align-self: start; }
+  .ed { padding-block: clamp(64px, 9vw, 120px) 32px; }
+  /* the running head: small capitals, very wide tracking */
+  .label { font-size: .72rem; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; color: var(--graphite); }
+  /* the tagline is the headline of the footer */
+  .tagline { max-width: 26ch; margin-top: 20px; font-size: clamp(1.75rem, 1.1rem + 1.8vw, 2.5rem); font-weight: 400; line-height: 1.15;
+    letter-spacing: -.02em; text-wrap: balance; }
+  .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; margin-top: clamp(48px, 7vw, 88px); }
+  .cols div { display: grid; align-content: start; gap: 10px; }
+  h3 { font-size: .68rem; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--graphite); margin-bottom: 6px; }
+  .cols a, .cols span { justify-self: start; }
+  .cols a { position: relative; }
+  /* links grow an underline from the left */
+  .cols a::after { content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 1px; background: currentColor; scale: 0 1; transform-origin: left;
+    transition: scale 350ms var(--ease-out-expo); }
+  .cols a:hover::after, .cols a:focus-visible::after { scale: 1 1; }
+  .ext { display: inline-block; font-size: .8em; color: var(--graphite); }
+  .cols span { color: var(--graphite); }
+  .strip { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: clamp(48px, 7vw, 88px);
+    padding-top: 20px; border-top: 1px solid color-mix(in srgb, var(--ink) 10%, transparent); font-size: var(--t-small); color: var(--graphite); }
+  .status { display: inline-flex; align-items: center; gap: 10px; }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
-  /* the name returns at full width as the last word on every page */
-  .name { max-width: none; padding-inline: var(--edge); font-size: 12.4vw; font-weight: 500; letter-spacing: -.055em; line-height: .8; white-space: nowrap; }
-  .legal { margin-top: 16px; }
+
+  /* the wordmark: light capitals stretched edge to edge, outlined; the fill shows through a circle that follows the pointer */
+  .word { display: block; width: 100%; height: auto; margin-top: 8px; padding-inline: var(--edge); overflow: visible; }
+  .word text { font-family: var(--font-display); font-size: 108px; font-weight: var(--display-weight); }
+  .outline { fill: none; stroke: var(--accent); stroke-width: 1; opacity: .7; }
+  .fill { fill: url(#word-fill); opacity: 0; filter: drop-shadow(0 0 18px color-mix(in srgb, var(--accent) 55%, transparent)); transition: opacity 400ms var(--ease-smooth-out); }
+  .word:hover .fill { opacity: 1; }
+
   @media (max-width: 720px) {
     .cols { grid-template-columns: 1fr 1fr; }
-    .status { grid-column: 1 / -1; justify-self: start; }
   }
 </style>
+
+<script>
+  // the fill's spotlight follows the pointer across the wordmark
+  const word = document.querySelector<SVGSVGElement>('[data-word]');
+  const spot = document.querySelector<SVGRadialGradientElement>('[data-word-spot]');
+  if (word && spot) {
+    word.addEventListener('pointermove', (e) => {
+      const r = word.getBoundingClientRect();
+      const x = ((e.clientX - r.left) / r.width) * 1000, y = ((e.clientY - r.top) / r.height) * 120;
+      spot.setAttribute('gradientTransform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(260)`);
+    });
+  }
+</script>

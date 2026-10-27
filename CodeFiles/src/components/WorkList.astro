@@ -39,6 +39,7 @@ const cats = [...new Set(projects.map((p) => p.data.category))];
       ))}
     </ol>
     <div class="frame" aria-hidden="true">
+      <span class="bt"></span>
       {projects.map((p, i) => (
         <div class:list={['layer', { on: i === 0 }]} data-layer={i}>
           {p.data.preview ? <video src={withBase(p.data.preview)} muted loop playsinline preload="metadata" data-autoplay poster={covers[i]}></video>
@@ -61,7 +62,9 @@ const cats = [...new Set(projects.map((p) => p.data.category))];
   .names a[aria-current] .nm { translate: 12px 0; }
   .names a[aria-current] .meta { color: var(--accent); }
   .pic { display: none; }
-  .frame { position: sticky; top: 18vh; aspect-ratio: 4 / 3; border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+  .frame { position: sticky; top: 18vh; aspect-ratio: 4 / 3; border-radius: var(--radius); overflow: hidden; background: var(--surface); --bt-r: var(--radius); }
+  .grid:hover .frame :global(.bt) { opacity: 1; }
+  .grid:hover .frame :global(.bt)::before { animation-play-state: running; }
   .layer { position: absolute; inset: 0; opacity: 0; scale: 1.04; filter: blur(6px);
     transition: opacity 450ms var(--ease-smooth-out), scale 800ms var(--ease-out-expo), filter 450ms var(--ease-smooth-out); }
   .layer.on { opacity: 1; scale: 1; filter: none; }

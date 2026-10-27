@@ -4,10 +4,10 @@ import Base from '../layouts/Base.astro';
 import WorkList from '../components/WorkList.astro';
 import Skills from '../components/Skills.astro';
 import HeroName from '../components/HeroName.astro';
+import Intro from '../components/Intro.astro';
 import Roles from '../components/Roles.astro';
-import Metal from '../components/Metal.astro';
 import Cta from '../components/Cta.astro';
-import Featured from '../components/Featured.astro';
+import ConcaveCarousel from '../components/ConcaveCarousel.astro';
 import Strip from '../components/Strip.astro';
 import Music from '../components/Music.astro';
 import Road from '../components/Road.astro';
@@ -16,7 +16,6 @@ import { site } from '../site';
 import render from '../assets/car/poster-mod.png';
 
 const projects = await sortedProjects();
-const lead = projects[0];
 const roles = ['interfaces', 'identities', 'services', 'in-car screens'];
 // side work: the one finished piece on hand, and labelled slots for the sketches and drawings still to come
 const ideas = [
@@ -30,11 +29,25 @@ const ideas = [
 const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-arm t-learn-arm-top" d="M6 4L10 8" /><path class="t-learn-arm t-learn-arm-bot" d="M10 8L6 12" /></svg>';
 ---
 <Base>
-  <!-- Hero: one full screen. The particle monogram forms over the metal mark and bursts into the background field;
-       the name sits across the foot of the screen as a type specimen. -->
+  <!-- the opening plays on every load, never for reduced motion, and not right after a jump to lightspeed (that
+       arrival is its own entrance); decided before first paint so the page never flashes -->
+  <script is:inline slot="head">
+    try {
+      const jumped = sessionStorage.getItem('jumped');
+      sessionStorage.removeItem('jumped');
+      if (jumped) document.documentElement.classList.add('arrived');
+      else if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('intro');
+    } catch {}
+  </script>
+  <Intro slot="intro" />
+  <!-- Hero: one full screen over the glitter warp (the site background, strongest here);
+       the name sits in the middle: it staggers in, then rests in a soft glitch. -->
   <section class="hero" aria-labelledby="hero-h">
-    <div class="hero-top">
-      <div class="sheet">
+    <h1 id="hero-h" class="hero-name">
+      <span class="sr-only">{site.name}</span>
+      <span class="name-fx" aria-hidden="true"><HeroName text={site.name} /></span>
+    </h1>
+    <div class="sheet">
         <p class="hero-roles" data-reveal style="--i:1">
           <span class="sr-only">I design interfaces, identities, services and in-car screens.</span>
           <span aria-hidden="true" class="roles-row">I design <Roles items={roles} /></span>
@@ -44,23 +57,17 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
           <Cta href="#work">See my work</Cta>
           <a class="btn" href="/about">About me</a>
         </div>
-      </div>
-      <div class="mark"><Metal anchor reform /></div>
     </div>
-    <h1 id="hero-h" class="hero-name">
-      <span class="sr-only">{site.name}</span>
-      <span class="name-fx" aria-hidden="true"><HeroName text={site.name} /></span>
-    </h1>
-    <div class="hero-bar small"><span><span class="dot" aria-hidden="true"></span>{site.status}</span><span class="muted hint">Click anywhere empty to send a shockwave. Click the mark to rebuild it.</span></div>
+    <div class="hero-bar small"><span><span class="dot" aria-hidden="true"></span>{site.status}</span></div>
   </section>
 
-  <!-- The lead project opens up to the full screen as you scroll -->
+  <!-- Every project on a wall that curves around the viewer: drag or use the arrows, click the centre panel to open -->
   <section class="featured section" aria-labelledby="featured-h">
     <div class="wrap sec-head">
-      <h2 id="featured-h" class="head" data-reveal>Latest project</h2>
-      <p class="muted" data-reveal style="--i:1">{lead.data.placeholder ? 'A slot for the next project. Keep scrolling and it opens up.' : `${lead.data.type}, ${lead.data.year}. Keep scrolling and it opens up.`}</p>
+      <h2 id="featured-h" class="head" data-reveal>Projects</h2>
+      <p class="muted" data-reveal style="--i:1">Drag the wall or use the arrows. Click the centre panel to open it.</p>
     </div>
-    <Featured title={lead.data.title} summary={lead.data.summary} href={`/work/${lead.id}`} placeholder={lead.data.placeholder} />
+    <ConcaveCarousel />
   </section>
 
   <section class="section wrap" id="work" aria-labelledby="work-h">
@@ -109,12 +116,14 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
 </Base>
 
 <style>
-  /* hero: one full screen. Copy and the metal mark share the top; the name spans the foot, edge to edge. */
-  .hero { position: relative; display: grid; grid-template-rows: 1fr auto auto; height: 100svh; min-height: 640px; padding: var(--nav-h) var(--edge) 0; }
-  .hero-top { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); align-items: center; gap: 24px; min-height: 0; }
-  .sheet { display: flex; flex-direction: column; gap: 28px; padding-inline: var(--pad); }
-  .mark { height: min(100%, 46svh); aspect-ratio: 1; justify-self: center; align-self: center; }
-  .name-fx { display: block; height: clamp(84px, 15vw, 260px); color: var(--ink); }
+  /* hero: one full screen. The name sits in the middle, edge to edge; the copy stacks centred under it. */
+  .hero { position: relative; isolation: isolate; display: grid; grid-template-rows: 1fr auto auto 1fr auto; min-height: max(100svh, 640px); padding: var(--nav-h) var(--edge) 0; }
+  .hero-name { grid-row: 2; margin-bottom: clamp(12px, 2.4vw, 32px); }
+  .sheet { grid-row: 3; display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 24px var(--pad) 0; text-align: center; }
+  .hero-intro { margin-inline: auto; }
+  .hero-actions { justify-content: center; }
+  .hero-bar { grid-row: 5; }
+  .name-fx { display: block; text-align: center; font-family: var(--font-display); font-size: var(--name-size, clamp(1.6rem, 4.6vw, 6rem)); font-weight: var(--display-weight); letter-spacing: var(--name-track, -.035em); line-height: 1.05; color: var(--ink); }
   .hero-roles { font-size: clamp(1.75rem, 1rem + 2.2vw, 3.25rem); font-weight: 500; letter-spacing: -.03em; line-height: 1.1; }
   .roles-row { display: inline-flex; align-items: center; gap: .3em; flex-wrap: wrap; }
   .hero-intro { color: var(--graphite); max-width: 40ch; font-size: var(--t-lead); line-height: 1.4; }
@@ -141,11 +150,7 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
   .clock-copy { display: grid; gap: 20px; justify-items: start; max-width: 520px; }
 
   @media (max-width: 860px) {
-    .hero { grid-template-rows: auto 1fr auto auto; height: auto; min-height: 100svh; }
-    .hero-top { grid-template-columns: 1fr; }
-    .mark { order: -1; height: auto; width: min(64vw, 300px); margin-top: 16px; }
     .sheet { padding: 8px 8px 24px; }
-    .name-fx { height: 18vw; }
     .hero-bar { flex-direction: column; padding-inline: 8px; }
     .note { grid-template-columns: 1fr; }
     .ideas-strip { height: 72svh; }

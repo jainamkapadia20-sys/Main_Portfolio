@@ -3,7 +3,7 @@
 interface Props { versions: { label: string; url: string }[] }
 const { versions } = Astro.props;
 ---
-<div class="car-model" data-car data-own-pointer>
+<div class="car-model" data-car>
   <canvas aria-label="3D model of the car. Drag to turn, pinch to zoom, double-click to reset." role="img"></canvas>
   <div class="switch" role="group" aria-label="Version of the model">
     {versions.map((v, i) => <button type="button" aria-pressed={String(i === 0)} data-model={v.url}>{v.label}</button>)}

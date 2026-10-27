@@ -4,7 +4,7 @@
 interface Props { items: { src: string; alt: string }[] }
 const { items } = Astro.props;
 ---
-<div class="trail" data-trail data-own-pointer>
+<div class="trail" data-trail>
   <p class="hint" aria-hidden="true">Move your cursor or finger here</p>
   {items.map((it) => <img data-trail-img src={it.src} alt="" aria-hidden="true" loading="lazy" decoding="async" draggable="false" />)}
 </div>

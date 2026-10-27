@@ -11,7 +11,7 @@ export const site = {
     'Jainam Kapadia, a design student working across UI/UX, graphic, service and HMI design, with a sketchbook always open.',
   nav: [
     { href: '/work', label: 'Work' },
-    { href: '/about', label: 'About' },
+    { href: '/about', label: 'About me' },
     { href: '#contact', label: 'Contact' },
   ],
   // Sample playlist until Jainam picks his own (any Spotify track, album or playlist URI works here)

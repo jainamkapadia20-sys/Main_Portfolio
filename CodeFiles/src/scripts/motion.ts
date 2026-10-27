@@ -41,24 +41,13 @@ const themeBtn = document.querySelector<HTMLButtonElement>('[data-theme-toggle]'
 const themeLabel = () => themeBtn?.setAttribute('aria-label', root.dataset.theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme');
 themeLabel();
 themeBtn?.addEventListener('click', () => {
+  // inside a time-jump era, the switch first brings you home to the base theme
+  if (root.dataset.era) { delete root.dataset.era; try { sessionStorage.removeItem('era'); } catch {} return; }
   root.dataset.theme = root.dataset.theme === 'light' ? 'dark' : 'light';
   try { localStorage.setItem('theme', root.dataset.theme); } catch {}
   document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')!.content = root.dataset.theme === 'light' ? '#F4F4F2' : '#0E0E0E';
   themeLabel();
 });
-
-// Motion switch: Full or Calm. The WebGL pieces read it when they start, so the page reloads after the thumb lands.
-const motionBtn = document.querySelector<HTMLButtonElement>('[data-motion-toggle]');
-if (motionBtn) {
-  motionBtn.setAttribute('aria-checked', String(!calm()));
-  motionBtn.addEventListener('click', () => {
-    const full = motionBtn.getAttribute('aria-checked') !== 'true';
-    motionBtn.classList.add('is-init');
-    motionBtn.setAttribute('aria-checked', String(full));
-    try { localStorage.setItem('motion', full ? 'full' : 'calm'); } catch {}
-    setTimeout(() => location.reload(), 380);
-  });
-}
 
 // Copy email. The links are real mailto links, so they still work without JS or a clipboard.
 const toast = document.querySelector<HTMLElement>('[data-toast]');

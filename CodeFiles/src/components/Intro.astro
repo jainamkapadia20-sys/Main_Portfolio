@@ -1,0 +1,51 @@
+---
+// The home page's opening (src/fx/intro.ts): my name, small, in the middle of a black screen (as tejj.in shows
+// "TEJJ"), then the room of type, then the whole layer fades away over the finished page. Plays on every load;
+// a click or any key skips it; reduced motion never sees it. The page decides whether to play before first paint,
+// by the inline script in index.astro, which puts `intro` on <html>.
+import { site } from '../site';
+---
+<div class="intro" id="intro" role="button" tabindex="0" aria-label="Skip the opening animation" data-intro>
+  <canvas class="room" aria-hidden="true" data-intro-room></canvas>
+  <span class="mark" aria-hidden="true">{site.name}</span>
+</div>
+
+<style>
+  .intro { display: none; }
+  :global(html.intro) .intro, .intro.leaving { position: fixed; inset: 0; z-index: 1000; display: block; background: var(--paper); cursor: pointer;
+    transition: opacity 1800ms cubic-bezier(.45, 0, .55, 1); }
+  .intro.leaving { opacity: 0; pointer-events: none; }
+  .room { position: absolute; inset: 0; width: 100%; height: 100%; }
+  /* the name: small, in the accent; it fades as the room begins */
+  .mark { position: absolute; left: 50%; top: 50%; translate: -50% -50%; font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(14px, 1.5vw, 22px); white-space: nowrap;
+    color: var(--accent); letter-spacing: .04em;
+    transition: opacity 400ms cubic-bezier(.45, 0, .55, 1) 200ms; }
+  .mark.gone { opacity: 0; }
+  /* while the opening plays, the page underneath waits: the name holds its stagger until the room clears */
+  :global(html.intro) { overflow: hidden; }
+</style>
+
+<script>
+  import { playIntro } from '../fx/intro';
+  const el = document.querySelector<HTMLElement>('[data-intro]');
+  const root = document.documentElement;
+  if (el && root.classList.contains('intro')) {
+    const signal = { skipped: false };
+    const skip = () => { signal.skipped = true; };
+    el.addEventListener('click', skip);
+    el.addEventListener('keydown', (e) => { if (['Enter', ' ', 'Escape'].includes(e.key)) { e.preventDefault(); skip(); } });
+    el.focus({ preventScroll: true });
+    // the name holds alone for a beat, then fades as the room begins
+    const mark = el.querySelector('.mark')!;
+    new Promise((r) => setTimeout(r, 900)).then(() => {
+      mark.classList.add('gone');
+      return signal.skipped ? undefined : playIntro(el.querySelector('canvas')!, signal);
+    }).finally(() => {
+      // hand over: the page is revealed underneath and starts its own entrances (name, navbar)
+      el.classList.add('leaving');
+      root.classList.remove('intro');
+      document.dispatchEvent(new CustomEvent('intro:done'));
+      setTimeout(() => el.remove(), 1900);
+    });
+  }
+</script>

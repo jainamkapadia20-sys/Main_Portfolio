@@ -1,11 +1,10 @@
 ---
-// The JK monogram in liquid metal (src/fx/metal.ts). With `anchor`, the background's particle monogram forms on
-// top of it and bursts away to reveal it; with `reform`, clicking it sends the particles home to burst again.
-interface Props { anchor?: boolean; reform?: boolean; label?: string }
-const { anchor = false, reform = false, label = 'Burst the monogram again' } = Astro.props;
+// The JK monogram in liquid metal (src/fx/metal.ts). With `reform`, clicking it dissolves it out and back in.
+interface Props { reform?: boolean; label?: string }
+const { reform = false, label = 'Replay the monogram' } = Astro.props;
 ---
-<div class="metal" data-field-anchor={anchor ? '' : undefined}>
-  <canvas data-metal={reform ? 'reform' : ''} aria-hidden="true" data-own-pointer></canvas>
+<div class="metal">
+  <canvas data-metal={reform ? 'reform' : ''} aria-hidden="true"></canvas>
   {reform && <button class="sr-only" type="button" data-metal-again>{label}</button>}
 </div>
 

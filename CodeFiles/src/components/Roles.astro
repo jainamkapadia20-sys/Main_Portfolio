@@ -1,53 +1,72 @@
 ---
-// "I design ___": the word rolls letter by letter inside a red highlight that resizes to fit each word.
-// Two loops, then it rests on the first word. Hover pauses it. Calm shows the first word, still.
+// "I design ___": the word morphs into the next one. Two copies cross-fade through a heavy blur, and an SVG
+// threshold filter snaps the blurred edges back to crisp ink, so the letters seem to melt into each other.
+// The red highlight eases between word widths. Calm shows the first word, still.
 interface Props { items: string[] }
 const { items } = Astro.props;
 ---
-<span class="roles" data-roles={JSON.stringify(items)}><span class="word" data-word>{[...items[0]].map((c) => <span class="ch">{c === ' ' ? ' ' : c}</span>)}</span></span>
+<span class="roles" data-roles={JSON.stringify(items)}>
+  <span class="morph"><span class="w" data-a>{items[0]}</span><span class="w" data-b aria-hidden="true"></span></span>
+</span>
+<svg class="goo" aria-hidden="true" focusable="false">
+  <defs>
+    <filter id="roles-goo">
+      <feColorMatrix in="SourceGraphic" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 255 -140" />
+    </filter>
+  </defs>
+</svg>
 
 <style>
-  .roles { display: inline-flex; overflow: hidden; vertical-align: bottom; padding: .04em .3em .1em; border-radius: .22em; background: var(--accent); color: var(--on-accent);
-    line-height: 1.1; transition: width 520ms var(--ease-out-expo); }
-  .word { display: inline-flex; white-space: pre; }
-  .ch { display: inline-block; transition: transform 560ms var(--ease-out-expo), opacity 380ms var(--ease-smooth-out); }
-  .ch.out { transform: translateY(-120%); opacity: 0; }
-  .ch.pre { transform: translateY(100%); opacity: 0; transition: none; }
+  .roles { position: relative; display: inline-block; vertical-align: bottom; padding: .04em .3em .1em; border-radius: .22em;
+    background: var(--accent); color: var(--on-accent); line-height: 1.1; white-space: nowrap; transition: width 900ms var(--ease-out-expo); }
+  .morph { position: relative; display: inline-block; filter: url(#roles-goo) blur(.4px); }
+  .w { display: inline-block; white-space: nowrap; }
+  [data-b] { position: absolute; left: 0; top: 0; opacity: 0; }
+  .goo { position: absolute; width: 0; height: 0; }
 </style>
 
 <script>
   import { calm } from '../lib/motion';
+  const MORPH = 1.5, HOLD = 1.6; // seconds: the cross-fade, then the rest on each word
   document.querySelectorAll<HTMLElement>('[data-roles]').forEach((el) => {
     const items: string[] = JSON.parse(el.dataset.roles!);
     if (calm() || items.length < 2) return;
-    const STAGGER = 18, HOLD = 2400;
-    let i = 0, laps = 0, paused = false;
-    el.addEventListener('pointerenter', () => (paused = true));
-    el.addEventListener('pointerleave', () => (paused = false));
-    const chars = (w: string) => [...w].map((c) => { const s = document.createElement('span'); s.className = 'ch pre'; s.textContent = c === ' ' ? ' ' : c; return s; });
-    // the highlight animates between word widths, so measure the next word before swapping
-    const widthOf = (spans: HTMLElement[]) => {
-      const probe = document.createElement('span'); probe.className = 'word'; probe.style.cssText = 'position:absolute;visibility:hidden';
-      spans.forEach((s) => probe.appendChild(s.cloneNode(true))); el.appendChild(probe);
-      const w = probe.getBoundingClientRect().width; probe.remove(); return w;
+    const a = el.querySelector<HTMLElement>('[data-a]')!, b = el.querySelector<HTMLElement>('[data-b]')!;
+    const pad = () => parseFloat(getComputedStyle(el).paddingLeft) * 2;
+    const widthOf = (t: string) => { b.textContent = t; const w = b.getBoundingClientRect().width; return w; };
+    let i = 0, t0 = performance.now(), phase: 'hold' | 'morph' = 'hold', visible = true, raf = 0;
+    el.style.width = `${a.getBoundingClientRect().width + pad()}px`;
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible && !raf) raf = requestAnimationFrame(tick); }).observe(el);
+
+    // each copy's blur grows as it fades; the threshold filter turns the overlap into a melt
+    // the blur is scaled to the word size: at headline size 8px melts, at this size it would erase the letters
+    const k = parseFloat(getComputedStyle(el).fontSize) / 80;
+    const set = (f: number) => {
+      b.style.filter = `blur(${Math.min((8 / Math.max(f, 1e-3) - 8) * k, 40)}px)`;
+      b.style.opacity = String(Math.pow(f, 0.4));
+      a.style.filter = `blur(${Math.min((8 / Math.max(1 - f, 1e-3) - 8) * k, 40)}px)`;
+      a.style.opacity = String(Math.pow(1 - f, 0.4));
     };
-    el.style.width = `${el.getBoundingClientRect().width}px`;
-    const step = () => {
-      if (paused) return setTimeout(step, 400);
-      const word = el.querySelector<HTMLElement>('[data-word]')!;
-      const old = [...word.children] as HTMLElement[];
-      old.reverse().forEach((c, k) => setTimeout(() => c.classList.add('out'), k * STAGGER));
-      i = (i + 1) % items.length;
-      if (i === 0) laps++;
-      const next = chars(items[i]);
-      const pad = parseFloat(getComputedStyle(el).paddingLeft) * 2;
-      setTimeout(() => {
-        el.style.width = `${widthOf(next) + pad}px`;
-        word.replaceChildren(...next);
-        next.reverse().forEach((c, k) => setTimeout(() => c.classList.remove('pre'), 20 + k * STAGGER));
-        if (laps < 2 || i !== 0) setTimeout(step, HOLD);
-      }, old.length * STAGGER + 220);
-    };
-    setTimeout(step, HOLD);
+    function tick(now: number) {
+      raf = 0;
+      if (!visible) return;
+      const s = (now - t0) / 1000;
+      if (phase === 'hold' && s > HOLD) {
+        phase = 'morph'; t0 = now;
+        const next = items[(i + 1) % items.length];
+        el.style.width = `${widthOf(next) + pad()}px`;
+      } else if (phase === 'morph') {
+        const f = Math.min(1, s / MORPH);
+        set(f);
+        if (f >= 1) {
+          i = (i + 1) % items.length;
+          a.textContent = items[i]; a.style.filter = ''; a.style.opacity = '1';
+          b.style.opacity = '0'; b.style.filter = '';
+          phase = 'hold'; t0 = now;
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    }
+    raf = requestAnimationFrame(tick);
   });
 </script>

@@ -1,9 +1,8 @@
 // The JK monogram poured in liquid metal. The strokes are rasterised twice (sharp for the edge, blurred for a
 // rounded height), the shader lights that height like polished chrome with slow-moving reflections, and the mark
-// tilts toward the pointer. It dissolves in when the background's particle monogram bursts (`field:burst`), and a
-// click on it sends the particles home to burst again.
+// tilts toward the pointer. It dissolves in just after load, and a click dissolves it out and back in.
 import { program, fullscreenVS, fit, loop, approach, monogramCanvas } from './gl';
-import { onTheme } from '../lib/theme';
+import { onTheme, palettes, rgb } from '../lib/theme';
 import { calm } from '../lib/motion';
 
 const FS = `
@@ -97,12 +96,11 @@ export function mountMetal(canvas: HTMLCanvasElement, opts: { reform?: boolean }
       tilt.tx = Math.max(-1, Math.min(1, (e.clientX - (r.left + r.width / 2)) / (r.width * 1.5)));
       tilt.ty = Math.max(-1, Math.min(1, (e.clientY - (r.top + r.height / 2)) / (r.height * 1.5)));
     }, { passive: true });
-    // the background monogram bursts and leaves this one behind; without a field (or if it is late), appear anyway
-    document.addEventListener('field:burst', () => (revealTarget = 1));
-    setTimeout(() => (revealTarget = 1), 2600);
+    // it dissolves in shortly after load; a click dissolves it out and back in
+    setTimeout(() => (revealTarget = 1), 350);
     if (opts.reform) canvas.addEventListener('click', () => {
       revealTarget = 0;
-      document.dispatchEvent(new CustomEvent('field:reform'));
+      setTimeout(() => (revealTarget = 1), 450);
     });
   }
 
@@ -128,7 +126,7 @@ export function mountMetal(canvas: HTMLCanvasElement, opts: { reform?: boolean }
 
   onTheme((t) => {
     light = t === 'light' ? 1 : 0;
-    accent = t === 'light' ? [0.78, 0.12, 0.09] : [1, 0.23, 0.19];
+    accent = rgb(palettes[t].accent);
     if (still) draw(0);
   });
 

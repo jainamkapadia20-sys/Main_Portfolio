@@ -1,15 +1,54 @@
 ---
-// The name as a type specimen (src/fx/specimen.ts). The page keeps the real text in its h1; this is the picture of it.
+// The name, as real text. It loads in letter by letter (each one drops from above out of a blur, 80ms apart), then
+// eases into its resting state: a chromatic glitch, where two copies of the name in cyan and red jump through thin
+// horizontal slices on out-of-step loops. CSS only, all on the GPU. Reduced motion shows the name, still.
 interface Props { text: string }
 const { text } = Astro.props;
 ---
-<canvas class="specimen" data-specimen={text} data-own-pointer aria-hidden="true"></canvas>
+<span class="hname" data-text={text} data-hname>{[...text].map((c, i) => <span class="c" style={`--i:${i}`}>{c === ' ' ? ' ' : c}</span>)}</span>
 
 <style>
-  .specimen { display: block; width: 100%; height: 100%; touch-action: pan-y; }
+  .hname { position: relative; display: inline-block; white-space: nowrap; --cyan: #5EE7FF; --red: var(--accent); }
+
+  /* load-in: staggered from the top, out of a blur */
+  .c { display: inline-block; white-space: pre; animation: c-in 1s cubic-bezier(.22, 1, .36, 1) both; animation-delay: calc(var(--i) * 80ms); }
+  @keyframes c-in { from { opacity: 0; transform: translateY(-.55em); filter: blur(10px); } }
+
+  /* rest: two channel copies sit over the name, masked to slices that jump on desynced loops */
+  .hname::before, .hname::after { content: attr(data-text); position: absolute; inset: 0; background: var(--paper);
+    opacity: 0; transition: opacity 700ms var(--ease-smooth-out); pointer-events: none; }
+  .hname::before { left: 4px; text-shadow: -2px 0 var(--cyan); }
+  .hname::after { left: -4px; text-shadow: 2px 0 var(--red); }
+  .hname.rest::before { opacity: 1; animation: g-a 2.4s steps(1) infinite; }
+  .hname.rest::after { opacity: 1; animation: g-b 3.1s steps(1) infinite; }
+  @keyframes g-a {
+    0% { clip-path: inset(12% 0 78% 0); } 8% { clip-path: inset(64% 0 22% 0); } 16% { clip-path: inset(38% 0 52% 0); }
+    24% { clip-path: inset(84% 0 4% 0); } 32% { clip-path: inset(4% 0 90% 0); } 40% { clip-path: inset(52% 0 40% 0); }
+    48% { clip-path: inset(26% 0 66% 0); } 56% { clip-path: inset(72% 0 16% 0); } 64% { clip-path: inset(44% 0 48% 0); }
+    72% { clip-path: inset(8% 0 82% 0); } 80% { clip-path: inset(60% 0 30% 0); } 88% { clip-path: inset(30% 0 62% 0); }
+    100% { clip-path: inset(90% 0 2% 0); }
+  }
+  @keyframes g-b {
+    0% { clip-path: inset(70% 0 18% 0); } 9% { clip-path: inset(20% 0 72% 0); } 18% { clip-path: inset(48% 0 40% 0); }
+    27% { clip-path: inset(6% 0 86% 0); } 36% { clip-path: inset(80% 0 10% 0); } 45% { clip-path: inset(34% 0 58% 0); }
+    54% { clip-path: inset(58% 0 34% 0); } 63% { clip-path: inset(14% 0 76% 0); } 72% { clip-path: inset(88% 0 4% 0); }
+    81% { clip-path: inset(42% 0 50% 0); } 90% { clip-path: inset(24% 0 68% 0); } 100% { clip-path: inset(66% 0 26% 0); }
+  }
+
+  .hname.off::before, .hname.off::after { animation-play-state: paused; }
+  /* while the opening room plays, the letters wait at their starting point; they drop in as it fades */
+  :global(html.intro) .c { animation-play-state: paused; }
+  :global(:root[data-motion="calm"]) .c { animation: none; }
+  :global(:root[data-motion="calm"]) .hname::before, :global(:root[data-motion="calm"]) .hname::after { display: none; }
 </style>
 
 <script>
-  import { mountSpecimen } from '../fx/specimen';
-  document.querySelectorAll<HTMLCanvasElement>('[data-specimen]').forEach((c) => mountSpecimen(c, c.dataset.specimen!));
+  import { calm } from '../lib/motion';
+  // hand over to the resting glitch once the last letter has landed; pause it while it is off screen
+  document.querySelectorAll<HTMLElement>('[data-hname]').forEach((el) => {
+    if (calm()) return;
+    const last = el.lastElementChild as HTMLElement;
+    last.addEventListener('animationend', () => el.classList.add('rest'), { once: true });
+    new IntersectionObserver(([e]) => el.classList.toggle('off', !e.isIntersecting)).observe(el);
+  });
 </script>

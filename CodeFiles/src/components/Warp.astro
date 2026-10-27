@@ -1,0 +1,19 @@
+---
+// The site's background: the glitter warp (src/fx/warp.ts), fixed behind every page. Strong on the first screen,
+// a faint slow drift everywhere else. Decorative.
+---
+<canvas class="warp" data-warp aria-hidden="true"></canvas>
+
+<style>
+  .warp { position: fixed; inset: 0; width: 100vw; height: 100lvh; z-index: -1; pointer-events: none; }
+  /* the jump to lightspeed: the starfield rises over the page, then sinks back behind it */
+  .warp.jump { z-index: 1100; opacity: 0; transition: opacity 250ms ease-out; }
+  .warp.jump.jump-on { opacity: 1; }
+  .warp.jump:not(.jump-on) { transition-duration: 450ms; }
+</style>
+
+<script>
+  import { mountWarp } from '../fx/warp';
+  const c = document.querySelector<HTMLCanvasElement>('[data-warp]');
+  if (c) mountWarp(c);
+</script>
