@@ -13,8 +13,8 @@ export type Theme = keyof typeof palettes;
 /** The time-jump cycle, in order. `dark` is home: the present day. */
 export const eras = [
   { id: 'dark', year: '2026', name: 'Hyperdrive' },
-  { id: 'apex', year: '1998', name: 'Apex' },
   { id: 'blueprint', year: '2049', name: 'Blueprint' },
+  { id: 'apex', year: '1998', name: 'Apex' },
 ] as const;
 
 export const theme = (): Theme => {
