@@ -176,6 +176,9 @@ html.arrived::after { content: ""; position: fixed; inset: 0; z-index: 1200; bac
    The name runs down the right edge in katakana, like a windscreen banner. */
 html[data-era="apex"] .hname::before, html[data-era="apex"] .hname::after, html[data-era="apex"] .cta::before { display: none; }
 html[data-era="apex"] h2 { font-family: var(--font-display); font-weight: 800; letter-spacing: -.03em; }
+/* a soft dark scrim keeps the hero copy readable while the light trails sweep behind it */
+html[data-era="apex"] .hero::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(ellipse 46% 40% at 50% 46%, rgb(7 8 11 / .82), rgb(7 8 11 / .5) 55%, transparent 80%); }
 .kana { display: none; }
 html[data-era="apex"] .kana { display: block; position: absolute; right: var(--inset); top: 50%; translate: 0 -50%; writing-mode: vertical-rl;
   font: 900 clamp(1rem, 1.5vw, 1.4rem)/1 "Noto Sans JP Name", sans-serif; letter-spacing: .3em; color: var(--accent); animation: kana-in 900ms var(--ease-out-expo) 300ms both; }

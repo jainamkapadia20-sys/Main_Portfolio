@@ -5,7 +5,7 @@
 // slow drift as you scroll, so the page never cuts to black.
 // It also does the jump to lightspeed (a `warp:jump` event, sent by the JK in the navbar): the starfield rises over
 // the page, the stars stretch into long blue-white lines as it accelerates, a white flash, and out the other side.
-// Each time-jump era swaps the stars for its own world: the Wangan a night drive along Tokyo Bay,
+// Each time-jump era swaps the stars for its own world: the Wangan a plain night ground under its own road canvas,
 // 2049 a drafting grid with construction lines being drawn.
 import { program, fullscreenVS, loop } from './gl';
 import { onTheme, palettes, rgb, type Theme } from '../lib/theme';
@@ -18,7 +18,7 @@ in vec2 vUv;
 out vec4 o;
 uniform vec2 uRes;
 uniform float uTime, uGain, uJump, uFlash, uPx;
-uniform int uMode;            // 0 stars, 1 Wangan night drive, 3 blueprint (2049)
+uniform int uMode;            // 0 stars, 1 Wangan (plain ground), 3 blueprint (2049)
 uniform vec3 uPaper, uStar, uAccent;
 
 const float LAYERS = 6.0;
@@ -61,75 +61,6 @@ const float TAU = 6.28318;
 // thin anti-aliased line at distance d (in the same units as w)
 float line(float d, float w) { return 1.0 - smoothstep(w * 0.5, w * 0.5 + fwidth(d) * 1.5, abs(d)); }
 
-// Wangan: the Shuto expressway along Tokyo Bay at night, modern JDM. The horizon sits low, under the hero's buttons,
-// so the text stands on a clear night sky: the city skyline in two layers with scattered lit windows and red aircraft
-// lights blinking on the towers, a cool glow over it. Below, the elevated road: sodium lamps along both edges pass
-// in a steady rhythm and pool orange on the tarmac, lane dashes stream past, tail lights run away in crimson near
-// the vanishing point. Kept dim and slow; it is a mood, not a game.
-float skyline(float x, float cols, float tall, float seed) {
-  float id = floor(x * cols + seed);
-  float hgt = 0.012 + pow(hash(vec2(id, seed)), 3.0) * tall;
-  return hgt;
-}
-vec3 apex(vec2 q) {
-  float h = -0.3;                                    // horizon, below the hero's content
-  vec3 sodium = vec3(1.0, 0.6, 0.22);
-  vec3 col = uPaper;
-  if (q.y < h) {
-    float z = 0.09 / (h - q.y);                      // distance down the road
-    float travel = uTime * 5.0;
-    float sway = sin((z + travel) * 0.045) * 0.6 - sin(travel * 0.045) * 0.6;   // the long bend of the bay shore
-    float x = q.x * z - sway;                        // across the road, in lane units (lanes are 1 wide)
-    float fog = exp(-z * 0.12);
-    float sharp = clamp(1.0 - fwidth(x) * 3.0, 0.0, 1.0);   // lines that shrink below a pixel fade out instead of smearing into a band
-    float onRoad = 1.0 - smoothstep(1.55, 1.6, abs(x));
-    float beat = fract((z + travel) * 0.08);         // one lamp every 12.5 units
-    float pool = 0.5 + 0.5 * cos(TAU * beat);
-    col = mix(uPaper, uPaper * 1.5 + 0.01 + sodium * 0.05 * pool, onRoad * fog);
-    float w = 0.05;
-    float edges = line(abs(x) - 1.5, w) * onRoad;
-    float dash = step(fract((z + travel) * 0.22), 0.45);
-    float lanes = (line(x - 0.5, w) + line(x + 0.5, w)) * dash;
-    col += (uStar * 0.2) * (edges + lanes) * fog * sharp;
-    float lamps = line(abs(x) - 1.62, 0.12) * smoothstep(0.08, 0.0, abs(beat - 0.5));
-    col += sodium * 1.4 * lamps * fog * sharp;
-    // cars as long-exposure streaks, only out near the horizon
-    float lights = 0.0, heads = 0.0;
-    for (int k = 0; k < 3; k++) {
-      float lane = -1.0 + float(k);                  // -1 and 0 run away from you, +1 comes at you
-      float runs = fract(z * 0.035 - uTime * (lane > 0.5 ? 0.6 : 0.18) + float(k) * 0.37);
-      float car = smoothstep(0.0, 0.03, runs) * smoothstep(0.55, 0.3, runs);
-      float pair = line(abs(x - lane) - 0.2, 0.05);
-      if (lane > 0.5) heads += pair * car; else lights += pair * car;
-    }
-    float far = smoothstep(1.5, 5.0, z);
-    col += (uAccent * 0.9 * lights + vec3(0.9, 0.95, 1.0) * 0.5 * heads) * fog * far * sharp;
-    col += vec3(0.3, 0.36, 0.55) * 0.08 * exp((q.y - h) * 7.0);   // the city glow carries on over the road, so the horizon has no seam
-  } else {
-    vec3 cool = vec3(0.3, 0.36, 0.55);
-    col = uPaper + cool * 0.08 * exp(-(q.y - h) * 6.0);
-    float y = q.y - h;
-    float aa = fwidth(q.y) * 1.5;
-    // back layer: wide, tall towers; front layer: narrower, lower blocks
-    float hb = skyline(q.x, 16.0, 0.12, 7.0), hf = skyline(q.x, 34.0, 0.07, 3.0);
-    float back = smoothstep(hb + aa, hb, y), front = smoothstep(hf + aa, hf, y);
-    vec3 bcol = uPaper * 0.75 + cool * 0.035, fcol = uPaper * 0.5;
-    // scattered lit windows, warm, a few per tower
-    vec2 wc = vec2(q.x * 260.0, y * 180.0);
-    float win = step(0.93, hash(floor(wc) + 11.0)) * step(0.25, fract(wc.x)) * step(0.3, fract(wc.y));
-    col = mix(col, bcol + vec3(1.0, 0.85, 0.6) * 0.16 * win, back);
-    col = mix(col, fcol + vec3(1.0, 0.9, 0.7) * 0.22 * win, front);
-    // red aircraft lights on the tallest towers, each on its own slow blink
-    float id = floor(q.x * 16.0 + 7.0), r = hash(vec2(id, 7.0));
-    if (r > 0.72) {
-      vec2 tip = vec2((id - 7.0 + 0.5) / 16.0, h + hb + 0.006);   // same column, so hb is this tower's height
-      float blink = smoothstep(0.55, 0.9, sin(uTime * 1.6 + r * 40.0));
-      col += uAccent * smoothstep(0.004, 0.0, length(q - tip)) * blink;
-    }
-  }
-  return mix(uPaper, col, uGain);
-}
-
 // 2049: a blueprint. A minor and major drafting grid, then construction lines drawn in: a circle, its centre
 // lines and a dimensioned box, redrawing slowly.
 vec3 blueprint(vec2 q) {
@@ -154,7 +85,7 @@ void main() {
   vec2 uv = (vUv - 0.5) * vec2(uRes.x / uRes.y, 1.0);
   vec3 col;
   // the jump itself is always through stars, whatever era we leave from
-  if (uMode == 1 && uJump < 0.001 && uFlash < 0.001) col = apex(uv);
+  if (uMode == 1 && uJump < 0.001 && uFlash < 0.001) col = uPaper;   // the Wangan's road is its own canvas (fx/hyperspeed.ts)
   else if (uMode == 3 && uJump < 0.001 && uFlash < 0.001) col = blueprint(uv);
   else col = stars(uv);
   o = vec4(mix(col, vec3(1.0), uFlash), 1.0);
