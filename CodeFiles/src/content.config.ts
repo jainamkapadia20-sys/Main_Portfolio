@@ -37,6 +37,8 @@ const projects = defineCollection({
       blocks: z.array(block).default([]),
       // the case study's hook: what came out of it, one short line each
       results: z.array(z.string()).default([]),
+      // a few numbers that count up as the story passes them, e.g. { value: 12, label: 'interviews' }
+      stats: z.array(z.object({ value: z.number(), suffix: z.string().default(''), label: z.string() })).default([]),
       // the process as steps: a phase word, a title, two to four short points, and the picture the stage shows
       process: z.array(z.object({ phase: z.string(), title: z.string(), points: z.array(z.string()).min(1).max(5),
         media: image().optional(), alt: z.string().default(''), caption: z.string().optional(),

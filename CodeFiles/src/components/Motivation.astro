@@ -1,0 +1,52 @@
+---
+// Why I do this (after Jhey Tompkins' "you can scroll"): "I design to" holds still while a list of reasons scrolls
+// past it; the reason crossing the middle of the screen lights up in the accent, the rest stay dim.
+const reasons = [
+  'make the complex feel simple.',
+  'make people feel at home.',
+  'make every drive a little safer.',
+  'turn a sketch into something real.',
+  'make someone smile.',
+  'keep learning, every project.',
+];
+---
+<section class="why section wrap" aria-labelledby="why-h">
+  <h2 id="why-h" class="lead-in">I design to</h2>
+  <ul class="list" data-why>
+    {reasons.map((r) => <li>{r}</li>)}
+  </ul>
+</section>
+
+<style>
+  .why { display: grid; grid-template-columns: auto 1fr; gap: 0 .35em; align-items: start;
+    font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(1.8rem, 1rem + 3.6vw, 5rem); letter-spacing: -.03em; line-height: 1.12; }
+  .lead-in { position: sticky; top: calc(50svh - .6em); font: inherit; letter-spacing: inherit; margin: 0; }
+  .list { display: grid; padding-block: 40svh; }
+  .list li { opacity: var(--lit, .16); color: color-mix(in srgb, var(--accent) calc(var(--lit, 0) * 100%), var(--ink)); transition: opacity 150ms linear; }
+  @media (max-width: 720px) {
+    .why { grid-template-columns: 1fr; }
+    .lead-in { top: calc(var(--nav-h) + 16px); background: var(--paper); padding-block: 8px; z-index: 1; }
+    .list { padding-block: 16svh 30svh; }
+  }
+  :global(:root[data-motion="calm"]) .list li { --lit: 1; color: var(--ink); }
+</style>
+
+<script>
+  import { calm } from '../lib/motion';
+  document.querySelectorAll<HTMLElement>('[data-why]').forEach((list) => {
+    if (calm()) return;
+    const items = [...list.children] as HTMLElement[];
+    let raf = 0;
+    const frame = () => {
+      raf = 0;
+      const mid = innerHeight / 2;
+      items.forEach((li) => {
+        const r = li.getBoundingClientRect();
+        const d = Math.abs(r.top + r.height / 2 - mid) / (innerHeight * 0.22);
+        li.style.setProperty('--lit', Math.max(0.16, 1 - d).toFixed(3));
+      });
+    };
+    addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(frame); }, { passive: true });
+    frame();
+  });
+</script>
