@@ -1,0 +1,140 @@
+---
+// The projects in React Bits' Flex Carousel (src/fx/flex-carousel.ts): an endless row of rectangular cards seen
+// through a liquid lens. It starts the first time it scrolls into view, so its "rise" intro plays where it can be
+// seen: the cards rise from below and grow into place, and the lens bends in. Under the row, the centred project's
+// title and a rolling count. Click the centred card to zoom it, then open the project; click again to let go.
+// A plain list of the same links is there for screen readers and without JS.
+import { sortedProjects } from '../lib/projects';
+import { withBase } from '../lib/url';
+
+const projects = await sortedProjects();
+const items = projects.map((p) => ({
+  title: p.data.title,
+  tag: p.data.category,
+  sub: p.data.placeholder ? 'Coming soon' : `${p.data.type}, ${p.data.year}`,
+  href: withBase(`/work/${p.id}`),   // JSON props aren't rebased after the build, so prefix here
+}));
+const total = String(items.length).padStart(2, '0');
+---
+<div class="flex-carousel" tabindex="0" role="region" aria-roledescription="carousel" aria-label="Projects" data-flex-carousel={JSON.stringify(items)}>
+  <div class="caption" data-caption aria-hidden="true">
+    <span class="title" data-title></span>
+    <span class="count" data-count>
+      <span class="digits" data-digits>
+        {[0, 1].map(() => <span class="digit"><span class="reel">{'0123456789'.split('').map((n) => <span>{n}</span>)}</span></span>)}
+      </span><span class="slash">/</span><span>{total}</span>
+    </span>
+    <a class="btn primary open" href={items[0]?.href} data-open tabindex="-1">Open project</a>
+  </div>
+  <p class="sr-only" aria-live="polite" aria-atomic="true" data-live></p>
+  <ul class="sr-only">{items.map((it) => <li><a href={it.href}>{it.title}, {it.tag}</a></li>)}</ul>
+</div>
+
+<style>
+  .flex-carousel { position: relative; width: 100%; height: min(86svh, 820px); min-height: 480px; overflow: hidden; cursor: grab; touch-action: pan-y;
+    user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; outline: none; --half: 25%; }
+  .flex-carousel[data-hover='open'] { cursor: zoom-in; }
+  .flex-carousel[data-hover='close'] { cursor: zoom-out; }
+  .flex-carousel[data-dragging] { cursor: grabbing; }
+  .flex-carousel:focus-visible { box-shadow: inset 0 0 0 2px var(--accent); }
+  .flex-carousel :global(canvas) { position: absolute; inset: 0; }
+
+  /* the caption sits just under the card row, and moves down with a zoomed card */
+  .caption { position: absolute; left: 0; right: 0; top: calc(50% + var(--half) * var(--flex-carousel-lift, 1) + 22px); z-index: 1; display: none;
+    flex-direction: column; align-items: center; gap: 6px; padding: 0 16px; pointer-events: none; text-align: center; animation: reveal 900ms ease both; }
+  .ready .caption { display: flex; }
+  .title { font-size: 15px; font-weight: 500; line-height: 1.35; color: var(--ink); animation: title 520ms cubic-bezier(.22, 1, .36, 1); }
+  .count { display: inline-flex; align-items: center; gap: 3px; font-family: var(--font-mono); font-size: 12px; line-height: 1; font-variant-numeric: tabular-nums;
+    color: var(--ink); opacity: .5; transition: opacity 400ms ease; }
+  .focused .count { opacity: 0; }
+  .digits { display: inline-flex; }
+  .digit { display: inline-block; height: 1em; overflow: hidden; }
+  .reel { display: flex; flex-direction: column; transition: transform 600ms cubic-bezier(.22, 1, .36, 1); }
+  .reel span { height: 1em; }
+  .slash { opacity: .6; }
+  .open { margin-top: 10px; pointer-events: none; opacity: 0; translate: 0 8px; transition: opacity 300ms ease, translate 400ms cubic-bezier(.22, 1, .36, 1); }
+  .focused .open { pointer-events: auto; opacity: 1; translate: 0 0; }
+  @keyframes title { from { opacity: 0; transform: translateY(8px); } }
+  @keyframes reveal { from { opacity: 0; } }
+  :global(:root[data-motion="calm"]) .caption, :global(:root[data-motion="calm"]) .title { animation: none; }
+  :global(:root[data-motion="calm"]) .reel { transition: none; }
+</style>
+
+<script>
+  import { createFlexCarousel } from '../fx/flex-carousel';
+  import { palette } from '../lib/theme';
+
+  type Item = { title: string; tag: string; sub: string; href: string };
+  const pad = (n: number) => String(n).padStart(2, '0');
+  // '#rrggbb' blended toward another, t = 0 → a, 1 → b
+  const mix = (a: string, b: string, t: number) => {
+    const q = (h: string) => [1, 3, 5].map((k) => parseInt(h.slice(k, k + 2), 16));
+    const A = q(a), B = q(b);
+    return `rgb(${A.map((v, k) => Math.round(v + (B[k] - v) * t)).join(',')})`;
+  };
+  // a landscape cover for a project with no picture yet: a field of the accent, a mark, the title
+  function cover(it: Item, i: number) {
+    const W = 1200, H = 900, c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const g = c.getContext('2d')!;
+    const { paper, ink, accent } = palette();
+    const bg = g.createLinearGradient(0, 0, W, H);
+    bg.addColorStop(0, accent); bg.addColorStop(1, mix(accent, '#000000', 0.55));
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    g.fillStyle = mix(accent, paper, 0.7); g.globalAlpha = 0.9;
+    g.beginPath();
+    switch (i % 7) {
+      case 0: g.arc(W * 0.66, H * 0.4, H * 0.26, 0, Math.PI * 2); break;
+      case 1: g.roundRect(W * 0.4, H * 0.24, W * 0.46, H * 0.2, H * 0.1); break;
+      case 2: g.moveTo(W * 0.44, H * 0.58); g.lineTo(W * 0.68, H * 0.14); g.lineTo(W * 0.92, H * 0.58); break;
+      case 3: g.arc(W * 0.68, H * 0.6, H * 0.36, Math.PI, Math.PI * 2); break;
+      case 4: g.roundRect(W * 0.5, H * 0.14, W * 0.38, H * 0.42, 36); break;
+      case 5: g.arc(W * 0.68, H * 0.4, H * 0.28, Math.PI * 0.85, Math.PI * 2.15); g.lineTo(W * 0.68, H * 0.4); break;
+      default: g.rect(W * 0.62, H * 0.14, H * 0.3, H * 0.3); g.arc(W * 0.56, H * 0.42, H * 0.17, 0, Math.PI * 2);
+    }
+    g.fill(); g.globalAlpha = 1;
+    const css = getComputedStyle(document.documentElement);
+    const display = css.getPropertyValue('--font-display'), mono = css.getPropertyValue('--font-mono');
+    const weight = css.getPropertyValue('--display-weight').trim() || '400';
+    g.fillStyle = '#ffffff';
+    g.font = `500 28px ${mono}`;
+    g.fillText(`${pad(i + 1)} — ${it.tag.toUpperCase()}`, 60, 84);
+    g.font = `${weight} 96px ${display}`;
+    g.fillText(it.title, 60, H - 130, W - 120);
+    g.font = `500 28px ${mono}`; g.globalAlpha = 0.8;
+    g.fillText(it.sub.toUpperCase(), 60, H - 66);
+    return c.toDataURL('image/jpeg', 0.9);
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-flex-carousel]').forEach((root) => {
+    const items: Item[] = JSON.parse(root.dataset.flexCarousel!);
+    const title = root.querySelector<HTMLElement>('[data-title]')!;
+    const reels = [...root.querySelectorAll<HTMLElement>('.reel')];
+    const open = root.querySelector<HTMLAnchorElement>('[data-open]')!;
+    const live = root.querySelector<HTMLElement>('[data-live]')!;
+    const show = (i: number) => {
+      const it = items[i];
+      title.textContent = it.title;
+      title.style.animation = 'none'; void title.offsetWidth; title.style.animation = '';   // replay the title's rise
+      pad(i + 1).split('').forEach((d, k) => { reels[k].style.transform = `translateY(${-Number(d) * 10}%)`; });
+      open.href = it.href;
+      live.textContent = `${it.title}, ${i + 1} of ${items.length}`;
+    };
+    // start the first time it is properly in view, so the rise intro plays where it can be seen
+    new IntersectionObserver(([e], io) => {
+      if (!e.isIntersecting) return;
+      io.disconnect();
+      document.fonts.ready.then(() => createFlexCarousel(root, items.map((it, i) => ({ src: cover(it, i), alt: it.title, title: it.title })), {
+        preset: 'liquid', intro: 'rise', cardHeight: 0.5, gap: 12, radius: 0, fit: 'natural',
+        captureWheel: false,   // up and down stay with the page; sideways swipes turn the row
+      }, {
+        onActive: show,
+        onRevealed: () => root.classList.add('ready'),
+        onFocusOpen: (on) => { root.classList.toggle('focused', on); open.tabIndex = on ? 0 : -1; },
+      }));
+    }, { threshold: 0.35 }).observe(root);
+    // the zoomed card's link must still work though the carousel listens for clicks on itself
+    open.addEventListener('pointerdown', (e) => e.stopPropagation());
+    open.addEventListener('pointerup', (e) => e.stopPropagation());
+  });
+</script>
