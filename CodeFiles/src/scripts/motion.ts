@@ -1,15 +1,11 @@
-import Lenis from 'lenis';
-import 'lenis/dist/lenis.css';
 import { calm } from '../lib/motion.js';
+import { lenis } from '../lib/scroll';
 
 const root = document.documentElement;
 root.classList.add('motion-ready');
 
-// Smooth scrolling, tuned light: lerp .16 (Lenis defaults to .1, which trails the wheel) so the page settles in a
-// few frames and never feels behind your hand. Touch keeps the phone's own scrolling. Anchors glide and respect
-// scroll-margin. In Calm, the browser's own scrolling is left alone.
-if (!calm()) {
-  const lenis = new Lenis({ autoRaf: true, lerp: 0.16, anchors: true });
+// Smooth scrolling lives in lib/scroll.ts (Lenis; the browser's own under Calm).
+if (lenis) {
   // the page holds still while the opening room covers it
   const hold = () => (root.classList.contains('intro') ? lenis.stop() : lenis.start());
   hold();

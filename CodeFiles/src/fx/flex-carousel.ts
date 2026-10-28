@@ -301,6 +301,8 @@ export interface FlexCarouselCallbacks {
   onActive: (index: number) => void;
   onRevealed: () => void;
   onFocusOpen: (open: boolean) => void;
+  /** A card was chosen (clicked, or Enter on the centred one). */
+  onSelect?: (index: number) => void;
 }
 export type FlexCarouselOptions = Partial<PresetValues> & {
   preset?: BendPreset; intro?: CarouselIntro; cardHeight?: number; gap?: number; radius?: number; fit?: CardFit; squeeze?: number;
@@ -950,7 +952,7 @@ export function createFlexCarousel(container: HTMLElement, items: FlexCarouselIt
     }
 
     let nextHover = '';
-    if (pointer.over && !pointer.dragging && introState.done && s.focusOnClick) {
+    if (pointer.over && !pointer.dragging && introState.done) {
       const hit = instances.find(
         inst => pointer.x >= inst.x0 && pointer.x <= inst.x1 && pointer.y >= inst.y0 && pointer.y <= inst.y1
       );
@@ -1069,8 +1071,10 @@ export function createFlexCarousel(container: HTMLElement, items: FlexCarouselIt
     const [x, y] = localPoint(e);
     const hit = instances.find(inst => x >= inst.x0 && x <= inst.x1 && y >= inst.y0 && y <= inst.y1);
     if (!hit) return;
+    // with no zoom, a click on any card chooses it straight away
+    if (!s.focusOnClick) { cb.onSelect?.(hit.index); return; }
     if (hit.index === activeIndex && Math.abs(goal - pos) < 2) {
-      
+      cb.onSelect?.(hit.index);
       if (s.focusOnClick) openFocus(hit.index);
     } else {
       const rel = (hit.x0 + hit.x1) / 2 - width / 2;
@@ -1151,6 +1155,7 @@ export function createFlexCarousel(container: HTMLElement, items: FlexCarouselIt
       e.preventDefault();
       if (closeFocus() || activeIndex < 0) return;
       
+      cb.onSelect?.(activeIndex);
       if (s.focusOnClick) openFocus(activeIndex);
     }
   };

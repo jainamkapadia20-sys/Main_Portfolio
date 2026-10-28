@@ -1,6 +1,6 @@
 ---
-// A project, told as a story you scroll through. It opens by flying you down a tunnel of the project's own words and
-// pictures; then the result first, a frame that grows to fill the screen; then the process, one line at a time, with
+// A project, told as a story you scroll through. It opens, by itself, by flying you down a tunnel of the project's
+// own words; then the result first, a frame that grows to fill the screen; then the process, one line at a time, with
 // a stroke that draws itself down the page alongside it, numbers that count up and pictures that pop in as they
 // arrive; then the takeaway, whose words light up as you read; then the next project.
 // Projects still to be written show a labelled placeholder story, so the shape can be seen.
@@ -27,7 +27,6 @@ const cluster = p.blocks.find((b) => b.type === 'cluster') as Extract<typeof p.b
 const cover = p.cover ? await web(p.cover) : undefined;
 
 // the story's beats: the project's own, or labelled sample beats until it is written
-const sample = p.placeholder || p.process.length === 0;
 const process = p.process.length ? await Promise.all(p.process.map(async (s) => ({ phase: s.phase, title: s.title, points: s.points,
   img: s.media ? await web(s.media) : undefined, alt: s.alt }))) : [
   { phase: 'Discover', title: 'Listening before drawing', points: ['Who uses this, and where it goes wrong for them.', 'Interviews, observation and the existing product, taken apart.'] },
@@ -50,8 +49,9 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
 const TUNNEL = 9;   // rings in the tunnel
 ---
 <Base title={p.title} description={p.summary}>
-  <!-- 1. The way in: a tunnel of the project's words and frames you fly down as you scroll -->
-  <section class="tunnel" data-pin="tunnel" aria-labelledby="case-h">
+  <!-- 1. The way in: on arrival you fly down a tunnel of the project's words, and the title settles at the end -->
+  <section class="tunnel" data-tunnel aria-labelledby="case-h">
+    <a class="back meta" href="/#work">← All work</a>
     <div class="tunnel-stage">
       <div class="rings" aria-hidden="true">
         {Array.from({ length: TUNNEL }, (_, i) => (
@@ -64,10 +64,9 @@ const TUNNEL = 9;   // rings in the tunnel
         ))}
       </div>
       <header class="tunnel-title">
-        <a class="back meta" href="/#work">← All work</a>
-        <p class="label">{p.category}{sample && ' · Placeholder story'}</p>
+        <p class="label">{p.category}</p>
         <h1 id="case-h">{p.title}</h1>
-        <p class="lead">{p.summary}</p>
+        {!p.placeholder && <p class="lead">{p.summary}</p>}
         <p class="hint meta" aria-hidden="true">Scroll</p>
       </header>
     </div>
@@ -146,9 +145,9 @@ const TUNNEL = 9;   // rings in the tunnel
 </Base>
 
 <style>
-  /* 1. tunnel: pinned for two screens; each ring is a frame of words that rushes toward you as you scroll */
-  .tunnel { height: 260svh; }
-  .tunnel-stage { position: sticky; top: 0; height: 100svh; overflow: hidden; perspective: 700px; display: grid; place-items: center; --p: 0; }
+  /* 1. tunnel: one screen; on arrival each ring of words rushes toward you and past, then the title settles in */
+  .tunnel { position: relative; height: 100svh; }
+  .tunnel-stage { position: relative; height: 100svh; overflow: hidden; perspective: 700px; display: grid; place-items: center; --p: 0; }
   .rings { position: absolute; inset: 0; transform-style: preserve-3d; }
   .ring { position: absolute; inset: 18% 14%; border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); border-radius: 28px;
     --z: calc((var(--i) * 1 / 9 + var(--p) * 1.15) - 1);
@@ -160,10 +159,10 @@ const TUNNEL = 9;   // rings in the tunnel
   .w.left { left: 3%; top: 50%; translate: 0 -50%; writing-mode: vertical-rl; rotate: 180deg; }
   .w.right { right: 3%; top: 50%; translate: 0 -50%; writing-mode: vertical-rl; }
   .tunnel-title { position: relative; z-index: 1; display: grid; justify-items: center; gap: var(--s-4); max-width: 22ch; text-align: center;
-    opacity: clamp(0, calc(1 - var(--p) * 2.2), 1); transform: translateZ(0) scale(calc(1 + var(--p) * .4)); }
+    opacity: clamp(0, calc((var(--p) - .62) * 2.8), 1); transform: translateZ(0) scale(calc(.9 + clamp(0, calc((var(--p) - .62) * 2.8), 1) * .1)); }
   .tunnel-title h1 { font-family: var(--font-display); font-weight: var(--display-weight); font-size: var(--t-display); letter-spacing: -.035em; line-height: .92; }
   .tunnel-title .lead { max-width: 36ch; color: var(--graphite); }
-  .back { position: fixed; top: calc(var(--nav-h) + 8px); left: var(--inset); }
+  .back { position: absolute; z-index: 2; top: calc(var(--nav-h) + 12px); left: var(--inset); }
   .hint { margin-top: var(--s-6); animation: hint 1.8s ease-in-out infinite; }
   @keyframes hint { 50% { translate: 0 6px; opacity: .5; } }
 
@@ -232,8 +231,9 @@ const TUNNEL = 9;   // rings in the tunnel
     .w.left, .w.right { display: none; }
   }
   /* calm: everything shown, nothing pinned or travelling */
-  :global(:root[data-motion="calm"]) .tunnel, :global(:root[data-motion="calm"]) .result { height: auto; }
-  :global(:root[data-motion="calm"]) .tunnel-stage, :global(:root[data-motion="calm"]) .result-stage { position: relative; }
+  :global(:root[data-motion="calm"]) .result { height: auto; }
+  :global(:root[data-motion="calm"]) .tunnel-stage { --p: 1; }
+  :global(:root[data-motion="calm"]) .result-stage { position: relative; }
   :global(:root[data-motion="calm"]) .result-stage { --g: 1; --o: 1; }
   :global(:root[data-motion="calm"]) [data-line], :global(:root[data-motion="calm"]) .pop { translate: none !important; opacity: 1 !important; scale: 1 !important; filter: none !important; }
   :global(:root[data-motion="calm"]) .words span { --lit: 1; }
@@ -241,14 +241,38 @@ const TUNNEL = 9;   // rings in the tunnel
 
 <script>
   import { calm } from '../../lib/motion';
+  import { addStops } from '../../lib/scroll';
   const still = calm();
+  // The story scrolls beat by beat: each scroll glides to the next stop and holds there. The stops: the way in; the
+  // result as a card, as the full screen, and with its outcomes; each step of the process; the takeaway; the end.
+  const top = (el: Element) => el.getBoundingClientRect().top + scrollY;
+  const centre = (el: Element) => top(el) + (el as HTMLElement).offsetHeight / 2 - innerHeight / 2;
+  addStops('step', () => {
+    const stops = [0];
+    const res = document.querySelector<HTMLElement>('[data-pin="result"]');
+    if (res) { const span = res.offsetHeight - innerHeight; stops.push(top(res), top(res) + span * 0.55, top(res) + span * 0.97); }
+    const proc = document.querySelector('[data-process]');
+    if (proc) stops.push(top(proc) - 40);
+    document.querySelectorAll('.step, .try, .takeaway, .next').forEach((el) => stops.push(centre(el)));
+    stops.push(document.documentElement.scrollHeight - innerHeight);
+    return stops;
+  });
   // how far through a pinned section the page is: 0 as it pins, 1 as it lets go
   const progress = (el: HTMLElement) => {
     const r = el.getBoundingClientRect();
     return Math.min(1, Math.max(0, -r.top / Math.max(1, r.height - innerHeight)));
   };
-  const tunnel = document.querySelector<HTMLElement>('[data-pin="tunnel"]');
-  const tunnelStage = tunnel?.querySelector<HTMLElement>('.tunnel-stage');
+  // the way in plays by itself on arrival: through the tunnel, then the title (2.8s, eased at both ends)
+  const tunnelStage = document.querySelector<HTMLElement>('[data-tunnel] .tunnel-stage');
+  if (tunnelStage && !still) {
+    const t0 = performance.now(), DUR = 2800;
+    const fly = (now: number) => {
+      const k = Math.min(1, (now - t0) / DUR), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+      tunnelStage.style.setProperty('--p', e.toFixed(4));
+      if (k < 1) requestAnimationFrame(fly);
+    };
+    requestAnimationFrame(fly);
+  }
   const result = document.querySelector<HTMLElement>('[data-pin="result"]');
   const resultStage = result?.querySelector<HTMLElement>('.result-stage');
   const proc = document.querySelector<HTMLElement>('[data-process]');
@@ -257,7 +281,6 @@ const TUNNEL = 9;   // rings in the tunnel
 
   const frame = () => {
     raf = 0;
-    if (tunnel && tunnelStage) tunnelStage.style.setProperty('--p', progress(tunnel).toFixed(4));
     if (result && resultStage) {
       const k = progress(result);
       resultStage.style.setProperty('--g', Math.min(1, k / 0.55).toFixed(4));                       // grow over the first half
@@ -281,11 +304,12 @@ const TUNNEL = 9;   // rings in the tunnel
   }
 
   // lines slide up, pictures pop in and numbers count, once each, as they arrive
+  const watched = new Map<Element, HTMLElement>();
   const io = new IntersectionObserver((entries) => entries.forEach((e) => {
     if (!e.isIntersecting) return;
-    const el = e.target as HTMLElement;
+    const el = watched.get(e.target) ?? (e.target as HTMLElement);
     el.classList.add('in');
-    io.unobserve(el);
+    io.unobserve(e.target);
     if (el.dataset.count) {
       const to = Number(el.dataset.count), suffix = el.dataset.suffix ?? '', t0 = performance.now();
       const tick = (now: number) => {
@@ -299,7 +323,10 @@ const TUNNEL = 9;   // rings in the tunnel
   document.querySelectorAll<HTMLElement>('[data-line], [data-pop], [data-count]').forEach((el, i) => {
     if (still) { el.classList.add('in'); return; }
     el.style.transitionDelay = `${(i % 4) * 70}ms`;   // a small stagger within each group
-    io.observe(el);
+    // a line hides below its mask, where it can never count as visible: watch the mask instead
+    const box = el.closest('.mask') ?? el;
+    watched.set(box, el);
+    io.observe(box);
   });
   if (still) document.querySelectorAll<HTMLElement>('[data-count]').forEach((el) => { el.textContent = `${el.dataset.count}${el.dataset.suffix ?? ''}`; });
 

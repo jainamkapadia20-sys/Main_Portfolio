@@ -96,6 +96,18 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
   </section>
 </Base>
 
+<script>
+  import { addStops } from '../lib/scroll';
+  // the home page's sections click into place when a scroll comes to rest near the start of one
+  addStops('proximity', () => {
+    const top = (el: Element) => el.getBoundingClientRect().top + scrollY;
+    const stops = [0];
+    document.querySelectorAll('#work, .side, .why').forEach((el) => stops.push(top(el) - 24));
+    stops.push(document.documentElement.scrollHeight - innerHeight);
+    return stops;
+  });
+</script>
+
 
 <style>
   /* hero: one full screen. The name sits in the middle, edge to edge; the copy stacks centred under it. */
