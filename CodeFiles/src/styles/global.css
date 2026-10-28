@@ -138,9 +138,25 @@
   /* the one button shape: a pill. Filled for the action, tonal for the rest. */
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 0 24px; border-radius: 999px;
     font-weight: 500; background: var(--surface-2); color: var(--ink); transition: background-color var(--duration-fast) var(--ease-smooth-out), scale var(--duration-quick) var(--ease-smooth-out); }
-  .btn:hover { background: color-mix(in srgb, var(--ink) 14%, var(--surface-2)); }
+  .btn.primary { transition: background-color var(--duration-fast) var(--ease-smooth-out), scale var(--duration-quick) var(--ease-smooth-out), translate 500ms cubic-bezier(.3, 1.4, .4, 1); }
   .btn:active { scale: .97; }
   .btn.primary { background: var(--accent); color: var(--on-accent); }
+  /* every other button is liquid metal (after johuniq's Liquid Metal Button): a dark pill with a rim of chrome that
+     flows round it all the time, and runs faster and brighter under the pointer */
+  .btn:not(.primary) { position: relative; isolation: isolate; color: #ECECF1;
+    background: radial-gradient(120% 140% at 50% 0%, #26262c, #0d0d10 70%);
+    box-shadow: inset 0 1px 0 hsl(0 0% 100% / .12), 0 6px 18px -8px hsl(0 0% 0% / .6); }
+  .btn:not(.primary):hover { background: radial-gradient(120% 140% at 50% 0%, #303037, #111115 70%); color: #fff; }
+  .btn:not(.primary)::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; padding: 1.5px; pointer-events: none;
+    background: conic-gradient(from var(--metal), #2b2b31, #f6f6fb 7%, #707079 15%, #1c1c21 27%, #d4d4dc 39%, #3b3b43 51%, #ffffff 61%,
+      #575760 73%, #1f1f25 85%, #2b2b31);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    animation: metal-flow 7s linear infinite; filter: saturate(.8); transition: filter 300ms ease; }
+  .btn:not(.primary):hover::before, .btn:not(.primary):focus-visible::before { animation-duration: 2.4s; filter: brightness(1.35) saturate(.8); }
+  @property --metal { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+  @keyframes metal-flow { to { --metal: 360deg; } }
+  :root[data-motion="calm"] .btn:not(.primary)::before { animation: none; }
   .btn.primary:hover { background: color-mix(in srgb, var(--ink) 12%, var(--accent)); }
   .tag { display: inline-block; font-size: var(--t-small); font-weight: 500; padding: 2px 10px; border-radius: 999px; background: var(--surface-2); color: var(--graphite); }
 

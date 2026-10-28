@@ -7,21 +7,25 @@ import Intro from '../components/Intro.astro';
 import Roles from '../components/Roles.astro';
 import Cta from '../components/Cta.astro';
 import GlassCarousel from '../components/GlassCarousel.astro';
-import Strip from '../components/Strip.astro';
+import SideWork from '../components/SideWork.astro';
 import Music from '../components/Music.astro';
 import Road from '../components/Road.astro';
 import { site } from '../site';
 import render from '../assets/car/poster-mod.png';
 
 const feels = ['intuitive', 'delightful', 'effortless', 'human', 'memorable', 'thoughtful'];
-// side work: the one finished piece on hand, and labelled slots for the sketches and drawings still to come
-const ideas = [
-  { title: 'Sketchbook page', subtitle: 'Drawing', alt: '' },
-  { title: 'Poster study', subtitle: 'Graphic design', alt: '' },
-  { title: 'My Honda City, modelled from scratch', subtitle: 'Blender render', alt: 'Blender render of a grey Honda City with a rear wing.', src: (await getImage({ src: render, width: 1400, format: 'webp' })).src },
-  { title: 'Storyboard', subtitle: 'Service design', alt: '', ratio: '16 / 10' },
-  { title: 'Wireframes', subtitle: 'UI/UX', alt: '' },
-  { title: 'Product sketch', subtitle: 'Drawing', alt: '', ratio: '4 / 5' },
+// side work, by category: the one finished piece on hand, and labelled placeholders for the rest
+const honda = (await getImage({ src: render, width: 1400, format: 'webp' })).src;
+const ph = (titles: string[], note?: string) => titles.map((title) => ({ title, note }));
+const side = [
+  { name: 'Artwork', pieces: ph(['Ink study', 'Portrait', 'Gouache landscape', 'Figure drawing'], 'Artwork') },
+  { name: 'Prototypes', pieces: ph(['Booking flow', 'Smart-home app', 'Onboarding', 'Micro-interactions'], 'Prototype') },
+  { name: 'Graphic design', pieces: ph(['Poster study', 'Brand mark', 'Type specimen', 'Album cover'], 'Graphic design') },
+  { name: 'Sketches', pieces: ph(['Sketchbook page', 'Product sketch', 'Car sketch', 'Thumbnails'], 'Drawing') },
+  { name: '3D & renders', pieces: [{ title: 'My Honda City, modelled from scratch', note: 'Blender render', src: honda, alt: 'Blender render of a grey Honda City with a rear wing.' }, ...ph(['Object study', 'Interior render'], '3D')] },
+  { name: 'HMI concepts', pieces: ph(['Cluster concept', 'Infotainment home', 'Climate control'], 'HMI') },
+  { name: 'Service design', pieces: ph(['Storyboard', 'Journey map', 'Blueprint'], 'Service design') },
+  { name: 'Photography', pieces: ph(['Night drive', 'Street', 'Details'], 'Photography') },
 ];
 const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-arm t-learn-arm-top" d="M6 4L10 8" /><path class="t-learn-arm t-learn-arm-bot" d="M10 8L6 12" /></svg>';
 ---
@@ -60,13 +64,7 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
   </section>
 
 
-  <section class="section ideas" aria-labelledby="ideas-h">
-    <div class="wrap sec-head">
-      <h2 id="ideas-h" class="head" data-reveal>Sketches and side work</h2>
-      <p class="muted" data-reveal style="--i:1">Drag the strip, or click a piece to look closer.</p>
-    </div>
-    <div class="ideas-strip"><Strip items={ideas} /></div>
-  </section>
+  <SideWork categories={side} />
 
   <section class="section wrap" aria-labelledby="skills-h"><Skills /></section>
 
@@ -124,8 +122,6 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
   .featured { padding-top: 0; }
   /* the line from the primary action down to the neon tube; scripts below place it and draw it with the scroll */
   :global(#main) { position: relative; }
-  .ideas .sec-head { margin-bottom: 0; }
-  .ideas-strip { height: 100svh; max-height: 980px; }
 
   .note { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 48px; align-items: start; }
   .letter { display: grid; gap: 20px; max-width: 560px; font-size: var(--t-lead); line-height: 1.45; letter-spacing: -.01em; }
@@ -141,6 +137,5 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
     .sheet { padding: 8px 8px 24px; }
     .hero-bar { flex-direction: column; padding-inline: 8px; }
     .note { grid-template-columns: 1fr; }
-    .ideas-strip { height: 72svh; }
   }
 </style>
