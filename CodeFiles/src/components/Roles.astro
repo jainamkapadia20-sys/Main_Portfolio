@@ -1,12 +1,12 @@
 ---
 // "Designing things that feel ___." (after Edwin Vakayil's Morph Text): a light sentence whose last word, in bold,
 // melts into the next. Two copies cross-fade through a heavy blur, and an SVG threshold filter snaps the blurred
-// edges back to crisp ink, so the letters seem to flow into each other. The word's box eases between widths so the
-// full stop follows it. Calm shows the first word, still.
+// edges back to crisp ink, so the letters seem to flow into each other. The word's box keeps the longest word's
+// width, so the sentence before it stays locked in place. Calm shows the first word, still.
 interface Props { lead: string; items: string[] }
 const { lead, items } = Astro.props;
 ---
-<span class="line" aria-hidden="true">{lead} <span class="roles" data-roles={JSON.stringify(items)}><span class="morph"><span class="w" data-a>{items[0]}</span><span class="w" data-b></span></span></span><span class="stop">.</span></span>
+<span class="line" aria-hidden="true">{lead} <span class="roles" data-roles={JSON.stringify(items.map((w) => `${w}.`))}><span class="morph"><span class="w" data-a>{items[0]}.</span><span class="w" data-b></span></span></span></span>
 <svg class="goo" aria-hidden="true" focusable="false">
   <defs>
     <filter id="roles-goo">
@@ -17,12 +17,11 @@ const { lead, items } = Astro.props;
 
 <style>
   .line { font-weight: 300; }
-  .roles { position: relative; display: inline-block; vertical-align: bottom; white-space: nowrap; font-weight: 650; color: var(--ink);
-    transition: width 900ms var(--ease-out-expo); }
+  /* the word's box is as wide as the longest word, so the sentence before it never moves; the word sits at its start */
+  .roles { position: relative; display: inline-block; vertical-align: bottom; white-space: nowrap; text-align: left; font-weight: 650; color: var(--ink); }
   .morph { position: relative; display: inline-block; filter: url(#roles-goo) blur(.4px); }
   .w { display: inline-block; white-space: nowrap; }
   [data-b] { position: absolute; left: 0; top: 0; opacity: 0; }
-  .stop { margin-left: .02em; }
   .goo { position: absolute; width: 0; height: 0; }
 </style>
 
@@ -35,7 +34,10 @@ const { lead, items } = Astro.props;
     const a = el.querySelector<HTMLElement>('[data-a]')!, b = el.querySelector<HTMLElement>('[data-b]')!;
     const widthOf = (t: string) => { b.textContent = t; return b.getBoundingClientRect().width; };
     let i = 0, t0 = performance.now(), phase: 'hold' | 'morph' = 'hold', visible = true, raf = 0;
-    el.style.width = `${a.getBoundingClientRect().width}px`;
+    // reserve the longest word's width once the face has loaded, and keep it: only the word changes, never the line
+    const reserve = () => { el.style.width = `${Math.ceil(Math.max(...items.map(widthOf)))}px`; b.textContent = ''; };
+    reserve();
+    document.fonts.ready.then(reserve);
     new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible && !raf) raf = requestAnimationFrame(tick); }).observe(el);
 
     // each copy's blur grows as it fades; the threshold filter turns the overlap into a melt
@@ -53,7 +55,7 @@ const { lead, items } = Astro.props;
       const s = (now - t0) / 1000;
       if (phase === 'hold' && s > HOLD) {
         phase = 'morph'; t0 = now;
-        el.style.width = `${widthOf(items[(i + 1) % items.length])}px`;
+        b.textContent = items[(i + 1) % items.length];
       } else if (phase === 'morph') {
         const f = Math.min(1, s / MORPH);
         set(f);
