@@ -35,8 +35,8 @@ const canonical = new URL(Astro.url.pathname.replace(/(\/index)?\.html$/, '') ||
     const root = document.documentElement;
     try {
       const t = localStorage.getItem('theme');
-      if (t === 'light' || t === 'dark') root.dataset.theme = t;
-      if (t === 'light') document.querySelector('meta[name="theme-color"]').content = '#F4F4F2';
+      // light is the default; dark only when the visitor has chosen it
+      if (t !== 'dark') { root.dataset.theme = 'light'; document.querySelector('meta[name="theme-color"]').content = '#F4F4F2'; }
     } catch {}
     try {
       const nav = performance.getEntriesByType('navigation')[0];

@@ -2,14 +2,17 @@
 @layer reset, tokens, base, layout, utilities;
 
 /* Type (all OFL, self-hosted, Latin subsets; a face only downloads when something on screen uses it).
-   Present day: SF Pro, the system face on Apple devices (its licence doesn't allow hosting it, so the stack asks the
-   device for it), with Inter, the closest open face, everywhere else. The name itself is drawn (HeroName.astro).
-   Eras (time jumps): Wangan (JDM night) Archivo with Archivo Expanded for display, the name in katakana in Noto Sans JP, 2049 IBM Plex Sans Condensed + Big Shoulders Stencil. */
+   Present day, three faces with one job each: Cenios for the big display headlines (commercial; drop the licensed
+   file at /fonts/cenios.woff2 and it takes over; until then Archivo Expanded ExtraBold, wide and heavy, stands in),
+   Inter for every paragraph, and JetBrains Mono, tracked out, only for metadata and structural labels.
+   Eras (time jumps): Wangan Archivo + Archivo Expanded with the katakana name in Noto Sans JP, 2049 IBM Plex Sans Condensed + Big Shoulders Stencil. */
 @font-face { font-family: "Archivo"; src: url("/fonts/archivo-400.woff2") format("woff2"); font-weight: 400 500; font-display: swap; }
 @font-face { font-family: "Archivo"; src: url("/fonts/archivo-600.woff2") format("woff2"); font-weight: 600 700; font-display: swap; }
 @font-face { font-family: "Archivo Expanded"; src: url("/fonts/archivo-exp-800.woff2") format("woff2"); font-weight: 800; font-display: swap; }
 @font-face { font-family: "Noto Sans JP Name"; src: url("/fonts/notojp-900-name.woff2") format("woff2"); font-weight: 900; font-display: swap; }   /* only the katakana of my name */
 @font-face { font-family: "Inter"; src: url("/fonts/inter-var.woff2") format("woff2"); font-weight: 300 700; font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; src: url("/fonts/jetbrains-mono-var.woff2") format("woff2"); font-weight: 400 600; font-display: swap; }
+@font-face { font-family: "Cenios"; src: url("/fonts/cenios.woff2") format("woff2"), url("/fonts/cenios.otf") format("opentype"); font-weight: 400 900; font-display: swap; }
 @font-face { font-family: "IBM Plex Sans Condensed"; src: url("/fonts/plex-cond-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
 @font-face { font-family: "IBM Plex Sans Condensed"; src: url("/fonts/plex-cond-500.woff2") format("woff2"); font-weight: 500 700; font-display: swap; }
 @font-face { font-family: "Big Shoulders Stencil Display"; src: url("/fonts/bigshoulders-stencil-800.woff2") format("woff2"); font-weight: 800; font-display: swap; }
@@ -38,24 +41,26 @@
     --neon-tube: #F1DDFF; --neon-light: #9D5CFF; --neon-title: #F8F1FF;
     --neon-deep: color-mix(in srgb, var(--neon-light) 28%, var(--paper));
 
-    /* type: one family, five sizes. SF Pro on Apple devices, Inter elsewhere. */
-    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", system-ui, sans-serif;
-    --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, sans-serif;
-    --display-weight: 700;
+    /* type: three faces, and extreme contrast in scale: huge wide display, calm 17px text, small tracked mono */
+    --font: "Inter", system-ui, sans-serif;
+    --font-display: "Cenios", "Archivo Expanded", "Inter", sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    --display-weight: 800;
     /* space: one 8-point scale; related things sit a step apart, groups two or three */
     --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px;
     --t-small: .875rem;
     --t-body: 1.0625rem;
     --t-lead: clamp(1.25rem, 1.05rem + .7vw, 1.625rem);
-    --t-head: clamp(2.25rem, 1.3rem + 3.6vw, 4.75rem);
-    --t-display: clamp(3rem, 1rem + 7vw, 7.5rem);
+    --t-head: clamp(2.5rem, 1rem + 5.2vw, 6.5rem);
+    --t-display: clamp(3.5rem, 1rem + 9vw, 10rem);
+    --t-label: .75rem;
 
     /* frame: panels sit 12-20px from the edge with one radius; text inside a panel and text outside share a left edge */
     --edge: clamp(12px, 1.4vw, 20px);
     --pad: clamp(20px, 3.4vw, 56px);
     --inset: calc(var(--edge) + var(--pad));
     --radius: 20px;
-    --section: clamp(112px, 12vw, 200px);
+    --section: clamp(128px, 15vw, 240px);   /* generous: the type does the talking, the space lets it */
     --nav-h: 80px;   /* the floating glass pill (56px) plus its 12px gap, with room to breathe */
 
     /* motion tokens (transitions.dev scale) */
@@ -105,6 +110,9 @@
   ::selection { background: var(--accent); color: var(--on-accent); }
   input, textarea { caret-color: var(--accent); }
   h1, h2, h3 { font-weight: 500; letter-spacing: -.03em; line-height: 1.02; text-wrap: balance; }
+  h2 { font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: -.02em; line-height: .98; }
+  /* structural labels and metadata: JetBrains Mono, small and tracked out */
+  .label, .meta { font-family: var(--font-mono); font-size: var(--t-label); font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--graphite); }
   p { max-width: 62ch; text-wrap: pretty; }
   p a:where(:not([class])), dd a:where(:not([class])) { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .2em; }
   @view-transition { navigation: auto; }
