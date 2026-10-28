@@ -78,7 +78,7 @@ const items = projects.map((p) => ({
     g.fillStyle = '#ffffff';
     g.font = `500 30px ${mono}`;
     g.fillText(`${pad(i + 1)} — ${it.tag.toUpperCase()}`, 60, 92);
-    g.font = `800 92px ${display}`;
+    g.font = `${getComputedStyle(document.documentElement).getPropertyValue("--display-weight").trim() || 400} 92px ${display}`;
     const words = it.title.split(' '), lines: string[] = [];
     let line = '';
     for (const w of words) { const t = line ? `${line} ${w}` : w; if (g.measureText(t).width > W - 120 && line) { lines.push(line); line = w; } else line = t; }
