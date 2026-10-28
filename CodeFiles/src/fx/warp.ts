@@ -25,7 +25,7 @@ const float TAU = 6.28318;
 float line(float d, float w) { return 1.0 - smoothstep(w * 0.5, w * 0.5 + fwidth(d) * 1.5, abs(d)); }
 
 // Neural vortex (the "Interactive Neural Vortex" background, its shader kept as written): fifteen rotated layers of
-// sine waves fold into glowing neural filaments in purple and cyan. The pointer warps them where it hovers and the
+// sine waves fold into glowing neural filaments, here in wine and bright red (the original's purple and cyan, recoloured). The pointer warps them where it hovers and the
 // colours drift as the page scrolls. The original draws onto a see-through canvas at 95% opacity; that blend is
 // done here, over the page's own ground.
 vec2 rotate(vec2 uv, float th) { return mat2(cos(th), sin(th), -sin(th), cos(th)) * uv; }
@@ -59,9 +59,9 @@ vec3 vortex() {
   noise += pow(noise, 10.);
   noise = max(.0, noise - .5);
   noise *= (1. - length(vUv - .5));
-  color = vec3(0.5, 0.15, 0.65);
-  color = mix(color, vec3(0.02, 0.7, 0.9), 0.32 + 0.16 * sin(2.0 * uScroll + 1.2));
-  color += vec3(0.15, 0.0, 0.6) * sin(2.0 * uScroll + 1.5);
+  color = vec3(0.62, 0.06, 0.16);                                                     // wine red where the original is purple
+  color = mix(color, vec3(0.95, 0.22, 0.24), 0.32 + 0.16 * sin(2.0 * uScroll + 1.2)); // bright red where it is cyan
+  color += vec3(0.45, 0.0, 0.08) * sin(2.0 * uScroll + 1.5);
   color = color * noise;
   // the canvas's premultiplied colour over the page, at the original's 95% opacity
   float a = clamp(noise, 0.0, 1.0);

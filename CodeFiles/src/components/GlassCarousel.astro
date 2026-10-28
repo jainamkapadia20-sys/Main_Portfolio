@@ -1,5 +1,5 @@
 ---
-// The projects in the liquid-glass carousel (src/fx/glass-carousel.ts). Each panel is a portrait cover drawn for the
+// The projects in the liquid-glass carousel (src/fx/glass-carousel.ts). Each panel is a landscape cover drawn for the
 // project in the site's colours until real covers exist. The title of the centred project sits above the row and
 // its count below; a "View" label follows the pointer over a panel. Click the centred panel to focus it, then open
 // the project or close. A plain list of the same links is there for screen readers and without JS.
@@ -52,9 +52,9 @@ const items = projects.map((p) => ({
   type Item = { title: string; tag: string; sub: string; href: string };
   const pad = (n: number) => String(n).padStart(2, '0');
 
-  // a portrait cover for a project that has no picture yet: a field of the accent, a mark, the title
+  // a landscape cover for a project that has no picture yet: a field of the accent, a mark, the title
   function cover(it: Item, i: number) {
-    const W = 900, H = 1200, c = document.createElement('canvas');
+    const W = 1200, H = 900, c = document.createElement('canvas');
     c.width = W; c.height = H;
     const g = c.getContext('2d')!;
     const { paper, ink, accent } = palette();
@@ -107,8 +107,8 @@ const items = projects.map((p) => ({
     const build = () => {
       engine?.destroy();
       engine = createCarousel(mount, root.querySelector<HTMLElement>('[data-view]'), {
-        items: items.map((it, i) => ({ title: it.title, src: cover(it, i), aspect: 3 / 4 })),
-        panelHeight: 520,
+        items: items.map((it, i) => ({ title: it.title, src: cover(it, i), aspect: 4 / 3 })),
+        panelHeight: 460,
         gap: 14,
         background: palette().paper,
         entry,

@@ -35,9 +35,9 @@
 @layer tokens {
   :root {
     /* colour (user-pinned): ink, paper and one red per theme. Dark is the default; light is one toggle away.
-       Purple and black. Contrast on paper: ink 18, graphite 5.9, accent 6.0. The canvas effects read the same values from src/lib/theme.ts. */
-    --paper: #0A0910; --ink: #F4F1FA; --graphite: #8F8A9E; --surface: #15131C; --surface-2: #1D1A27; --accent: #A970FF;
-    --on-accent: #0A0910;
+       Wine red and black. Contrast: ink on paper 18, graphite 7, white on the wine accent 5.9. The canvas effects read the same values from src/lib/theme.ts. */
+    --paper: #0B0708; --ink: #F6F0F1; --graphite: #A3959A; --surface: #171012; --surface-2: #211519; --accent: #C21E45;
+    --on-accent: #FFFFFF;
     color-scheme: dark;
     /* the projects' neon tube (NeonReveal.astro): tube, the light it pours, and the heading cut out of it */
     --neon-tube: #F1DDFF; --neon-light: #9D5CFF; --neon-title: #F8F1FF;
@@ -138,7 +138,6 @@
   /* the one button shape: a pill. Filled for the action, tonal for the rest. */
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 0 24px; border-radius: 999px;
     font-weight: 500; background: var(--surface-2); color: var(--ink); transition: background-color var(--duration-fast) var(--ease-smooth-out), scale var(--duration-quick) var(--ease-smooth-out); }
-  .btn.primary { transition: background-color var(--duration-fast) var(--ease-smooth-out), scale var(--duration-quick) var(--ease-smooth-out), translate 500ms cubic-bezier(.3, 1.4, .4, 1); }
   .btn:active { scale: .97; }
   .btn.primary { background: var(--accent); color: var(--on-accent); }
   /* every other button is liquid metal (after johuniq's Liquid Metal Button): a dark pill with a rim of chrome that

@@ -1,5 +1,5 @@
-// The projects' carousel: an endless row of portrait panels seen through a liquid-glass lens (the "Liquid Glass
-// Carousel" component, its WebGL engine kept as written and only its React shell rebuilt for this site). Wheel,
+// The projects' carousel: an endless row of panels (the "Liquid Glass Carousel" component, its WebGL engine kept as
+// written and only its React shell rebuilt for this site; its glass lens is switched off, see LENS_ON). Wheel,
 // drag or flick it; it snaps to the nearest panel. Clicking the centred panel focuses it: it grows, the others drop
 // away and the lens fades, and the project can be opened from there. It rises and grows into place on first view.
 import { gsap } from 'gsap';
@@ -13,6 +13,8 @@ export interface LiquidGlassCarouselItem {
 }
 
 const PORTRAIT_ASPECT = 3 / 4;
+// The glass lens over the middle of the row is switched off here: the panels read as clean rectangles.
+const LENS_ON = false;
 
 const LENS = {
   sizeX: 0.565, sizeY: 1, posX: 0.5, posY: 0.5, rotation: 65, spin: 0, zoom: 0, dispersion: 11, blur: 0, glow: 4.2,
@@ -840,10 +842,15 @@ export function createCarousel(
     const fx = focusState.lensFx;
     for (const key of LENS_FX_KEYS) lensUniforms[key].value = lensFxFull[key] * fx;
 
-    renderer.setRenderTarget(rt);
-    renderer.render(scene, camera);
-    renderer.setRenderTarget(null);
-    renderer.render(lensScene, lensCam);
+    if (LENS_ON) {
+      renderer.setRenderTarget(rt);
+      renderer.render(scene, camera);
+      renderer.setRenderTarget(null);
+      renderer.render(lensScene, lensCam);
+    } else {
+      renderer.setRenderTarget(null);
+      renderer.render(scene, camera);
+    }
     raf = requestAnimationFrame(tick);
   }
 

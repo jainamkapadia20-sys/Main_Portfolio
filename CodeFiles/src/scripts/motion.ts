@@ -44,7 +44,7 @@ themeBtn?.addEventListener('click', () => {
   if (root.dataset.era) { delete root.dataset.era; try { sessionStorage.removeItem('era'); } catch {} return; }
   root.dataset.theme = root.dataset.theme === 'light' ? 'dark' : 'light';
   try { localStorage.setItem('theme', root.dataset.theme); } catch {}
-  document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')!.content = root.dataset.theme === 'light' ? '#F4F4F2' : '#0A0910';
+  document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')!.content = root.dataset.theme === 'light' ? '#F4F4F2' : '#0B0708';
   themeLabel();
 });
 
@@ -64,19 +64,3 @@ document.querySelectorAll<HTMLElement>('[data-copy-email]').forEach((b) => b.add
 const menu = document.getElementById('menu');
 menu?.addEventListener('focusout', (e) => { if (!menu.contains(e.relatedTarget as Node)) menu.hidePopover(); });
 
-// Magnetic actions: the primary buttons lean toward the pointer once it comes within reach, and spring back home
-// when it leaves (the spring is the transition on .btn.primary in global.css).
-if (!calm() && matchMedia('(hover: hover)').matches) {
-  const REACH = 60, PULL = 0.32;
-  document.querySelectorAll<HTMLElement>('.btn.primary').forEach((b) => {
-    let on = false;
-    addEventListener('pointermove', (e) => {
-      const r = b.getBoundingClientRect();
-      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-      const dx = e.clientX - cx, dy = e.clientY - cy;
-      const near = Math.abs(dx) < r.width / 2 + REACH && Math.abs(dy) < r.height / 2 + REACH;
-      if (near) { on = true; b.style.translate = `${dx * PULL}px ${dy * PULL}px`; }
-      else if (on) { on = false; b.style.translate = ''; }
-    }, { passive: true });
-  });
-}

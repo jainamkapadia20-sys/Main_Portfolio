@@ -1,47 +1,18 @@
 ---
-// The name, written by hand in the pen of Apple's Hello screen (strokes in src/lib/name-strokes.ts). It writes itself
-// once the opening room has cleared: one continuous pen that eases in, runs across both words at an even speed and
-// eases out, then dots the i's. The h1 around it carries the name as text; this drawing is decorative.
-// Reduced motion shows it already written.
-import { NAME_STROKES, NAME_VIEWBOX } from '../lib/name-strokes';
+// The name, set in the display face (Cenios, or its stand-in until the licensed file is in /fonts). Once the opening
+// room has cleared, the letters rise into place one after another out of a mask. The h1 around it carries the name
+// as text; this is the visible setting. Reduced motion shows it still.
+import { site } from '../site';
+const letters = [...site.name];
 ---
-<svg class="hello" viewBox={NAME_VIEWBOX} fill="none" stroke="currentColor" stroke-width="14.8883" stroke-linecap="round"
-  stroke-linejoin="round" aria-hidden="true" data-hello>
-  {NAME_STROKES.map((d) => <path d={d} />)}
-</svg>
+<span class="hello" aria-hidden="true" data-hello>{letters.map((c, i) => <span class="c" style={`--i:${i}`}>{c === ' ' ? ' ' : c}</span>)}</span>
 
 <style>
-  .hello { display: block; width: min(88vw, 900px); height: auto; margin-inline: auto; overflow: visible; }
-  /* hidden until the script measures the strokes and starts writing (only when JS can) */
-  :global(.js) .hello:not(.ready) { visibility: hidden; }
-  :global(:root[data-motion="calm"]) .hello { visibility: visible; }
+  .hello { display: block; overflow: hidden; padding-block: .06em; font-family: var(--font-display); font-weight: var(--display-weight);
+    font-size: var(--name-size, clamp(2.2rem, 7.2vw, 7.5rem)); letter-spacing: var(--name-track, -.035em); line-height: .95; white-space: nowrap; color: var(--ink); }
+  .c { display: inline-block; animation: rise 1100ms cubic-bezier(.22, 1, .36, 1) both; animation-delay: calc(250ms + var(--i) * 45ms); }
+  @keyframes rise { from { translate: 0 105%; } }
+  /* while the opening room plays, the letters wait below the line */
+  :global(html.intro) .c { animation-play-state: paused; }
+  :global(:root[data-motion="calm"]) .c { animation: none; }
 </style>
-
-<script>
-  import { calm } from '../lib/motion';
-  const svg = document.querySelector<SVGSVGElement>('[data-hello]');
-  if (svg && !calm()) {
-    const paths = [...svg.querySelectorAll('path')];
-    const lens = paths.map((p) => p.getTotalLength());
-    const total = lens.reduce((a, b) => a + b, 0);
-    const starts = lens.map((_, i) => lens.slice(0, i).reduce((a, b) => a + b, 0));
-    // the pen: hidden strokes, each uncovered as the running length passes through it
-    paths.forEach((p, i) => { p.style.strokeDasharray = `${lens[i]} ${lens[i] + 1}`; p.style.strokeDashoffset = `${lens[i]}`; });
-    svg.classList.add('ready');
-    const DURATION = 3600;                                   // Apple's hello takes ~3.5s; this keeps the same pace
-    const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);   // easeInOut, like the original
-    const write = () => {
-      const t0 = performance.now();
-      const frame = (now: number) => {
-        const k = Math.min(1, (now - t0) / DURATION);
-        const drawn = ease(k) * total;
-        paths.forEach((p, i) => { p.style.strokeDashoffset = `${lens[i] - Math.min(lens[i], Math.max(0, drawn - starts[i]))}`; });
-        if (k < 1) requestAnimationFrame(frame);
-      };
-      requestAnimationFrame(frame);
-    };
-    // wait for the opening room to clear, if it is playing
-    if (document.documentElement.classList.contains('intro')) document.addEventListener('intro:done', () => setTimeout(write, 250), { once: true });
-    else write();
-  }
-</script>
