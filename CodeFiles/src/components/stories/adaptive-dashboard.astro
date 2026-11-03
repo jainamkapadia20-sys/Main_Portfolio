@@ -18,7 +18,6 @@ import pedestrian from '../../assets/hmi/09-proximity-alert-2.png';
 import autopark from '../../assets/hmi/10-park-auto.png';
 import reversing from '../../assets/hmi/11-parking-manual.png';
 import braking from '../../assets/hmi/12-crash-alert.png';
-import wall from '../../assets/hmi/research.jpg';
 import flows from '../../assets/hmi/flows.jpg';
 import sbBlind from '../../assets/hmi/sb-blindspot.jpg';
 import sbExit from '../../assets/hmi/sb-exit.jpg';
@@ -79,10 +78,13 @@ const patterns = [
   { t: 'Urgent and trivial look the same', d: 'When every alert shouts, the one that matters is lost.', shot: cutin, alt: 'Red ring and warning sign for a cut-in' },
   { t: 'Touch costs attention', d: 'Every tap is a look away. Fewer taps, bigger targets.', shot: autopark, alt: 'Auto park asks for one tap to confirm' },
 ];
-const modes = {
-  highway: { img: cruise, alt: 'Highway mode: speed and rpm gauges, limit sign and ACC', shows: ['Speed and the limit', 'Range for planning stops', 'The next exit, early', 'Blind spot and lane keeping', 'Fatigue alerts'] },
-  traffic: { img: traffic, alt: 'Traffic mode: speed ring, map and 360° proximity, rpm gauge removed', shows: ['360° proximity', 'Pedestrians and cyclists', 'The next turn', 'Parking cameras', 'Start-stop and climate'] },
-};
+// the research board's key sticky notes, grouped under the question they answer (from the project's Miro board)
+const board = [
+  { q: 'What matters most while driving?', c: 'y', notes: ['Speed visibility', 'Navigation directions', 'Blind spot warnings', 'Fuel or battery range'] },
+  { q: 'How does that change with the situation?', c: 'g', notes: ['Navigation in unfamiliar areas', 'Parking cameras in tight spaces', 'ADAS alerts at night', 'A simpler screen in rain'] },
+  { q: 'What distracts the most?', c: 'p', notes: ['Touchscreen climate controls', 'Typing a destination', 'Deep menus', 'Switching between screens'] },
+  { q: 'What would reduce the effort?', c: 'b', notes: ['Larger icons and buttons', 'Information that fits the moment', 'Physical controls for essentials', 'Fewer things on screen while moving'] },
+];
 const spec = [
   ['Show', 'Only what this road needs, right now'],
   ['Rank', 'Safety first, everything else after'],
@@ -181,23 +183,13 @@ const pad = (n: number) => String(n).padStart(2, '0');
     <p class="question" data-scrub>Can a cluster show <em>less</em> and still make sure nothing important is missed?</p>
     <p class="aside" data-scrub>The answer was not a quieter screen. It was a screen that knows which road it is on.</p>
 
-    <div class="modes" data-modes data-scrub="pop">
-      <div class="modes-head">
-        <h3 class="h3">Two modes, one cluster</h3>
-        <div class="switch" role="group" aria-label="Driving mode">
-          <button type="button" aria-pressed="true" data-mode="highway">Highway</button>
-          <button type="button" aria-pressed="false" data-mode="traffic">Traffic</button>
-        </div>
+    {cluster && (
+      <div class="screens">
+        <h3 class="h3" data-scrub>Every screen, by type</h3>
+        <p class="muted lede-s" data-scrub>Highway, traffic and parking. Pick a type, then a moment, to see what the cluster shows and why.</p>
+        <ClusterPlayer block={cluster} />
       </div>
-      <div class="modes-body">
-        <div class="modes-shot">
-          <Image class="m on" data-shot="highway" src={modes.highway.img} alt={modes.highway.alt} widths={[800, 1400]} sizes="(min-width: 1100px) 760px, 100vw" />
-          <Image class="m" data-shot="traffic" src={modes.traffic.img} alt={modes.traffic.alt} widths={[800, 1400]} sizes="(min-width: 1100px) 760px, 100vw" />
-        </div>
-        <ul class="shows" data-list="highway">{modes.highway.shows.map((s) => <li>{s}</li>)}</ul>
-        <ul class="shows" data-list="traffic" hidden>{modes.traffic.shows.map((s) => <li>{s}</li>)}</ul>
-      </div>
-    </div>
+    )}
 
     <p class="mono muted aud" data-scrub>Designed for drivers aged 25 to 35</p>
     <dl class="spec" data-scrub>
@@ -232,10 +224,15 @@ const pad = (n: number) => String(n).padStart(2, '0');
       ))}
     </ol>
 
-    <figure class="fig" data-scrub="pop">
-      <Image src={wall} alt="Miro board of notes under four research questions, sorted into highway and traffic needs, with the brief and scenarios" widths={[800, 1400, 2000]} sizes="(min-width: 1300px) 1240px, 100vw" />
-      <figcaption class="mono muted">The Miro board: four questions, sorted into open road and city</figcaption>
-    </figure>
+    <h3 class="h3 sub" data-scrub>From the research board</h3>
+    <div class="board">
+      {board.map((col, i) => (
+        <div class="col" data-scrub style={`--d:${i * 0.08}`}>
+          <p class="q">{col.q}</p>
+          <ul>{col.notes.map((n, j) => <li class:list={['sticky', col.c]} style={`--r:${((i + j) % 3 - 1) * 1.4}deg`}>{n}</li>)}</ul>
+        </div>
+      ))}
+    </div>
   </section>
 
   <!-- 03 PROTOTYPING -->
@@ -284,14 +281,6 @@ const pad = (n: number) => String(n).padStart(2, '0');
       <span class="bar" aria-hidden="true"></span>
       <ol>{scale.map((r) => <li style={`--c:${r.c}`}><Image src={r.src} alt={`${r.t}: ${r.d}`} widths={[400, 800]} sizes="(min-width: 1100px) 290px, 50vw" /><p><b>{r.t}</b><span class="muted">{r.d}</span></p></li>)}</ol>
     </div>
-
-    {cluster && (
-      <div class="drive-it">
-        <h3 class="h3" data-scrub>Drive it</h3>
-        <p class="muted" data-scrub>Choose a mode, then a moment.</p>
-        <ClusterPlayer block={cluster} />
-      </div>
-    )}
 
     <h3 class="h3 sub" data-scrub>Under pressure</h3>
     <ul class="pressure">
@@ -402,6 +391,15 @@ const pad = (n: number) => String(n).padStart(2, '0');
   [data-scrub='left'] { translate: calc((1 - var(--e, 1)) * -64px) 0; }
   [data-scrub='right'] { translate: calc((1 - var(--e, 1)) * 64px) 0; }
   .aud { margin-top: var(--s-6); }
+  /* the research board: a column per question, its notes in Miro's colours, set slightly askew like the real board */
+  .board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-5); margin-top: var(--s-5); }
+  .col { display: grid; gap: var(--s-4); align-content: start; }
+  .q { font-weight: 600; line-height: 1.3; padding-bottom: var(--s-3); border-bottom: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); min-height: 3.6em; }
+  .col ul { display: grid; gap: 12px; }
+  .sticky { padding: 18px 16px; min-height: 92px; display: flex; align-items: flex-end; border-radius: 4px 4px 14px 4px; color: #1b1416; font-weight: 600; line-height: 1.3;
+    rotate: var(--r); box-shadow: 0 1px 0 hsl(0 0% 100% / .4) inset, 0 12px 22px -10px hsl(0 0% 0% / .7); transition: rotate 300ms var(--ease-smooth-out), translate 300ms var(--ease-smooth-out); }
+  .sticky:hover { rotate: 0deg; translate: 0 -3px; }
+  .sticky.y { background: #F7D774; } .sticky.g { background: #B9E4B1; } .sticky.p { background: #F3B6CF; } .sticky.b { background: #AFCFF5; }
   .meta-row { display: flex; flex-wrap: wrap; gap: var(--s-6); margin-top: clamp(40px, 5vw, 64px); padding-top: var(--s-4); border-top: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); }
   .meta-row dt { color: var(--graphite); margin-bottom: 4px; }
   .meta-row dd { margin: 0; font-weight: 500; }
@@ -456,27 +454,15 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .pn { color: var(--accent); font-size: 1rem; }
   .pt { font-size: clamp(1.15rem, 1rem + .5vw, 1.5rem); font-weight: 600; letter-spacing: -.01em; line-height: 1.25; margin-bottom: 6px; }
   .patterns :global(img) { width: 100%; height: auto; border-radius: 10px; }
-  .fig { margin-top: clamp(64px, 8vw, 110px); display: grid; gap: var(--s-3); }
-  .fig :global(img) { width: 100%; height: auto; border-radius: 14px; }
-
   /* 02 */
   .question { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2.2rem, 1rem + 3.8vw, 5rem); letter-spacing: -.035em; line-height: 1.02;
     margin-top: var(--s-5); max-width: 20ch; text-wrap: balance; }
   .question em { font-style: normal; color: var(--accent); }
   .aside { margin-top: var(--s-5); font-size: var(--t-lead); line-height: 1.35; max-width: 44ch; color: var(--graphite); }
-  .modes { margin-top: clamp(80px, 9vw, 130px); }
-  .modes-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--s-4); }
-  .switch { display: inline-flex; padding: 4px; border-radius: 12px; background: var(--surface); border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent); }
-  .switch button { min-height: 44px; padding: 0 22px; border-radius: 9px; border: 0; background: none; color: var(--graphite); font: inherit; font-weight: 600; cursor: pointer;
-    transition: background-color var(--duration-fast) var(--ease-smooth-out), color var(--duration-fast) var(--ease-smooth-out); }
-  .switch button[aria-pressed='true'] { background: var(--accent); color: #fff; }
-  .switch button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .modes-body { display: grid; grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); gap: var(--s-6); margin-top: var(--s-5); align-items: center; }
-  .modes-shot { position: relative; aspect-ratio: 2 / 1; border-radius: 14px; overflow: hidden; background: #050505; }
-  .modes-shot :global(.m) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 500ms var(--ease-smooth-out); }
-  .modes-shot :global(.m.on) { opacity: 1; }
-  .shows { display: grid; }
-  .shows li { padding: 12px 0; border-bottom: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); font-size: 1.05rem; }
+  .screens { margin: clamp(80px, 9vw, 130px) calc(var(--inset) * -1) 0; }
+  .screens > .h3, .screens > p { padding-inline: var(--inset); }
+  .lede-s { margin-top: var(--s-2); max-width: 52ch; line-height: 1.45; }
+  .screens :global(.cp) { margin-top: var(--s-5); }
   .spec { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-5); margin-top: clamp(64px, 8vw, 110px); }
   .spec div { display: grid; gap: var(--s-2); padding-top: var(--s-3); border-top: 2px solid var(--accent); }
   .spec dd { margin: 0; font-size: 1.05rem; line-height: 1.4; }
@@ -500,9 +486,6 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .scale :global(img) { width: 100%; height: auto; border-radius: 10px; box-shadow: 0 0 0 2px var(--c); }
   .scale p { display: grid; gap: 2px; }
   .scale b { color: var(--c); }
-  .drive-it { margin: clamp(80px, 9vw, 130px) calc(var(--inset) * -1) 0; }
-  .drive-it > .h3, .drive-it > p { padding-inline: var(--inset); }
-  .drive-it :global(.cp) { margin-top: var(--s-5); }
   .pressure { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-6) var(--s-5); margin-top: var(--s-5); }
   .pressure li { display: grid; gap: var(--s-2); align-content: start; }
   .pressure :global(img) { width: 100%; height: auto; border-radius: 10px; margin-bottom: var(--s-2); }
@@ -525,7 +508,8 @@ const pad = (n: number) => String(n).padStart(2, '0');
   @media (max-width: 1100px) { .rail { display: none; } .topbar { display: block; } .labelled { grid-template-columns: 1fr; } .how { grid-template-columns: repeat(2, minmax(0, 1fr)); } .how li::after { display: none; } }
   @media (max-width: 900px) {
     .readouts, .spec { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .modes-body, .cols, .pressure, .vs, .stage-row { grid-template-columns: 1fr; }
+    .cols, .pressure, .vs, .stage-row { grid-template-columns: 1fr; }
+    .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .stage-txt { position: static; }
     .patterns li { grid-template-columns: 40px 1fr; }
     .patterns li :global(img) { grid-column: 1 / -1; }
@@ -533,7 +517,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
     .log li { grid-template-columns: 56px 1fr; }
     .log li > :last-child { grid-column: 1 / -1; }
   }
-  @media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } .plain, .how { grid-template-columns: 1fr; } .mark { width: 22px; height: 22px; font-size: 11px; } }
+  @media (max-width: 560px) { .grid2, .board { grid-template-columns: 1fr; } .plain, .how { grid-template-columns: 1fr; } .mark { width: 22px; height: 22px; font-size: 11px; } }
   /* calm: the clip does not pin; its captions read as a short list */
   :global(:root[data-motion="calm"]) .story { height: auto; }
   :global(:root[data-motion="calm"]) .story .stage { position: relative; height: auto; padding-block: 16svh; }
@@ -633,12 +617,4 @@ const pad = (n: number) => String(n).padStart(2, '0');
   addEventListener('scroll', kick, { passive: true });
   frame();
 
-  // two modes, one cluster: the switch swaps the screen and what it shows
-  const modes = document.querySelector<HTMLElement>('[data-modes]');
-  modes?.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach((b) => b.addEventListener('click', () => {
-    const m = b.dataset.mode!;
-    modes.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-    modes.querySelectorAll<HTMLElement>('[data-shot]').forEach((x) => x.classList.toggle('on', x.dataset.shot === m));
-    modes.querySelectorAll<HTMLElement>('[data-list]').forEach((x) => { x.hidden = x.dataset.list !== m; });
-  }));
 </script>
