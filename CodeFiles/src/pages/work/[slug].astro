@@ -344,10 +344,7 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
 
 <script>
   import { calm } from '../../lib/motion';
-  import { addStops } from '../../lib/scroll';
   const still = calm();
-  // sections settle into place when a scroll comes to rest near the start of one; long sections scroll freely
-  addStops('proximity', () => [...document.querySelectorAll('[data-sec]')].map((el) => el.getBoundingClientRect().top + scrollY - 56));
 
   // the dock appears once the title has gone by, and marks the section that fills the middle of the screen
   const dock = document.querySelector<HTMLElement>('[data-dock]');

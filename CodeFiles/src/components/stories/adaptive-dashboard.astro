@@ -1,9 +1,10 @@
 ---
-// The Adaptive Dashboard case study, told like a drive (after Arnav Srinath's "Cooked", which tells its story as a
-// meal). It opens on the result, the cluster cycling through its states (the result film, once there is one), then
-// the drive: a night in traffic, what research found, the route chosen, the testing, the finished cluster, and the
-// same drive again with it. A road line draws itself down the page as you go. Shared behaviour (the dock, the
-// count-up numbers, section snapping, the next-project link) lives in src/pages/work/[slug].astro.
+// The Adaptive Dashboard case study, told as a night drive seen through a dashcam. It opens on the result film (the
+// cluster cycling through its states until the real film exists), cut off by a false bottom so it is clear there is
+// more below. Then a drive in the rain plays out in captions, an attention gauge fills into the red, and five chapters
+// follow: field notes, the brief, prototyping, the cluster, the debrief. A route rail on the left follows the reader,
+// its marker moving with the scroll and its stops jumping to each chapter. Shared behaviour (count-up numbers, the
+// next-project link) lives in src/pages/work/[slug].astro.
 import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
 import ClusterPlayer from '../ClusterPlayer.astro';
@@ -39,153 +40,171 @@ const p = project.data;
 const film = p.blocks.find((b) => b.type === 'video' && b.src) as Extract<typeof p.blocks[number], { type: 'video' }> | undefined;
 const cluster = p.blocks.find((b) => b.type === 'cluster') as Extract<typeof p.blocks[number], { type: 'cluster' }> | undefined;
 
-// the result reel: the cluster's states in the order a drive meets them (stands in for the result film)
+// the result film's stand-in: the cluster's states in the order a drive meets them
 const reel = [
   { src: startup, t: 'Startup' }, { src: cruise, t: 'Highway cruise' }, { src: exit, t: 'Exit guidance' }, { src: blind, t: 'Blind spot' },
   { src: traffic, t: 'Traffic mode' }, { src: alongside, t: 'Car alongside' }, { src: closing, t: 'Closing in' }, { src: cutin, t: 'Cut-in' },
   { src: pedestrian, t: 'Pedestrian' }, { src: braking, t: 'Emergency braking' }, { src: autopark, t: 'Auto park' }, { src: reversing, t: 'Reversing' },
 ];
-const phases = [
-  { id: 'result', label: 'Result', stage: 'The cluster' },
-  { id: 'start', label: 'Ignition', stage: 'The problem' },
-  { id: 'discover', label: 'Scan', stage: 'Discover' },
-  { id: 'define', label: 'Route', stage: 'Define' },
-  { id: 'develop', label: 'Drive', stage: 'Develop' },
-  { id: 'deliver', label: 'Arrive', stage: 'Deliver' },
-  { id: 'outcome', label: 'Park', stage: 'Outcome' },
+const route = [
+  { id: 'film', t: 'Film' }, { id: 'night', t: 'Night drive' }, { id: 'notes', t: 'Field notes' }, { id: 'brief', t: 'The brief' },
+  { id: 'proto', t: 'Prototyping' }, { id: 'cluster', t: 'The cluster' }, { id: 'debrief', t: 'Debrief' },
 ];
-const notes = [
-  { t: 'Small touchscreen buttons are hard to hit while driving', c: 'y' },
-  { t: 'Pop-up alerts interrupt navigation', c: 'w' },
-  { t: 'Important alerts get buried', c: 'g' },
-  { t: 'Too much information at once', c: 'y' },
-  { t: 'Navigation instructions appear too late', c: 'w' },
-  { t: 'Looking away from the road for settings', c: 'g' },
-  { t: 'Distracted by unnecessary animations', c: 'y' },
-  { t: 'Feels stressed in heavy traffic', c: 'w' },
+const captions = [
+  'Stop. Crawl. Stop.',
+  'Brake lights ahead, a lane closing, a scooter on the left.',
+  'The cluster lights up with everything it knows.',
+  'For two seconds, nobody is watching the road.',
 ];
-const noticed = [
-  { t: 'Speed is checked constantly', d: 'On highways, drivers glance at speed every few seconds.', shot: cruise, alt: 'Highway cruise screen with the speed large on the left' },
-  { t: 'Priority moves with the road', d: 'New places need navigation; tight spaces need cameras.', shot: traffic, alt: 'Traffic mode with map and proximity view' },
-  { t: 'Alerts get buried', d: 'Too many notifications, and the one that matters gets lost.', shot: cutin, alt: 'Red alert ring and warning sign' },
-  { t: 'Touch pulls eyes away', d: 'Small targets and deep menus take attention off the road.', shot: autopark, alt: 'Auto park asks for a single tap to confirm' },
+const load = ['Speed', 'Revs', 'Media', 'Maps', 'Calls', 'Alerts', 'Climate', 'Range'];
+const log = [
+  { s: 'hi', t: 'Alerts buried under everything else on screen' },
+  { s: 'hi', t: 'Settings that need eyes off the road' },
+  { s: 'md', t: 'Pop-ups cutting across navigation' },
+  { s: 'md', t: 'Turn instructions that arrive too late' },
+  { s: 'md', t: 'Targets too small to hit at speed' },
+  { s: 'lo', t: 'Animation that pulls focus for nothing' },
+  { s: 'lo', t: 'Text too small to read in a glance' },
+  { s: 'lo', t: 'Stress climbing in heavy traffic' },
+];
+const patterns = [
+  { t: 'Speed gets checked every few seconds', d: 'On open roads it is the one number drivers return to.', shot: cruise, alt: 'Highway screen with the speed large on the left' },
+  { t: 'What matters changes with the road', d: 'Navigation in new places, cameras in tight spots, the gap in traffic.', shot: traffic, alt: 'Traffic mode with map and proximity view' },
+  { t: 'Urgent and trivial look the same', d: 'When every alert shouts, the one that matters is lost.', shot: cutin, alt: 'Red ring and warning sign for a cut-in' },
+  { t: 'Touch costs attention', d: 'Every tap is a look away. Fewer taps, bigger targets.', shot: autopark, alt: 'Auto park asks for one tap to confirm' },
 ];
 const modes = {
-  highway: { img: cruise, alt: 'Highway mode: speed and rpm gauges, limit sign and ACC', shows: ['Speed and the limit', 'Range for planning stops', 'Exit guidance', 'Blind spot and lane keeping', 'Fatigue alerts'] },
-  traffic: { img: traffic, alt: 'Traffic mode: speed ring, map and 360° proximity, rpm gauge removed', shows: ['360° proximity', 'Pedestrians and cyclists', 'The next turn, early', 'Parking cameras', 'Start-stop and climate'] },
+  highway: { img: cruise, alt: 'Highway mode: speed and rpm gauges, limit sign and ACC', shows: ['Speed and the limit', 'Range for planning stops', 'The next exit, early', 'Blind spot and lane keeping', 'Fatigue alerts'] },
+  traffic: { img: traffic, alt: 'Traffic mode: speed ring, map and 360° proximity, rpm gauge removed', shows: ['360° proximity', 'Pedestrians and cyclists', 'The next turn', 'Parking cameras', 'Start-stop and climate'] },
 };
-const ring = [
-  { src: traffic, c: '#3FD07A', t: 'Green', d: 'All clear' },
-  { src: alongside, c: '#E8D53A', t: 'Yellow', d: 'A car alongside' },
-  { src: closing, c: '#F08A2C', t: 'Orange', d: 'Closing in' },
-  { src: cutin, c: '#E8343C', t: 'Red', d: 'Act now' },
+const spec = [
+  ['Show', 'Only what this road needs, right now'],
+  ['Rank', 'Safety first, everything else after'],
+  ['Read', 'Whole state in one glance'],
+  ['Touch', 'As little as possible, never in menus'],
 ];
-const edges = [
-  { src: braking, t: 'Emergency braking', d: 'The whole cluster turns red. One message, nothing else competes.', alt: 'The cluster washed red with the words Emergency Braking' },
-  { src: pedestrian, t: 'Pedestrian ahead', d: 'A red cone points at the person, not a generic warning.', alt: 'Pedestrian Detected warning with a red cone ahead of the car' },
-  { src: reversing, t: 'Reversing', d: 'The cluster becomes the rear camera, with arcs that go green, amber, red.', alt: 'Rear camera view beside a top-down car with sensor arcs' },
-  { src: startup, t: 'Startup', d: 'Every warning light checks itself once, then clears.', alt: 'Startup screen with gauges at zero and all warning lights on' },
+const scale = [
+  { src: traffic, c: '#3FD07A', t: 'Clear', d: 'Nothing near' },
+  { src: alongside, c: '#E8D53A', t: 'Aware', d: 'Car alongside' },
+  { src: closing, c: '#F08A2C', t: 'Caution', d: 'Gap closing' },
+  { src: cutin, c: '#E8343C', t: 'Act', d: 'Cut-in' },
 ];
-const chips = [{ k: 'Discipline', v: 'HMI' }, { k: 'Duration', v: p.duration }, { k: 'Tools', v: p.tools.join(' · ') }];
+const pressure = [
+  { src: braking, t: 'Emergency braking', d: 'The whole screen turns red. One message, nothing competing with it.', alt: 'The cluster washed red with the words Emergency Braking' },
+  { src: pedestrian, t: 'Someone steps out', d: 'A red cone points at the person, so the warning says where, not just what.', alt: 'Pedestrian Detected warning with a red cone ahead of the car' },
+  { src: reversing, t: 'Backing in', d: 'The cluster becomes the rear camera, with arcs that tighten as you get close.', alt: 'Rear camera view beside a top-down car with sensor arcs' },
+  { src: startup, t: 'Key on', d: 'Every warning light checks itself once, then clears before you move.', alt: 'Startup screen with gauges at zero and all warning lights on' },
+];
 const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-arm t-learn-arm-top" d="M6 4L10 8" /><path class="t-learn-arm t-learn-arm-bot" d="M10 8L6 12" /></svg>';
-const check = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" /></svg>';
+const pad = (n: number) => String(n).padStart(2, '0');
 ---
-<article class="drive" aria-labelledby="case-h">
-  <!-- the road line: a lane marking that draws itself down the page as the drive goes on -->
-  <svg class="road-line" viewBox="0 0 100 1000" preserveAspectRatio="none" aria-hidden="true">
-    <defs><mask id="road-reveal"><path class="reveal" d="M50 0 C 10 120, 90 230, 50 340 S 10 560, 50 670 S 90 880, 50 1000" pathLength="1" data-road /></mask></defs>
-    <path class="edge" d="M50 0 C 10 120, 90 230, 50 340 S 10 560, 50 670 S 90 880, 50 1000" mask="url(#road-reveal)" />
-    <path class="dash" d="M50 0 C 10 120, 90 230, 50 340 S 10 560, 50 670 S 90 880, 50 1000" mask="url(#road-reveal)" />
-  </svg>
+<article class="trip" aria-labelledby="case-h" data-trip>
+  <!-- the route rail: follows the reader; each stop jumps to its chapter -->
+  <nav class="rail" aria-label="Chapters" data-rail>
+    <span class="track" aria-hidden="true"><span class="fill" data-fill></span><span class="car" data-car></span></span>
+    <ol>{route.map((r) => <li><a href={`#${r.id}`} data-stop={r.id}><span class="stopdot" aria-hidden="true"></span><span class="lbl">{r.t}</span></a></li>)}</ol>
+  </nav>
+  <span class="topbar" aria-hidden="true"><span data-topfill></span></span>
 
-  <!-- RESULT: the finished cluster, first -->
-  <section id="result" class="sec hero" data-sec>
-    <div class="wrap">
-      <div class="film">
-        {film ? <video src={withBase(film.src!)} muted loop playsinline autoplay preload="metadata" aria-label={film.alt}></video> : (
-          <div class="reel" data-reel role="img" aria-label="The cluster cycling through its twelve states, from startup to reversing">
-            {reel.map((r, i) => <Image class:list={['frame', { on: i === 0 }]} src={r.src} alt="" widths={[800, 1400, 2000]} sizes="(min-width: 1300px) 1240px, 100vw" loading={i < 2 ? 'eager' : 'lazy'} fetchpriority={i === 0 ? 'high' : undefined} />)}
-            <p class="reel-cap meta" aria-hidden="true"><span class="dot"></span><span data-reel-cap>{reel[0].t}</span><span class="count" data-reel-n>01 / {reel.length}</span></p>
-          </div>
-        )}
-      </div>
+  <!-- FILM: the result first, cut off by a false bottom -->
+  <section id="film" class="film-sec" data-ch>
+    <div class="screen">
+      {film ? <video src={withBase(film.src!)} muted loop playsinline autoplay preload="auto" aria-label={film.alt}></video> : (
+        <div class="reel" data-reel role="img" aria-label="The cluster playing through its twelve states, from key on to reversing">
+          {reel.map((r, i) => <Image class:list={['frame', { on: i === 0 }]} src={r.src} alt="" widths={[800, 1400, 2000]} sizes="(min-width: 1300px) 1240px, 100vw" loading={i < 2 ? 'eager' : 'lazy'} fetchpriority={i === 0 ? 'high' : undefined} />)}
+        </div>
+      )}
+      <span class="hud rec" aria-hidden="true"><i></i>Rec</span>
+      {!film && <span class="hud cap mono" aria-hidden="true" data-reel-cap>{reel[0].t} · 01/{reel.length}</span>}
+      <span class="cue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg></span>
     </div>
-    <header class="title wrap">
-      <p class="kicker meta">An HMI case study</p>
+    <header class="ident">
+      <p class="mono acc">HMI · instrument cluster</p>
       <h1 id="case-h">{p.title}</h1>
-      <p class="tagline">Less on the screen, more on the road</p>
-      <p class="sum muted">{p.summary}</p>
-      <ul class="chips">{chips.map((c) => <li><span class="muted">{c.k}</span> {c.v}</li>)}</ul>
-      <p class="hint meta"><span class="dot"></span>Scroll to start the drive</p>
+      <p class="line">A cluster that steps back when the road gets busy.</p>
+      <dl class="meta-row">
+        <div><dt class="mono">Role</dt><dd>{p.role.join(', ')}</dd></div>
+        <div><dt class="mono">Length</dt><dd>{p.duration}</dd></div>
+        <div><dt class="mono">Made with</dt><dd>{p.tools.join(', ')}</dd></div>
+      </dl>
     </header>
   </section>
 
-  <!-- IGNITION: the scene, and the tension -->
-  <section id="start" class="sec scene" data-sec>
-    <p class="big center" data-reveal>Imagine this.</p>
-    <p class="big center" data-reveal>9 pm. Rain. Bumper to bumper.<br /><span class="muted">Your cluster shows everything at once.</span></p>
-    <p class="big center" data-reveal>…and you <span class="accent">look down.</span></p>
-    <div class="balance" data-balance data-reveal>
-      <div class="pan left"><b>Everything on screen</b><span class="muted">speed · revs · media · maps · alerts</span></div>
-      <div class="pan right"><b class="accent">Eyes on the road</b><span class="muted">what driving actually needs</span></div>
-      <svg class="beam" viewBox="0 0 600 160" aria-hidden="true">
-        <g class="arm"><rect x="40" y="56" width="520" height="10" rx="5" /><rect x="70" y="40" width="12" height="20" rx="3" /><rect x="518" y="40" width="12" height="20" rx="3" /></g>
-        <path class="pivot" d="M300 66 L260 140 L340 140 Z" /><rect class="pivot" x="230" y="140" width="140" height="10" rx="4" />
-      </svg>
-    </div>
-    <div class="who wrap">
-      <h2 class="h2" data-reveal>Who's behind the wheel</h2>
-      <ul class="people">
-        <li class="card" data-reveal><svg viewBox="0 0 64 40" aria-hidden="true"><path d="M2 30 L62 30" /><path d="M8 30 V22 L18 12 H44 L56 22 V30" /><circle cx="18" cy="32" r="5" /><circle cx="46" cy="32" r="5" /></svg><b>Highway commuters</b><span class="muted">Long, fast drives. Speed, range and the next exit.</span></li>
-        <li class="card" data-reveal style="--i:1"><svg viewBox="0 0 64 40" aria-hidden="true"><path d="M2 30 L62 30" /><rect x="6" y="14" width="22" height="16" rx="4" /><rect x="36" y="14" width="22" height="16" rx="4" /><circle cx="12" cy="32" r="3" /><circle cx="24" cy="32" r="3" /><circle cx="42" cy="32" r="3" /><circle cx="54" cy="32" r="3" /></svg><b>City drivers</b><span class="muted">Stop and go. Gaps, people, parking.</span></li>
-      </ul>
-      <p class="muted center small" data-reveal>Primary audience: drivers aged 25 to 35.</p>
+  <!-- NIGHT DRIVE: the problem, as a dashcam clip with captions -->
+  <section id="night" class="pin cam" data-ch data-pin="cam" style={`--n:${captions.length}`}>
+    <div class="stage">
+      <Image class="cam-bg" src={traffic} alt="" widths={[800, 1400, 2000]} sizes="100vw" />
+      <div class="cam-hud mono" aria-hidden="true"><span class="rec"><i></i>21:04</span><span>Rain</span><span>18 km/h</span></div>
+      <ol class="caps" aria-label="The drive">{captions.map((c, i) => <li data-cap={i} class:list={{ on: i === 0 }}>{c}</li>)}</ol>
     </div>
   </section>
 
-  <!-- SCAN / DISCOVER -->
-  <section id="discover" class="sec wrap" data-sec>
-    <p class="phase meta" data-reveal><span class="no">01</span>Discover</p>
-    <h2 class="display" data-reveal>Reading<br />the road</h2>
-    <div class="stats" data-reveal>
-      <p><span class="num" data-count="4">4</span><span class="meta">research questions</span></p>
-      <p><span class="num" data-count="2">2</span><span class="meta">driving contexts</span></p>
-      <p><span class="num" data-count="9">9</span><span class="meta">pain points</span></p>
-      <p><span class="num" data-count="7">7</span><span class="meta">scenarios</span></p>
+  <!-- the attention gauge fills as the screen asks for more -->
+  <section class="pin gauge" data-pin="gauge" aria-labelledby="g-h">
+    <div class="stage">
+      <p class="mono acc">Attention budget</p>
+      <h2 id="g-h" class="h2">Everything asks for a look</h2>
+      <svg class="dial" viewBox="0 0 240 150" aria-hidden="true">
+        <path class="arc" d="M30 130 A90 90 0 0 1 210 130" pathLength="1" />
+        <path class="arc red" d="M30 130 A90 90 0 0 1 210 130" pathLength="1" />
+        <g class="needle" data-needle><line x1="120" y1="130" x2="120" y2="54" /><circle cx="120" cy="130" r="7" /></g>
+      </svg>
+      <p class="verdict mono" data-verdict>Within budget</p>
+      <ul class="asks">{load.map((l) => <li data-ask>{l}</li>)}</ul>
+    </div>
+  </section>
+
+  <section class="sec wrap kinds" aria-labelledby="k-h">
+    <h2 id="k-h" class="h2">Two kinds of drive</h2>
+    <div class="two">
+      <div class="panel" data-reveal><p class="mono acc">Open road</p><p class="big3">Long, fast, steady.</p><p class="muted">Speed, range and the next exit matter most.</p></div>
+      <div class="panel" data-reveal style="--i:1"><p class="mono acc">City crawl</p><p class="big3">Short, slow, crowded.</p><p class="muted">Gaps, people and parking matter most.</p></div>
+    </div>
+    <p class="mono muted">Designed for drivers aged 25 to 35</p>
+  </section>
+
+  <!-- 01 FIELD NOTES -->
+  <section id="notes" class="sec wrap" data-ch>
+    <p class="chap mono"><span>01</span>Field notes</p>
+    <h2 class="display" data-reveal>What the research said</h2>
+    <div class="readouts" data-reveal>
+      <p><b class="num" data-count="4">4</b><span class="mono">questions asked</span></p>
+      <p><b class="num" data-count="2">2</b><span class="mono">road contexts</span></p>
+      <p><b class="num" data-count="9">9</b><span class="mono">pain points</span></p>
+      <p><b class="num" data-count="7">7</b><span class="mono">scenarios</span></p>
     </div>
 
-    <h3 class="h2 sub" data-reveal>What came up</h3>
-    <ul class="notes">{notes.map((n, i) => <li class:list={['note', n.c]} style={`--r:${(i % 3 - 1) * 1.6}deg; --i:${i % 4}`} data-reveal>{n.t}</li>)}</ul>
+    <h3 class="h3 sub" data-reveal>Logged complaints</h3>
+    <ol class="log">
+      {log.map((l, i) => <li data-reveal style={`--i:${i % 4}`}><span class="mono t">{`00:${pad(i * 7 + 3)}`}</span><span class:list={['sev', l.s]}>{l.s === 'hi' ? 'High' : l.s === 'md' ? 'Medium' : 'Low'}</span><span>{l.t}</span></li>)}
+    </ol>
 
-    <h3 class="h2 sub" data-reveal>What we noticed</h3>
-    <ul class="noticed">
-      {noticed.map((n, i) => (
-        <li class="card" data-reveal style={`--i:${i}`}>
-          <span class="meta accent">{String(i + 1).padStart(2, '0')}</span>
-          <b>{n.t}</b>
-          <span class="muted">{n.d}</span>
-          <figure class="from"><Image src={n.shot} alt={n.alt} widths={[400, 800]} sizes="280px" /><figcaption class="meta">From the cluster</figcaption></figure>
+    <h3 class="h3 sub" data-reveal>Four patterns</h3>
+    <ol class="patterns">
+      {patterns.map((n, i) => (
+        <li data-reveal>
+          <span class="pn mono">{pad(i + 1)}</span>
+          <div><p class="pt">{n.t}</p><p class="muted">{n.d}</p></div>
+          <Image src={n.shot} alt={n.alt} widths={[500, 900]} sizes="(min-width: 1100px) 380px, 100vw" />
         </li>
       ))}
-    </ul>
+    </ol>
 
     <figure class="fig" data-reveal>
-      <Image src={wall} alt="Miro wall of sticky notes under four research questions, with highway and traffic clusters, the brief and the scenarios" widths={[800, 1400, 2000]} sizes="(min-width: 1300px) 1240px, 100vw" />
-      <figcaption class="muted">The research wall: four questions, then what matters on the highway and in traffic.</figcaption>
+      <Image src={wall} alt="Miro board of notes under four research questions, sorted into highway and traffic needs, with the brief and scenarios" widths={[800, 1400, 2000]} sizes="(min-width: 1300px) 1240px, 100vw" />
+      <figcaption class="mono muted">The Miro board: four questions, sorted into open road and city</figcaption>
     </figure>
   </section>
 
-  <!-- ROUTE / DEFINE -->
-  <section id="define" class="sec wrap" data-sec>
-    <p class="phase meta" data-reveal><span class="no">02</span>Define</p>
-    <h2 class="display" data-reveal>Planning<br />the route</h2>
-    <p class="meta accent hmw-k" data-reveal>How might we</p>
-    <p class="hmw" data-reveal>How might we let the cluster <span class="accent">show less</span>, without the driver ever <span class="accent">missing what matters?</span></p>
-    <p class="pull" data-reveal>Drivers don't need more information. They need the right information at the right moment.</p>
+  <!-- 02 THE BRIEF -->
+  <section id="brief" class="sec wrap" data-ch>
+    <p class="chap mono"><span>02</span>The brief</p>
+    <p class="question" data-reveal>Can a cluster show <em>less</em> and still make sure nothing important is missed?</p>
+    <p class="aside" data-reveal>The answer was not a quieter screen. It was a screen that knows which road it is on.</p>
 
     <div class="modes" data-modes data-reveal>
       <div class="modes-head">
-        <h3 class="h2">Two modes, one cluster</h3>
+        <h3 class="h3">Two modes, one cluster</h3>
         <div class="switch" role="group" aria-label="Driving mode">
           <button type="button" aria-pressed="true" data-mode="highway">Highway</button>
           <button type="button" aria-pressed="false" data-mode="traffic">Traffic</button>
@@ -201,345 +220,385 @@ const check = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3
       </div>
     </div>
 
-    <div class="brief card" data-reveal>
-      <p class="meta accent">The brief</p>
-      <h3 class="h3">Show less, warn better</h3>
-      <ul class="checks">
-        {['Only what the road needs right now', 'A hierarchy you read in one glance', 'Controls without menus', 'Awareness without overload'].map((t) => <li><span class="tick" set:html={check} />{t}</li>)}
-      </ul>
-    </div>
+    <dl class="spec" data-reveal>
+      {spec.map(([k, v]) => <div><dt class="mono acc">{k}</dt><dd>{v}</dd></div>)}
+    </dl>
   </section>
 
-  <!-- DRIVE / DEVELOP -->
-  <section id="develop" class="sec wrap" data-sec>
-    <p class="phase meta" data-reveal><span class="no">03</span>Develop</p>
-    <h2 class="display" data-reveal>Test<br />drives</h2>
+  <!-- 03 PROTOTYPING -->
+  <section id="proto" class="sec wrap" data-ch>
+    <p class="chap mono"><span>03</span>Prototyping</p>
+    <h2 class="display" data-reveal>From storyboard to bench test</h2>
 
-    <h3 class="h2 sub" data-reveal>Seven moments, storyboarded</h3>
-    <p class="muted lede" data-reveal>Each told in six shots, from calm to safe. Four of them:</p>
-    <div class="grid2" data-reveal>
-      {[[sbBlind, 'Blind spot, highway'], [sbExit, 'Exit guidance, highway'], [sbPed, 'Pedestrian, traffic'], [sbPark, 'Parking assist, traffic']].map(([src, t]) => (
-        <figure><Image src={src as ImageMetadata} alt={`Storyboard: ${t}`} widths={[600, 1100]} sizes="(min-width: 1100px) 600px, 100vw" /><figcaption class="meta">{t}</figcaption></figure>
-      ))}
+    <div class="stage-row">
+      <div class="stage-txt" data-reveal><p class="mono acc">A · Storyboards</p><p class="st">Seven moments, six frames each.</p><p class="muted">Four shown: blind spot, exit, pedestrian, parking.</p></div>
+      <div class="grid2" data-reveal>
+        {[[sbBlind, 'Blind spot on the highway'], [sbExit, 'Taking an exit'], [sbPed, 'Pedestrian in traffic'], [sbPark, 'Parking in town']].map(([src, t]) => (
+          <figure><Image src={src as ImageMetadata} alt={`Storyboard: ${t}`} widths={[600, 1100]} sizes="(min-width: 1100px) 420px, 100vw" /><figcaption class="mono muted">{t}</figcaption></figure>
+        ))}
+      </div>
+    </div>
+    <div class="stage-row">
+      <div class="stage-txt" data-reveal><p class="mono acc">B · Layouts</p><p class="st">Six on paper, four redrawn.</p><p class="muted">Where speed sits, what the bottom bar holds, how much the road gets.</p></div>
+      <figure data-reveal><Image class="wide" src={sketches} alt="Four hand-drawn cluster layouts with speed, rpm, range and status bars" widths={[800, 1400]} sizes="(min-width: 1100px) 860px, 100vw" /></figure>
+    </div>
+    <div class="stage-row">
+      <div class="stage-txt" data-reveal><p class="mono acc">C · Bench test</p><p class="st">Model cars, a paper road.</p><p class="muted">Each scenario acted out, warnings drawn where the screen would put them.</p></div>
+      <div class="grid2" data-reveal>
+        {[[toyLane, 'Drifting out of lane'], [toyChange, 'Clear to change lanes'], [toyKeep, 'Holding the lane'], [toyPark, 'Too close while parking']].map(([src, t]) => (
+          <figure><Image src={src as ImageMetadata} alt={`Model cars on a paper road: ${t}`} widths={[500, 900]} sizes="(min-width: 1100px) 420px, 100vw" /><figcaption class="mono muted">{t}</figcaption></figure>
+        ))}
+      </div>
+    </div>
+    <div class="stage-row">
+      <div class="stage-txt" data-reveal><p class="mono acc">D · Logic</p><p class="st">Sensor in, screen out.</p><p class="muted">Each scenario mapped, including the moment a warning becomes an alert.</p></div>
+      <figure data-reveal><Image class="wide" src={flows} alt="User and system flowcharts for lane change, speed breaker and traffic mode" widths={[800, 1400]} sizes="(min-width: 1100px) 860px, 100vw" /></figure>
     </div>
 
-    <h3 class="h2 sub" data-reveal>Paper first</h3>
-    <p class="muted lede" data-reveal>Three traffic and three highway layouts, then four revised ones.</p>
-    <figure class="fig" data-reveal><Image src={sketches} alt="Four hand-drawn cluster layouts with speed, rpm, range and status bars" widths={[800, 1400, 2000]} sizes="(min-width: 1300px) 1240px, 100vw" /></figure>
-
-    <h3 class="h2 sub" data-reveal>On a paper road</h3>
-    <p class="muted lede" data-reveal>Toy cars acting out each scenario, with warnings drawn where the screen would show them.</p>
-    <div class="grid2" data-reveal>
-      {[[toyLane, 'Lane drift'], [toyChange, 'Safe lane change'], [toyKeep, 'Lane keeping'], [toyPark, 'Too close to park']].map(([src, t]) => (
-        <figure><Image src={src as ImageMetadata} alt={`Model cars on a paper road: ${t}`} widths={[500, 900]} sizes="(min-width: 1100px) 600px, 100vw" /><figcaption class="meta">{t}</figcaption></figure>
-      ))}
-    </div>
-
-    <h3 class="h2 sub" data-reveal>The full flow</h3>
-    <p class="muted lede" data-reveal>From sensor to screen, with the points where a warning becomes an alert.</p>
-    <figure class="fig" data-reveal><Image src={flows} alt="User and system flowcharts for lane change, speed breaker and traffic mode" widths={[800, 1400, 2000]} sizes="(min-width: 1300px) 1240px, 100vw" /></figure>
-
-    <div class="flip card" data-reveal>
-      <p class="meta accent">A turn in the road</p>
-      <h3 class="h3">Traffic mode dropped the rev counter</h3>
-      <div class="ba">
-        <figure><Image src={cruise} alt="Highway screen with speed and rpm gauges" widths={[500, 900]} sizes="(min-width: 1100px) 520px, 100vw" /><figcaption><span class="meta">Before</span>Sketches kept speed and rpm side by side in both modes.</figcaption></figure>
-        <figure><Image src={traffic} alt="Traffic screen with the rpm gauge removed" widths={[500, 900]} sizes="(min-width: 1100px) 520px, 100vw" /><figcaption><span class="meta accent">After</span>In traffic, revs mean little. The map and 360° view take their place.</figcaption></figure>
+    <div class="cut" data-reveal>
+      <p class="mono acc">What got cut</p>
+      <h3 class="h3">The rev counter, in traffic</h3>
+      <div class="vs">
+        <figure><Image src={cruise} alt="Highway screen with speed and rpm gauges" widths={[500, 900]} sizes="(min-width: 1100px) 520px, 100vw" /><figcaption><span class="mono">Kept on the highway</span>Speed and revs side by side.</figcaption></figure>
+        <figure><Image src={traffic} alt="Traffic screen with the rpm gauge removed" widths={[500, 900]} sizes="(min-width: 1100px) 520px, 100vw" /><figcaption><span class="mono acc">Dropped in traffic</span>At walking pace revs say nothing. The space goes to the map and the cars around you.</figcaption></figure>
       </div>
     </div>
   </section>
 
-  <!-- ARRIVE / DELIVER -->
-  <section id="deliver" class="sec wrap" data-sec>
-    <p class="phase meta" data-reveal><span class="no">04</span>Deliver</p>
-    <h2 class="display" data-reveal>The finished<br />cluster</h2>
-
-    <h3 class="h2 sub" data-reveal>One ring that warns</h3>
-    <p class="muted lede" data-reveal>The ring around the speed shifts colour, so the level is felt before any text is read.</p>
-    <ol class="ring">
-      {ring.map((r, i) => (
-        <li data-reveal style={`--i:${i}; --c:${r.c}`}>
-          <Image src={r.src} alt={`${r.t} ring: ${r.d}`} widths={[400, 800]} sizes="(min-width: 1100px) 300px, 50vw" />
-          <p><span class="swatch"></span><b>{r.t}</b> <span class="muted">{r.d}</span></p>
-        </li>
-      ))}
-    </ol>
+  <!-- 04 THE CLUSTER -->
+  <section id="cluster" class="sec wrap" data-ch>
+    <p class="chap mono"><span>04</span>The cluster</p>
+    <h2 class="display" data-reveal>One ring, four levels</h2>
+    <p class="aside" data-reveal>The ring around the speed carries the threat level. You feel the colour change before you read a word.</p>
+    <div class="scale" data-reveal>
+      <span class="bar" aria-hidden="true"></span>
+      <ol>{scale.map((r) => <li style={`--c:${r.c}`}><Image src={r.src} alt={`${r.t}: ${r.d}`} widths={[400, 800]} sizes="(min-width: 1100px) 290px, 50vw" /><p><b>{r.t}</b><span class="muted">{r.d}</span></p></li>)}</ol>
+    </div>
 
     {cluster && (
-      <div class="try">
-        <h3 class="h2 sub" data-reveal>Try it yourself</h3>
-        <p class="muted lede" data-reveal>Pick a mode, then a moment.</p>
+      <div class="drive-it">
+        <h3 class="h3" data-reveal>Drive it</h3>
+        <p class="muted" data-reveal>Choose a mode, then a moment.</p>
         <ClusterPlayer block={cluster} />
       </div>
     )}
 
-    <h3 class="h2 sub" data-reveal>When it matters most</h3>
-    <ul class="edges">
-      {edges.map((e, i) => (
-        <li class="card" data-reveal style={`--i:${i % 2}`}>
+    <h3 class="h3 sub" data-reveal>Under pressure</h3>
+    <ul class="pressure">
+      {pressure.map((e, i) => (
+        <li data-reveal style={`--i:${i % 2}`}>
           <Image src={e.src} alt={e.alt} widths={[600, 1100]} sizes="(min-width: 1100px) 560px, 100vw" />
-          <b>{e.t}</b><span class="muted">{e.d}</span>
+          <p class="pt">{e.t}</p><p class="muted">{e.d}</p>
         </li>
       ))}
     </ul>
   </section>
 
-  <!-- PARK / OUTCOME: the same drive, again -->
-  <section id="outcome" class="sec" data-sec>
-    <p class="big center" data-reveal>Imagine this <span class="accent">again.</span></p>
-    <p class="big center" data-reveal>9 pm. Rain. Bumper to bumper.<br /><span class="muted">The cluster shows the car ahead, the gap, the next turn.</span></p>
-    <p class="big center" data-reveal>…and your eyes <span class="accent">stay up.</span></p>
-    <div class="wrap"><div class="again" data-reveal><Image src={traffic} alt="The traffic-mode cluster: speed ring, car ahead, map and range" widths={[800, 1400, 2000]} sizes="(min-width: 1300px) 1240px, 100vw" /></div></div>
-
-    <div class="wrap back-look">
-      <h3 class="h2 sub" data-reveal>Looking back</h3>
-      <div class="cols">
-        {[
-          { k: 'Went well', v: ['Every screen traces back to a research question', 'One ring carries four warning levels', 'Toy-car runs made each scenario concrete'] },
-          { k: 'Hurdles', v: ['Speed and range stay static across screens', 'Three storyboarded scenarios never reached a screen'] },
-          { k: 'Next time', v: ['Screens for fatigue, speed breaker and motorcycle alerts', 'Sound and haptic cues for each ring colour', 'Glance tests with drivers in a simulator'] },
-        ].map((c, i) => <div class="card" data-reveal style={`--i:${i}`}><p class="meta accent">{c.k}</p><ul class="dots">{c.v.map((x) => <li>{x}</li>)}</ul></div>)}
-      </div>
-      <p class="muted small" data-reveal>Concept work, not affiliated with Porsche.</p>
+  <!-- 05 DEBRIEF: the same clip, now with the cluster -->
+  <section id="debrief" class="sec wrap" data-ch>
+    <p class="chap mono"><span>05</span>Debrief</p>
+    <div class="replay" data-reveal>
+      <Image src={traffic} alt="Traffic mode: speed ring, the car ahead, map and range" widths={[800, 1400, 2000]} sizes="(min-width: 1300px) 1240px, 100vw" />
+      <div class="cam-hud mono" aria-hidden="true"><span class="rec"><i></i>21:04</span><span>Rain</span><span>18 km/h</span></div>
+      <p class="replay-cap">Same street. The cluster shows the car ahead, the gap and the turn. Eyes stay forward.</p>
     </div>
+    <div class="cols">
+      {[
+        { k: 'Worked', v: ['Every screen traces back to a research question', 'One ring carries four threat levels', 'Bench tests made each scenario concrete'] },
+        { k: 'Fell short', v: ['Speed and range never change between screens', 'Three storyboarded scenarios have no final screen'] },
+        { k: 'Next', v: ['Screens for fatigue, speed breakers and motorcycles', 'A sound and a vibration for each ring level', 'Glance tests with drivers in a simulator'] },
+      ].map((c, i) => <div data-reveal style={`--i:${i}`}><p class="mono acc">{c.k}</p><ul>{c.v.map((x) => <li>{x}</li>)}</ul></div>)}
+    </div>
+    <p class="mono muted small">Concept work, not affiliated with Porsche.</p>
   </section>
 
   <section class="sec wrap next" aria-labelledby="next-h">
-    <p class="meta accent">Next on the road</p>
+    <p class="mono acc">Next project</p>
     <a class="next-link" href={`/work/${next.id}`} id="next-h">{next.data.title} <span class="t-learn-chevron" set:html={arrow} /></a>
   </section>
-
-  <nav class="dock" aria-label="Case study sections" data-dock>
-    <span class="pill" aria-hidden="true"></span>
-    {phases.map((s) => <a href={`#${s.id}`} data-dock-link={s.id}><b>{s.label}</b><span>{s.stage}</span></a>)}
-  </nav>
 </article>
 
 <style>
-  .drive { position: relative; overflow-x: clip; }
-  .sec { position: relative; padding-top: clamp(110px, 13vw, 200px); scroll-margin-top: 24px; max-width: 1300px; margin-inline: auto; }
-  .accent { color: var(--accent); }
+  .trip { position: relative; overflow-x: clip; }
+  .mono { font-family: var(--font-mono); font-size: var(--t-label); font-weight: 500; letter-spacing: .12em; text-transform: uppercase; }
+  .acc { color: var(--accent); }
   .muted { color: var(--graphite); }
-  .center { text-align: center; }
-  .small { font-size: var(--t-small); }
-  .card { background: var(--surface); border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent); border-radius: var(--radius); padding: clamp(18px, 2.2vw, 28px); }
-  .h2 { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(1.9rem, 1rem + 2.6vw, 3.4rem); letter-spacing: -.03em; line-height: 1.02; text-wrap: balance; }
-  .h3 { font-size: clamp(1.3rem, 1rem + .8vw, 1.7rem); font-weight: 600; letter-spacing: -.015em; line-height: 1.2; }
-  .sub { margin-top: clamp(80px, 9vw, 130px); }
-  .lede { margin-top: var(--s-3); max-width: 52ch; line-height: 1.45; }
+  .small { font-size: 11px; }
   p, li { text-wrap: pretty; }
+  .sec { position: relative; max-width: 1300px; margin-inline: auto; padding-top: clamp(120px, 14vw, 220px); scroll-margin-top: 16px; }
+  .h2 { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2rem, 1rem + 3vw, 3.8rem); letter-spacing: -.03em; line-height: 1.02; text-wrap: balance; }
+  .h3 { font-size: clamp(1.3rem, 1rem + .8vw, 1.8rem); font-weight: 600; letter-spacing: -.015em; line-height: 1.2; }
+  .sub { margin-top: clamp(80px, 9vw, 130px); }
+  .display { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2.6rem, 1rem + 5vw, 6.4rem); letter-spacing: -.04em; line-height: .95;
+    margin-top: var(--s-5); max-width: 16ch; text-wrap: balance; }
+  .chap { display: flex; align-items: center; gap: 14px; color: var(--graphite); }
+  .chap span { color: var(--accent); font-size: 1.1rem; letter-spacing: 0; }
+  .chap::after { content: ''; flex: 1; height: 1px; background: color-mix(in srgb, var(--ink) 14%, transparent); }
 
-  /* the road line, down the left */
-  .road-line { position: absolute; top: 100svh; bottom: 0; left: max(4px, calc(50% - 700px)); width: 90px; height: calc(100% - 100svh); overflow: visible; pointer-events: none; }
-  .road-line .edge { fill: none; stroke: color-mix(in srgb, var(--ink) 14%, transparent); stroke-width: 26; vector-effect: non-scaling-stroke; }
-  .road-line .dash { fill: none; stroke: var(--accent); stroke-width: 3; stroke-dasharray: 18 16; vector-effect: non-scaling-stroke; }
-  .road-line .reveal { fill: none; stroke: #fff; stroke-width: 40; vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--draw, 0)); }
+  /* route rail: fixed at the left; the fill and the car follow the scroll every frame */
+  .rail { position: fixed; z-index: 30; left: clamp(14px, 1.6vw, 28px); top: 50%; translate: 0 -50%; height: min(62vh, 520px); display: flex; opacity: 0;
+    transition: opacity 400ms var(--ease-smooth-out); pointer-events: none; }
+  .rail.show { opacity: 1; pointer-events: auto; }
+  .track { position: absolute; left: 5px; top: 0; bottom: 0; width: 2px; background: color-mix(in srgb, var(--ink) 14%, transparent); border-radius: 2px; }
+  .fill { position: absolute; inset: 0; background: var(--accent); transform-origin: 50% 0; scale: 1 var(--p, 0); border-radius: 2px; }
+  .car { position: absolute; left: 50%; top: 0; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 25%, transparent), 0 0 18px var(--accent); translate: 0 var(--y, 0px); }
+  .rail ol { position: relative; height: 100%; }
+  .rail li { position: absolute; left: 0; top: var(--at, 0%); translate: 0 -50%; }
+  .rail a { display: flex; align-items: center; gap: 12px; min-height: 28px; color: var(--graphite); }
+  .stopdot { width: 12px; height: 12px; border-radius: 50%; background: var(--paper); border: 2px solid color-mix(in srgb, var(--ink) 30%, transparent);
+    transition: border-color var(--duration-fast) var(--ease-smooth-out), background-color var(--duration-fast) var(--ease-smooth-out); }
+  .rail a.passed .stopdot { border-color: var(--accent); background: var(--accent); }
+  .lbl { font-size: 12px; font-weight: 500; white-space: nowrap; opacity: 0; translate: -6px 0; transition: opacity 250ms var(--ease-smooth-out), translate 250ms var(--ease-smooth-out); }
+  .rail:hover .lbl, .rail a:focus-visible .lbl, .rail a[aria-current='true'] .lbl { opacity: 1; translate: 0 0; }
+  .rail a[aria-current='true'] { color: var(--ink); }
+  .rail a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
+  .topbar { position: fixed; z-index: 30; left: 0; right: 0; top: 0; height: 3px; display: none; }
+  .topbar span { display: block; height: 100%; background: var(--accent); transform-origin: 0 50%; scale: var(--p, 0) 1; }
 
-  /* RESULT */
-  .hero { padding-top: clamp(64px, 7vw, 96px); max-width: none; }
-  .film { max-width: 1240px; margin-inline: auto; border-radius: var(--radius); overflow: hidden; background: #050505; aspect-ratio: 2 / 1;
-    box-shadow: 0 30px 90px hsl(0 0% 0% / .45); }
-  .film video { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .reel { position: relative; width: 100%; height: 100%; }
-  .reel :global(.frame) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; scale: 1.02;
-    transition: opacity 700ms var(--ease-smooth-out), scale 2400ms linear; }
+  /* FILM, with a false bottom: the screen stops short of the fold and the title shows beneath it */
+  .film-sec { position: relative; padding: clamp(16px, 2vw, 28px) var(--inset) 0; scroll-margin-top: 0; }
+  .screen { position: relative; height: calc(100svh - 230px); max-width: 1500px; margin-inline: auto; border-radius: 22px; overflow: hidden; background: #050505;
+    box-shadow: 0 40px 100px hsl(0 0% 0% / .5); }
+  .screen video, .reel { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .reel :global(.frame) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; scale: 1.06;
+    transition: opacity 900ms var(--ease-smooth-out), scale 3200ms linear; }
   .reel :global(.frame.on) { opacity: 1; scale: 1; }
-  .reel-cap { position: absolute; left: 16px; bottom: 14px; display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-radius: 999px; color: #fff;
-    background: hsl(0 0% 0% / .5); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
-  .reel-cap .count { opacity: .6; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent); }
-  .title { display: grid; justify-items: center; gap: var(--s-4); text-align: center; margin-top: clamp(40px, 6vw, 80px); }
-  .kicker { color: var(--accent); }
-  .title h1 { font-family: var(--font-display); font-weight: var(--display-weight); font-size: min(var(--t-display), 11vw); letter-spacing: -.035em; line-height: .92; overflow-wrap: anywhere; text-wrap: balance; }
-  .tagline { font-size: clamp(1.4rem, 1rem + 1.2vw, 2rem); font-weight: 600; letter-spacing: -.02em; color: var(--accent); }
-  .sum { max-width: 44ch; line-height: 1.45; }
-  .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s-2); margin-top: var(--s-2); }
-  .chips li { padding: 9px 16px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent); font-size: var(--t-small); font-weight: 600; }
-  .chips .muted { font-weight: 400; margin-right: 4px; }
-  .hint { display: inline-flex; align-items: center; gap: 10px; margin-top: var(--s-6); }
+  .hud { position: absolute; top: 18px; left: 20px; color: #fff; text-shadow: 0 1px 8px hsl(0 0% 0% / .6); }
+  .hud.cap { top: auto; bottom: 26px; }
+  .rec { font-family: var(--font-mono); font-size: var(--t-label); letter-spacing: .12em; text-transform: uppercase; }
+  .rec { display: inline-flex; align-items: center; gap: 8px; }
+  .rec i { width: 8px; height: 8px; border-radius: 50%; background: #ff3b3b; animation: blink 1.4s steps(2, start) infinite; }
+  @keyframes blink { to { visibility: hidden; } }
+  /* on the page itself (not in the card) the nav and back link sit above, so the screen gives up more height to keep the title peeking */
+  :global(:root:not(.in-card)) .screen { height: calc(100svh - 330px); }
+  .cue { position: absolute; left: 50%; bottom: 16px; translate: -50% 0; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; color: #fff;
+    background: hsl(0 0% 0% / .45); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); animation: nudge 1.8s var(--ease-smooth-out) infinite; }
+  .cue svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  @keyframes nudge { 50% { translate: -50% 6px; } }
+  .ident { display: grid; gap: var(--s-4); max-width: 1500px; margin: clamp(28px, 4vw, 48px) auto 0; }
+  .ident h1 { font-family: var(--font-display); font-weight: var(--display-weight); font-size: min(var(--t-display), 11vw); letter-spacing: -.035em; line-height: .92; overflow-wrap: anywhere; }
+  .line { font-size: var(--t-lead); max-width: 36ch; line-height: 1.3; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: var(--s-6); margin-top: var(--s-3); padding-top: var(--s-4); border-top: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); }
+  .meta-row dt { color: var(--graphite); margin-bottom: 4px; }
+  .meta-row dd { margin: 0; font-weight: 500; }
 
-  /* IGNITION */
-  .big { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2rem, 1rem + 3.6vw, 4.6rem); letter-spacing: -.03em; line-height: 1.05;
-    padding-inline: var(--inset); text-wrap: balance; }
-  .big + .big { margin-top: clamp(80px, 12vw, 180px); }
-  .big .muted { font-size: .6em; }
-  .balance { position: relative; max-width: 760px; margin: clamp(80px, 10vw, 140px) auto 0; padding-inline: var(--inset); --tilt: 0; }
-  .pan { position: absolute; top: 0; display: grid; gap: 4px; font-size: 1.05rem; text-align: center; transition: translate 600ms var(--ease-smooth-out); }
-  .pan b { font-size: clamp(1.1rem, 1rem + .6vw, 1.5rem); }
-  .pan.left { left: var(--inset); translate: 0 calc(var(--tilt) * -6px); }   /* each label rides its end of the beam */
-  .pan.right { right: var(--inset); translate: 0 calc(var(--tilt) * 6px); }
-  .beam { display: block; width: 100%; margin-top: 120px; overflow: visible; }
-  .arm { fill: var(--accent); transform-box: view-box; transform-origin: 300px 61px; rotate: calc(var(--tilt) * 1deg); transition: rotate 600ms var(--ease-smooth-out); }
-  .pivot { fill: color-mix(in srgb, var(--ink) 55%, transparent); }
-  .who { margin-top: clamp(100px, 12vw, 180px); display: grid; justify-items: center; gap: var(--s-6); }
-  .people { display: grid; grid-template-columns: repeat(2, minmax(0, 300px)); gap: var(--s-4); }
-  .people li { display: grid; justify-items: center; gap: var(--s-2); text-align: center; }
-  .people svg { width: 96px; height: 60px; fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; margin-bottom: var(--s-2); }
+  /* pinned scenes: a sticky stage, driven by how far the section has scrolled */
+  .pin { position: relative; }
+  .pin .stage { position: sticky; top: 0; height: 100svh; overflow: hidden; }
+  .cam { height: calc(var(--n) * 70svh + 100svh); margin-top: clamp(100px, 12vw, 180px); }
+  .cam-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: brightness(.24) blur(3px) saturate(.8); scale: 1.08; }
+  .cam .stage::after { content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(105deg, transparent 0 22px, hsl(210 40% 80% / .035) 22px 23px), radial-gradient(120% 90% at 50% 40%, transparent 40%, hsl(0 0% 0% / .7)); }
+  .cam-hud { position: absolute; z-index: 1; top: 24px; left: var(--inset); right: var(--inset); display: flex; gap: var(--s-5); color: #fff; }
+  .cam-hud .rec { margin-right: var(--s-3); }   /* all on the left: the card's close button sits top right */
+  .caps { position: absolute; z-index: 1; inset: auto var(--inset) 16svh; display: grid; text-align: center; }
+  .caps li { grid-area: 1 / 1; font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(1.8rem, 1rem + 3vw, 4rem); letter-spacing: -.03em; line-height: 1.08;
+    color: #fff; text-wrap: balance; opacity: 0; translate: 0 18px; transition: opacity 500ms var(--ease-smooth-out), translate 600ms var(--ease-smooth-out); }
+  .caps li.on { opacity: 1; translate: 0 0; }
+  .gauge { height: 220svh; }
+  .gauge .stage { display: grid; place-content: center; justify-items: center; gap: var(--s-4); text-align: center; padding-inline: var(--inset); }
+  .dial { width: min(420px, 80vw); margin-top: var(--s-4); overflow: visible; }
+  .arc { fill: none; stroke: color-mix(in srgb, var(--ink) 14%, transparent); stroke-width: 14; stroke-linecap: round; }
+  .arc.red { stroke: var(--accent); stroke-dasharray: .3 1; stroke-dashoffset: -.7; }
+  .needle { transform-box: view-box; transform-origin: 120px 130px; rotate: calc(-90deg + var(--k, 0) * 180deg); }
+  .needle line { stroke: var(--ink); stroke-width: 4; stroke-linecap: round; }
+  .needle circle { fill: var(--ink); }
+  .verdict { font-size: .85rem; transition: color 300ms var(--ease-smooth-out); }
+  .verdict.over { color: var(--accent); }
+  .asks { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 560px; }
+  .asks li { padding: 8px 14px; border-radius: 8px; font-size: var(--t-small); font-weight: 500; color: var(--graphite); background: var(--surface);
+    border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent); transition: color 300ms var(--ease-smooth-out), border-color 300ms var(--ease-smooth-out), background-color 300ms var(--ease-smooth-out); }
+  .asks li.lit { color: var(--ink); border-color: color-mix(in srgb, var(--accent) 60%, transparent); background: color-mix(in srgb, var(--accent) 30%, var(--surface)); }
 
-  /* chapters */
-  .phase { display: inline-flex; align-items: center; gap: 12px; }
-  .no { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff; letter-spacing: 0; }
-  .display { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(3rem, 1rem + 6vw, 7.5rem); letter-spacing: -.04em; line-height: .92; margin-top: var(--s-4); }
-  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: clamp(48px, 6vw, 80px); border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); border-radius: var(--radius); }
-  .stats p { display: grid; gap: var(--s-2); padding: clamp(18px, 2.4vw, 32px); }
-  .stats p + p { border-left: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); }
-  .num { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2.6rem, 1rem + 4vw, 5rem); letter-spacing: -.04em; line-height: .9; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .kinds { display: grid; gap: var(--s-5); padding-top: clamp(60px, 8vw, 120px); }
+  .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); }
+  .panel { display: grid; gap: var(--s-2); padding: clamp(20px, 2.6vw, 34px); border-left: 3px solid var(--accent); background: linear-gradient(90deg, var(--surface), transparent); }
+  .big3 { font-size: clamp(1.4rem, 1rem + 1vw, 2rem); font-weight: 600; letter-spacing: -.02em; }
 
-  .notes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-4); margin-top: var(--s-6); }
-  .note { position: relative; min-height: 150px; padding: 30px 18px 18px; border-radius: 6px; font-weight: 600; line-height: 1.35; rotate: var(--r); color: #1a1414;
-    box-shadow: 0 10px 24px hsl(0 0% 0% / .3); }
-  .note::before { content: ''; position: absolute; top: -10px; left: 50%; translate: -50% 0; width: 56px; height: 20px; border-radius: 3px; background: hsl(0 0% 100% / .35); }
-  .note.y { background: #F6D77A; } .note.w { background: #F2EEE8; } .note.g { background: #BFE3C2; }
-  .noticed { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-4); margin-top: var(--s-6); }
-  .noticed li { display: grid; gap: var(--s-2); align-content: start; }
-  .noticed b { font-size: 1.1rem; line-height: 1.25; }
-  .from { margin-top: var(--s-3); display: grid; gap: 6px; }
-  .from :global(img) { width: 100%; height: auto; border-radius: 10px; }
-  .from figcaption { color: var(--accent); }
-  .fig { margin-top: clamp(48px, 6vw, 80px); display: grid; gap: var(--s-3); }
-  .fig :global(img) { width: 100%; height: auto; border-radius: var(--radius); background: var(--surface); }
+  /* 01 */
+  .readouts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-5); margin-top: clamp(48px, 6vw, 80px); }
+  .readouts p { display: grid; gap: var(--s-2); padding-top: var(--s-3); border-top: 2px solid color-mix(in srgb, var(--ink) 16%, transparent); }
+  .num { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(3rem, 1rem + 5vw, 6rem); letter-spacing: -.04em; line-height: .9; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .log { margin-top: var(--s-5); border-top: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); }
+  .log li { display: grid; grid-template-columns: 70px 92px 1fr; gap: var(--s-4); align-items: center; padding: 16px 4px; border-bottom: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); font-size: 1.05rem; }
+  .log .t { color: var(--graphite); }
+  .sev { justify-self: start; padding: 3px 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+  .sev.hi { background: color-mix(in srgb, var(--accent) 22%, transparent); color: #ff8aa0; }
+  .sev.md { background: hsl(32 80% 50% / .18); color: #f3b16b; }
+  .sev.lo { background: color-mix(in srgb, var(--ink) 10%, transparent); color: var(--graphite); }
+  .patterns { display: grid; margin-top: var(--s-5); }
+  .patterns li { display: grid; grid-template-columns: 60px minmax(0, 1fr) minmax(0, 380px); gap: var(--s-5); align-items: center; padding: var(--s-5) 0; border-top: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); }
+  .pn { color: var(--accent); font-size: 1rem; }
+  .pt { font-size: clamp(1.15rem, 1rem + .5vw, 1.5rem); font-weight: 600; letter-spacing: -.01em; line-height: 1.25; margin-bottom: 6px; }
+  .patterns :global(img) { width: 100%; height: auto; border-radius: 10px; }
+  .fig { margin-top: clamp(64px, 8vw, 110px); display: grid; gap: var(--s-3); }
+  .fig :global(img) { width: 100%; height: auto; border-radius: 14px; }
 
-  /* ROUTE */
-  .hmw-k { margin-top: clamp(64px, 8vw, 110px); }
-  .hmw { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2rem, 1rem + 3.2vw, 4.2rem); letter-spacing: -.03em; line-height: 1.04; margin-top: var(--s-4); max-width: 22ch; text-wrap: balance; }
-  .pull { margin-top: var(--s-6); padding-left: var(--s-5); border-left: 3px solid var(--accent); font-size: var(--t-lead); line-height: 1.35; max-width: 46ch; }
+  /* 02 */
+  .question { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2.2rem, 1rem + 3.8vw, 5rem); letter-spacing: -.035em; line-height: 1.02;
+    margin-top: var(--s-5); max-width: 20ch; text-wrap: balance; }
+  .question em { font-style: normal; color: var(--accent); }
+  .aside { margin-top: var(--s-5); font-size: var(--t-lead); line-height: 1.35; max-width: 44ch; color: var(--graphite); }
   .modes { margin-top: clamp(80px, 9vw, 130px); }
   .modes-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--s-4); }
-  .switch { display: inline-flex; padding: 4px; border-radius: 999px; background: var(--surface); border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent); }
-  .switch button { min-height: 44px; padding: 0 22px; border-radius: 999px; border: 0; background: none; color: var(--graphite); font: inherit; font-weight: 600; cursor: pointer;
+  .switch { display: inline-flex; padding: 4px; border-radius: 12px; background: var(--surface); border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent); }
+  .switch button { min-height: 44px; padding: 0 22px; border-radius: 9px; border: 0; background: none; color: var(--graphite); font: inherit; font-weight: 600; cursor: pointer;
     transition: background-color var(--duration-fast) var(--ease-smooth-out), color var(--duration-fast) var(--ease-smooth-out); }
-  .switch button[aria-pressed='true'] { background: var(--ink); color: var(--paper); }
+  .switch button[aria-pressed='true'] { background: var(--accent); color: #fff; }
   .switch button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .modes-body { display: grid; grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); gap: var(--s-6); margin-top: var(--s-6); align-items: center; }
-  .modes-shot { position: relative; aspect-ratio: 2 / 1; border-radius: var(--radius); overflow: hidden; background: #050505; }
+  .modes-body { display: grid; grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); gap: var(--s-6); margin-top: var(--s-5); align-items: center; }
+  .modes-shot { position: relative; aspect-ratio: 2 / 1; border-radius: 14px; overflow: hidden; background: #050505; }
   .modes-shot :global(.m) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 500ms var(--ease-smooth-out); }
   .modes-shot :global(.m.on) { opacity: 1; }
-  .shows { display: grid; gap: var(--s-3); font-size: 1.1rem; }
-  .shows li { padding: 12px 16px; border-radius: 12px; background: var(--surface); }
-  .brief { margin-top: clamp(64px, 8vw, 110px); display: grid; gap: var(--s-3); max-width: 640px; }
-  .checks { display: grid; gap: var(--s-3); margin-top: var(--s-2); }
-  .checks li { display: grid; grid-template-columns: 26px 1fr; gap: 12px; align-items: center; }
-  .tick { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 6px; background: var(--accent); }
-  .tick :global(svg) { width: 15px; height: 15px; fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .shows { display: grid; }
+  .shows li { padding: 12px 0; border-bottom: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); font-size: 1.05rem; }
+  .spec { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-5); margin-top: clamp(64px, 8vw, 110px); }
+  .spec div { display: grid; gap: var(--s-2); padding-top: var(--s-3); border-top: 2px solid var(--accent); }
+  .spec dd { margin: 0; font-size: 1.05rem; line-height: 1.4; }
 
-  /* DRIVE */
-  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); margin-top: var(--s-6); }
-  .grid2 figure { display: grid; gap: var(--s-2); }
-  .grid2 :global(img) { width: 100%; height: auto; border-radius: 12px; background: var(--surface); }
-  .flip { margin-top: clamp(80px, 9vw, 130px); display: grid; gap: var(--s-3); }
-  .ba { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-5); margin-top: var(--s-3); }
-  .ba figure { display: grid; gap: var(--s-3); }
-  .ba :global(img) { width: 100%; height: auto; border-radius: 12px; }
-  .ba figcaption { display: grid; gap: 4px; line-height: 1.45; }
+  /* 03 */
+  .stage-row { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: clamp(24px, 4vw, 56px); margin-top: clamp(64px, 8vw, 110px); align-items: start; }
+  .stage-txt { display: grid; gap: var(--s-2); position: sticky; top: 32px; }
+  .st { font-size: clamp(1.3rem, 1rem + .9vw, 1.9rem); font-weight: 600; letter-spacing: -.02em; line-height: 1.2; }
+  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); }
+  .grid2 figure, .vs figure { display: grid; gap: var(--s-2); }
+  .grid2 :global(img), .wide, .vs :global(img) { width: 100%; height: auto; border-radius: 10px; }
+  .cut { margin-top: clamp(80px, 9vw, 130px); display: grid; gap: var(--s-3); padding: clamp(20px, 2.6vw, 34px); border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); border-radius: 18px; }
+  .vs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-5); margin-top: var(--s-3); }
+  .vs figcaption { display: grid; gap: 4px; line-height: 1.45; }
 
-  /* ARRIVE */
-  .ring { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-4); margin-top: var(--s-6); }
-  .ring li { display: grid; gap: var(--s-3); }
-  .ring :global(img) { width: 100%; height: auto; border-radius: 12px; outline: 2px solid var(--c); outline-offset: 3px; }
-  .ring p { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-  .swatch { width: 12px; height: 12px; border-radius: 50%; background: var(--c); }
-  .try { margin-inline: calc(var(--inset) * -1); }
-  .try > :not(:global(.cp)) { padding-inline: var(--inset); }
-  .try :global(.cp) { margin-top: var(--s-6); }
-  .edges { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); margin-top: var(--s-6); }
-  .edges li { display: grid; gap: var(--s-2); align-content: start; }
-  .edges :global(img) { width: 100%; height: auto; border-radius: 10px; margin-bottom: var(--s-2); }
-  .edges b { font-size: 1.2rem; }
+  /* 04 */
+  .scale { position: relative; margin-top: var(--s-6); }
+  .bar { display: block; height: 6px; border-radius: 6px; background: linear-gradient(90deg, #3FD07A, #E8D53A 38%, #F08A2C 66%, #E8343C); margin-bottom: var(--s-5); }
+  .scale ol { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-4); }
+  .scale li { display: grid; gap: var(--s-3); }
+  .scale :global(img) { width: 100%; height: auto; border-radius: 10px; box-shadow: 0 0 0 2px var(--c); }
+  .scale p { display: grid; gap: 2px; }
+  .scale b { color: var(--c); }
+  .drive-it { margin: clamp(80px, 9vw, 130px) calc(var(--inset) * -1) 0; }
+  .drive-it > .h3, .drive-it > p { padding-inline: var(--inset); }
+  .drive-it :global(.cp) { margin-top: var(--s-5); }
+  .pressure { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-6) var(--s-5); margin-top: var(--s-5); }
+  .pressure li { display: grid; gap: var(--s-2); align-content: start; }
+  .pressure :global(img) { width: 100%; height: auto; border-radius: 10px; margin-bottom: var(--s-2); }
 
-  /* PARK */
-  .again { margin-top: clamp(64px, 8vw, 110px); border-radius: var(--radius); overflow: hidden; max-width: 1240px; margin-inline: auto; box-shadow: 0 30px 90px hsl(0 0% 0% / .45); }
-  .again :global(img) { width: 100%; height: auto; display: block; }
-  .back-look { display: grid; gap: var(--s-5); }
-  .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-4); }
-  .cols .card { display: grid; gap: var(--s-3); align-content: start; }
-  .dots { display: grid; gap: var(--s-3); }
-  .dots li { position: relative; padding-left: 18px; line-height: 1.45; }
-  .dots li::before { content: ''; position: absolute; left: 0; top: .6em; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+  /* 05 */
+  .replay { position: relative; margin-top: var(--s-6); border-radius: 18px; overflow: hidden; }
+  .replay :global(img) { width: 100%; height: auto; display: block; }
+  .replay::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, hsl(0 0% 0% / .88) 10%, hsl(0 0% 0% / .5) 45%, transparent 75%); }
+  .replay-cap { position: absolute; z-index: 1; left: var(--s-6); right: var(--s-6); bottom: var(--s-6); color: #fff; font-family: var(--font-display); font-weight: var(--display-weight);
+    font-size: clamp(1.3rem, 1rem + 1.8vw, 2.6rem); letter-spacing: -.02em; line-height: 1.1; max-width: 28ch; text-wrap: balance; }
+  .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-5); margin: clamp(64px, 8vw, 110px) 0 var(--s-5); }
+  .cols > div { display: grid; gap: var(--s-3); align-content: start; padding-top: var(--s-3); border-top: 2px solid color-mix(in srgb, var(--ink) 16%, transparent); }
+  .cols ul { display: grid; gap: var(--s-3); }
+  .cols li { line-height: 1.45; }
 
-  .next { display: grid; gap: 8px; padding-bottom: 160px; }
+  .next { display: grid; gap: 8px; padding-bottom: 120px; }
   .next-link { display: inline-flex; align-items: center; gap: 16px; font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2.4rem, 1rem + 5vw, 6rem);
     letter-spacing: -.04em; line-height: 1; transition: color var(--duration-fast) var(--ease-smooth-out); }
   .next-link:hover { color: var(--accent); }
   .next-link :global(svg) { width: .5em; height: .5em; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
 
-  /* the dock: two-line tags (the drive's word over the design stage), a highlight slides to the one in view */
-  .dock { position: fixed; z-index: 40; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); display: flex; gap: 2px; padding: 5px; max-width: calc(100vw - 20px);
-    overflow-x: auto; scrollbar-width: none; border-radius: 18px; background: color-mix(in srgb, var(--surface) 75%, transparent);
-    backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4); border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
-    box-shadow: 0 10px 40px hsl(0 0% 0% / .35); opacity: 0; translate: -50% 16px; pointer-events: none;
-    transition: opacity 350ms var(--ease-smooth-out), translate 450ms var(--ease-out-expo); }
-  .dock:global(.show) { opacity: 1; translate: -50% 0; pointer-events: auto; }
-  .dock a { position: relative; z-index: 1; display: grid; gap: 1px; padding: 8px 14px; min-height: 44px; border-radius: 13px; white-space: nowrap; color: var(--graphite);
-    transition: color var(--duration-fast) var(--ease-smooth-out); }
-  .dock a b { font-size: var(--t-small); font-weight: 600; }
-  .dock a span { font-size: 11px; opacity: .75; }
-  .dock a:hover, .dock a[aria-current='true'] { color: var(--ink); }
-  .dock a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-  .pill { position: absolute; z-index: 0; top: 5px; bottom: 5px; left: 0; width: 0; border-radius: 13px; background: color-mix(in srgb, var(--ink) 12%, transparent);
-    transition: translate 400ms var(--ease-smooth-out), width 400ms var(--ease-smooth-out); }
-  :global(html) { scroll-padding-bottom: 96px; }
-
+  @media (max-width: 1100px) { .rail { display: none; } .topbar { display: block; } }
   @media (max-width: 900px) {
-    .notes, .noticed, .ring { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .stats p:nth-child(3) { border-left: 0; }
-    .stats p:nth-child(n + 3) { border-top: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); }
-    .modes-body, .cols, .edges, .ba { grid-template-columns: 1fr; }
-    .road-line { display: none; }
+    .readouts, .spec { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .modes-body, .cols, .pressure, .vs, .stage-row, .two { grid-template-columns: 1fr; }
+    .stage-txt { position: static; }
+    .patterns li { grid-template-columns: 40px 1fr; }
+    .patterns li :global(img) { grid-column: 1 / -1; }
+    .scale ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .log li { grid-template-columns: 56px 1fr; }
+    .log li > :last-child { grid-column: 1 / -1; }
   }
-  @media (max-width: 560px) {
-    .notes, .noticed, .grid2, .people { grid-template-columns: 1fr; }
-    .pan, .pan.left, .pan.right { position: static; translate: none; }
-    .balance { display: grid; gap: var(--s-4); }
-    .beam { margin-top: 0; }
-  }
-  :global(:root[data-motion="calm"]) .reel :global(.frame), :global(:root[data-motion="calm"]) .arm, :global(:root[data-motion="calm"]) .pan,
-  :global(:root[data-motion="calm"]) .dock, :global(:root[data-motion="calm"]) .pill { transition-duration: 0ms; }
+  @media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } .screen, :global(:root:not(.in-card)) .screen { height: 46svh; } .replay-cap { position: static; color: var(--ink); padding: var(--s-4) 0 0; } .replay::after { display: none; } }
+  /* calm: the clip does not pin; its captions read as a short list */
+  :global(:root[data-motion="calm"]) .cam { height: auto; }
+  :global(:root[data-motion="calm"]) .cam .stage { position: relative; height: auto; min-height: 100svh; }
+  :global(:root[data-motion="calm"]) .caps { position: relative; inset: auto; padding: 40svh var(--inset) 12svh; gap: var(--s-4); }
+  :global(:root[data-motion="calm"]) .caps li { grid-area: auto; }
+  :global(:root[data-motion="calm"]) .reel :global(.frame), :global(:root[data-motion="calm"]) .caps li, :global(:root[data-motion="calm"]) .cue,
+  :global(:root[data-motion="calm"]) .rec i { transition: none; animation: none; }
 </style>
 
 <script>
   import { calm } from '../../lib/motion';
   const still = calm();
 
-  // the result reel plays while it is on screen (calm: the first frame, still)
+  // the result film's stand-in plays while it is on screen (calm: the first frame, still)
   const reel = document.querySelector<HTMLElement>('[data-reel]');
   if (reel && !still) {
     const frames = [...reel.querySelectorAll<HTMLElement>('.frame')];
-    const cap = reel.querySelector<HTMLElement>('[data-reel-cap]')!, n = reel.querySelector<HTMLElement>('[data-reel-n]')!;
+    const cap = document.querySelector<HTMLElement>('[data-reel-cap]');
     const names = ['Startup', 'Highway cruise', 'Exit guidance', 'Blind spot', 'Traffic mode', 'Car alongside', 'Closing in', 'Cut-in', 'Pedestrian', 'Emergency braking', 'Auto park', 'Reversing'];
     let i = 0, timer = 0;
     const step = () => {
       frames[i].classList.remove('on');
       i = (i + 1) % frames.length;
       frames[i].classList.add('on');
-      cap.textContent = names[i];
-      n.textContent = `${String(i + 1).padStart(2, '0')} / ${frames.length}`;
+      if (cap) cap.textContent = `${names[i]} · ${String(i + 1).padStart(2, '0')}/${frames.length}`;
     };
-    new IntersectionObserver(([e]) => {
-      clearInterval(timer);
-      if (e.isIntersecting) timer = window.setInterval(step, 2400);
-    }).observe(reel);
+    new IntersectionObserver(([e]) => { clearInterval(timer); if (e.isIntersecting) timer = window.setInterval(step, 2600); }).observe(reel);
   }
 
-  // the balance tips toward "everything on screen" as the scene plays out; the road line draws as you go
-  const balance = document.querySelector<HTMLElement>('[data-balance]');
-  const road = document.querySelector<SVGPathElement>('[data-road]');
-  const article = document.querySelector<HTMLElement>('.drive');
+  // how far through a pinned section the page is: 0 as it pins, 1 as it lets go
+  const through = (el: HTMLElement) => { const r = el.getBoundingClientRect(); return Math.min(1, Math.max(0, -r.top / Math.max(1, r.height - innerHeight))); };
+  const cam = document.querySelector<HTMLElement>('[data-pin="cam"]');
+  const caps = cam ? [...cam.querySelectorAll<HTMLElement>('[data-cap]')] : [];
+  const gauge = document.querySelector<HTMLElement>('[data-pin="gauge"]');
+  const needle = document.querySelector<SVGGElement>('[data-needle]');
+  const verdict = document.querySelector<HTMLElement>('[data-verdict]');
+  const asks = [...document.querySelectorAll<HTMLElement>('[data-ask]')];
+
+  // the route rail: stops sit where their chapter starts along the page; the fill and the car track the scroll
+  const trip = document.querySelector<HTMLElement>('[data-trip]')!;
+  const rail = document.querySelector<HTMLElement>('[data-rail]');
+  const fill = document.querySelector<HTMLElement>('[data-fill]');
+  const car = document.querySelector<HTMLElement>('[data-car]');
+  const topfill = document.querySelector<HTMLElement>('[data-topfill]');
+  const stops = [...document.querySelectorAll<HTMLAnchorElement>('[data-stop]')];
+  const chapters = stops.map((a) => document.getElementById(a.dataset.stop!)!);
+  let starts: number[] = [];
+  const place = () => {
+    const top = trip.offsetTop, span = Math.max(1, trip.offsetHeight - innerHeight);
+    starts = chapters.map((c) => Math.min(1, Math.max(0, (c.getBoundingClientRect().top + scrollY - top) / span)));
+    stops.forEach((a, i) => a.parentElement!.style.setProperty('--at', `${starts[i] * 100}%`));
+  };
+
+  let raf = 0;
   const frame = () => {
     raf = 0;
-    if (balance) {
-      const r = balance.getBoundingClientRect();
-      const k = Math.min(1, Math.max(0, (innerHeight * 0.9 - r.top) / (innerHeight * 0.5)));
-      balance.style.setProperty('--tilt', `${(-9 * k).toFixed(2)}`);
+    const span = Math.max(1, trip.offsetHeight - innerHeight);
+    const p = Math.min(1, Math.max(0, (scrollY - trip.offsetTop) / span));
+    if (rail && fill && car) {
+      rail.classList.toggle('show', scrollY > innerHeight * 0.6);
+      fill.style.setProperty('--p', p.toFixed(4));
+      car.style.setProperty('--y', `${(p * rail.offsetHeight).toFixed(1)}px`);
+      let cur = 0;
+      starts.forEach((s, i) => { if (p + 0.002 >= s) cur = i; });
+      stops.forEach((a, i) => { a.classList.toggle('passed', i <= cur); a.setAttribute('aria-current', String(i === cur)); });
     }
-    if (road && article) {
-      const r = article.getBoundingClientRect();
-      road.style.setProperty('--draw', Math.min(1, Math.max(0, (innerHeight * 0.7 - r.top - innerHeight) / (r.height - innerHeight))).toFixed(4));
+    topfill?.style.setProperty('--p', p.toFixed(4));
+    if (cam && caps.length) {
+      const on = Math.min(caps.length - 1, Math.floor(through(cam) * caps.length * 0.999));
+      caps.forEach((c, i) => c.classList.toggle('on', i === on));
+    }
+    if (gauge && needle && verdict) {
+      const k = Math.min(1, through(gauge) * 1.15);
+      needle.style.setProperty('--k', k.toFixed(4));
+      asks.forEach((a, i) => a.classList.toggle('lit', k * asks.length > i + 0.2));
+      const over = k > 0.72;
+      verdict.classList.toggle('over', over);
+      verdict.textContent = over ? 'Over budget' : 'Within budget';
     }
   };
-  let raf = 0;
-  if (still) { balance?.style.setProperty('--tilt', '-9'); road?.style.setProperty('--draw', '1'); }
-  else { addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(frame); }, { passive: true }); frame(); }
+  const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
+  place();
+  addEventListener('resize', () => { place(); kick(); });
+  addEventListener('load', () => { place(); kick(); });
+  addEventListener('scroll', kick, { passive: true });
+  if (still) { caps.forEach((c) => c.classList.add('on')); }
+  frame();
 
   // two modes, one cluster: the switch swaps the screen and what it shows
   const modes = document.querySelector<HTMLElement>('[data-modes]');
