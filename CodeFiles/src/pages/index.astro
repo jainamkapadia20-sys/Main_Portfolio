@@ -1,5 +1,4 @@
 ---
-import { getImage } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import HeroName from '../components/HeroName.astro';
 import Intro from '../components/Intro.astro';
@@ -12,18 +11,16 @@ import Motivation from '../components/Motivation.astro';
 import Music from '../components/Music.astro';
 import Road from '../components/Road.astro';
 import { site } from '../site';
-import render from '../assets/car/poster-mod.png';
 
 const feels = ['intuitive', 'delightful', 'effortless', 'human', 'memorable', 'thoughtful'];
-// side work, by category: the one finished piece on hand, and labelled placeholders for the rest
-const honda = (await getImage({ src: render, width: 1400, format: 'webp' })).src;
+// side work, by category: labelled placeholders until the pieces arrive
 const ph = (titles: string[], note?: string) => titles.map((title) => ({ title, note }));
 const side = [
   { name: 'Artwork', pieces: ph(['Ink study', 'Portrait', 'Gouache landscape', 'Figure drawing'], 'Artwork') },
   { name: 'Prototypes', pieces: ph(['Booking flow', 'Smart-home app', 'Onboarding', 'Micro-interactions'], 'Prototype') },
   { name: 'Graphic design', pieces: ph(['Poster study', 'Brand mark', 'Type specimen', 'Album cover'], 'Graphic design') },
   { name: 'Sketches', pieces: ph(['Sketchbook page', 'Product sketch', 'Car sketch', 'Thumbnails'], 'Drawing') },
-  { name: '3D & renders', pieces: [{ title: 'My Honda City, modelled from scratch', note: 'Blender render', src: honda, alt: 'Blender render of a grey Honda City with a rear wing.' }, ...ph(['Object study', 'Interior render'], '3D')] },
+  { name: '3D & renders', pieces: ph(['Car model', 'Object study', 'Interior render'], '3D') },
   { name: 'HMI concepts', pieces: ph(['Cluster concept', 'Infotainment home', 'Climate control'], 'HMI') },
   { name: 'Service design', pieces: ph(['Storyboard', 'Journey map', 'Blueprint'], 'Service design') },
   { name: 'Photography', pieces: ph(['Night drive', 'Street', 'Details'], 'Photography') },

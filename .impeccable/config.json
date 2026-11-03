@@ -33,6 +33,15 @@
         ],
         "createdAt": "2026-10-24T11:39:06.388Z",
         "reason": "Agent: decision-round sketches for rejected directions (terminal, dossier, teletext), not shipping UI"
+      },
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "CodeFiles/src/components/HeroName.astro"
+        ],
+        "createdAt": "2026-11-03T13:33:54.798Z",
+        "reason": "user confirmed: asked for the top-lit gradient name style from their reference image"
       }
     ]
   }
