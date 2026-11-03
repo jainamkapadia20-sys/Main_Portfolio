@@ -66,8 +66,11 @@ process:
     points:
       - Blind spot, fatigue, exit, speed breaker, pedestrian, motorcycle, parking.
       - Each told in six shots, from calm to safe.
-    media: ../../assets/hmi/storyboards.jpg
-    alt: Seven six-shot storyboards for the highway and traffic scenarios
+    gallery:
+      - { src: ../../assets/hmi/sb-blindspot.jpg, alt: "Blind spot, highway" }
+      - { src: ../../assets/hmi/sb-exit.jpg, alt: "Exit guidance, highway" }
+      - { src: ../../assets/hmi/sb-pedestrian.jpg, alt: "Pedestrian, traffic" }
+      - { src: ../../assets/hmi/sb-parking.jpg, alt: "Parking assist, traffic" }
   - phase: Map
     title: What the car senses, what you see
     points:
@@ -87,8 +90,11 @@ process:
     points:
       - Every scenario acted out with model cars.
       - Lanes and warnings drawn where the screen would show them.
-    media: ../../assets/hmi/prototype.jpg
-    alt: Model cars on paper roads with drawn lanes, sensor arcs and parking guides
+    gallery:
+      - { src: ../../assets/hmi/toy-lane.jpg, alt: Lane drift }
+      - { src: ../../assets/hmi/toy-change.jpg, alt: Safe lane change }
+      - { src: ../../assets/hmi/toy-keep.jpg, alt: Lane keeping }
+      - { src: ../../assets/hmi/toy-park.jpg, alt: Too close to park }
   - phase: Build
     title: One ring that warns
     points:
