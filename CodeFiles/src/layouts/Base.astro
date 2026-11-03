@@ -8,8 +8,9 @@ import Tacho from '../components/Tacho.astro';
 import Toast from '../components/Toast.astro';
 import { site } from '../site';
 
-interface Props { title?: string; description?: string; image?: string; noindex?: boolean }
-const { title, description = site.description, image = '/og.png', noindex = false } = Astro.props;
+// warp: the site's moving background; the home page turns it off for its own (the aurora)
+interface Props { title?: string; description?: string; image?: string; noindex?: boolean; warp?: boolean }
+const { title, description = site.description, image = '/og.png', noindex = false, warp = true } = Astro.props;
 const fullTitle = title ? `${title} | ${site.name}` : `${site.name}, ${site.role}`;
 const canonical = new URL(Astro.url.pathname.replace(/(\/index)?\.html$/, '') || '/', Astro.site);
 ---
@@ -55,7 +56,7 @@ const canonical = new URL(Astro.url.pathname.replace(/(\/index)?\.html$/, '') ||
 </head>
 <body>
   <slot name="intro" />
-  <Warp />
+  {warp && <Warp />}
   <a class="skip" href="#main">Skip to content</a>
   <Nav />
   <main id="main"><slot /></main>

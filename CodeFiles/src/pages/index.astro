@@ -10,6 +10,7 @@ import SideWork from '../components/SideWork.astro';
 import Motivation from '../components/Motivation.astro';
 import Music from '../components/Music.astro';
 import Road from '../components/Road.astro';
+import Aurora from '../components/Aurora.astro';
 import { site } from '../site';
 
 const feels = ['intuitive', 'delightful', 'effortless', 'human', 'memorable', 'thoughtful'];
@@ -27,7 +28,7 @@ const side = [
 ];
 const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-arm t-learn-arm-top" d="M6 4L10 8" /><path class="t-learn-arm t-learn-arm-bot" d="M10 8L6 12" /></svg>';
 ---
-<Base>
+<Base warp={false}>
   <!-- the opening plays once per visit (coming back to the home page skips it), never for reduced motion; decided
        before first paint so the page never flashes -->
   <script is:inline slot="head">
@@ -42,6 +43,7 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
   <!-- Hero: one full screen over the glitter warp (the site background, strongest here);
        the name sits in the middle: it staggers in, then rests in a soft glitch. -->
   <section class="hero" aria-labelledby="hero-h">
+    <Aurora />
     <h1 id="hero-h" class="hero-name">
       <span class="sr-only">{site.name}</span>
       <span class="name-fx" aria-hidden="true"><HeroName /></span>

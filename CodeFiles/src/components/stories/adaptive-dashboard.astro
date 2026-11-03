@@ -63,22 +63,6 @@ const beats = [
   { k: 'The problem', t: 'For two seconds, nobody is watching the road.' },
 ];
 const load = ['Speed', 'Revs', 'Media', 'Maps', 'Calls', 'Alerts', 'Climate', 'Range'];
-const log = [
-  { s: 'hi', t: 'Alerts buried under everything else on screen' },
-  { s: 'hi', t: 'Settings that need eyes off the road' },
-  { s: 'md', t: 'Pop-ups cutting across navigation' },
-  { s: 'md', t: 'Turn instructions that arrive too late' },
-  { s: 'md', t: 'Targets too small to hit at speed' },
-  { s: 'lo', t: 'Animation that pulls focus for nothing' },
-  { s: 'lo', t: 'Text too small to read in a glance' },
-  { s: 'lo', t: 'Stress climbing in heavy traffic' },
-];
-const patterns = [
-  { t: 'Speed gets checked every few seconds', d: 'On open roads it is the one number drivers return to.', shot: cruise, alt: 'Highway screen with the speed large on the left' },
-  { t: 'What matters changes with the road', d: 'Navigation in new places, cameras in tight spots, the gap in traffic.', shot: traffic, alt: 'Traffic mode with map and proximity view' },
-  { t: 'Urgent and trivial look the same', d: 'When every alert shouts, the one that matters is lost.', shot: cutin, alt: 'Red ring and warning sign for a cut-in' },
-  { t: 'Touch costs attention', d: 'Every tap is a look away. Fewer taps, bigger targets.', shot: autopark, alt: 'Auto park asks for one tap to confirm' },
-];
 // the research board's key sticky notes, grouped under the question they answer (from the project's Miro board)
 const board = [
   { q: 'What matters most while driving?', c: 'y', notes: ['Speed visibility', 'Navigation directions', 'Blind spot warnings', 'Fuel or battery range'] },
@@ -99,10 +83,76 @@ const scale = [
   { src: cutin, c: '#E8343C', t: 'Act', d: 'Cut-in' },
 ];
 const pressure = [
-  { src: braking, t: 'Emergency braking', d: 'The whole screen turns red. One message, nothing competing with it.', alt: 'The cluster washed red with the words Emergency Braking' },
-  { src: pedestrian, t: 'Someone steps out', d: 'A red cone points at the person, so the warning says where, not just what.', alt: 'Pedestrian Detected warning with a red cone ahead of the car' },
-  { src: reversing, t: 'Backing in', d: 'The cluster becomes the rear camera, with arcs that tighten as you get close.', alt: 'Rear camera view beside a top-down car with sensor arcs' },
-  { src: startup, t: 'Key on', d: 'Every warning light checks itself once, then clears before you move.', alt: 'Startup screen with gauges at zero and all warning lights on' },
+  { t: 'Someone steps out', d: 'A red cone points at the person, so the warning says where, not just what.' },
+  { t: 'Backing in', d: 'The cluster becomes the rear camera, with arcs that tighten as you get close.' },
+  { t: 'Key on', d: 'Every warning light checks itself once, then clears before you move.' },
+];
+// Scrolly chapters: the pictures stay put on one side while the steps scroll past on the other. Each step names the
+// picture it shows (p) and, for the labelled screen, the part it points at (m). A picture is one screen, a grid of
+// up to four, or two side by side.
+type Pic = { kind: 'one'; src: ImageMetadata; alt: string } | { kind: 'marked' }
+  | { kind: 'grid' | 'vs'; items: { src: ImageMetadata; alt: string; cap: string; c?: string }[] };
+type Step = { k: string; t: string; d: string; p: number; m?: number };
+const resultPics: Pic[] = [{ kind: 'marked' }];
+const resultSteps: Step[] = [
+  { k: 'The home screen', t: 'On the open road', d: 'Six things, and nothing else. Scroll to see each one.', p: 0 },
+  ...parts.map((pt, i) => ({ k: String(i + 1).padStart(2, '0'), t: pt.t, d: pt.d, p: 0, m: i })),
+];
+const modePics: Pic[] = [
+  { kind: 'one', src: cruise, alt: 'Highway mode: speed, revs, the limit and cruise control' },
+  { kind: 'one', src: traffic, alt: 'Traffic mode: speed ring, map and the cars around you' },
+  { kind: 'one', src: autopark, alt: 'Auto park: a free space highlighted, one tap to confirm' },
+  { kind: 'one', src: braking, alt: 'Emergency braking: the whole screen turns red' },
+];
+const modeSteps: Step[] = [
+  { k: 'Open road', t: 'Highway mode', d: 'Speed, revs, the limit, cruise control and the next exit.', p: 0 },
+  { k: 'City', t: 'Traffic mode', d: 'The rev counter goes. The map and the cars around you take its place.', p: 1 },
+  { k: 'Tight spaces', t: 'Parking', d: 'It finds a space and asks once. Reversing turns it into the rear camera.', p: 2 },
+  { k: 'Danger', t: 'Alerts take over', d: 'Something critical fills the screen in red. One message, nothing else.', p: 3 },
+];
+const patternPics: Pic[] = [
+  { kind: 'one', src: cruise, alt: 'Highway screen with the speed large on the left' },
+  { kind: 'one', src: traffic, alt: 'Traffic mode with map and proximity view' },
+  { kind: 'one', src: cutin, alt: 'Red ring and warning sign for a cut-in' },
+  { kind: 'one', src: autopark, alt: 'Auto park asks for one tap to confirm' },
+];
+const patternSteps: Step[] = [
+  { k: 'Pattern 01', t: 'Speed gets checked every few seconds', d: 'So speed stays the biggest thing on every screen.', p: 0 },
+  { k: 'Pattern 02', t: 'What matters changes with the road', d: 'So the screen changes too: highway, traffic, parking.', p: 1 },
+  { k: 'Pattern 03', t: 'Urgent and trivial look the same', d: 'So danger gets its own signal: the colour of the ring.', p: 2 },
+  { k: 'Pattern 04', t: 'Touch costs attention', d: 'So the screen asks for one tap at most, never a menu.', p: 3 },
+];
+const protoPics: Pic[] = [
+  { kind: 'grid', items: [
+    { src: sbBlind, alt: 'Storyboard: blind spot on the highway', cap: 'Blind spot' }, { src: sbExit, alt: 'Storyboard: taking an exit', cap: 'Exit' },
+    { src: sbPed, alt: 'Storyboard: pedestrian in traffic', cap: 'Pedestrian' }, { src: sbPark, alt: 'Storyboard: parking in town', cap: 'Parking' }] },
+  { kind: 'grid', items: [
+    { src: toyLane, alt: 'Model car drifting out of its lane', cap: 'Drifting' }, { src: toyChange, alt: 'Model car changing lanes when clear', cap: 'Changing lanes' },
+    { src: toyKeep, alt: 'Model car holding its lane', cap: 'Holding the lane' }, { src: toyPark, alt: 'Model car too close while parking', cap: 'Parking' }] },
+  { kind: 'one', src: flows, alt: 'User and system flowcharts for lane change, speed breaker and traffic mode' },
+  { kind: 'vs', items: [
+    { src: cruise, alt: 'Highway screen with speed and rpm gauges', cap: 'Highway: revs kept' },
+    { src: traffic, alt: 'Traffic screen with the rpm gauge removed', cap: 'Traffic: revs dropped' }] },
+];
+const protoSteps: Step[] = [
+  { k: 'A · Storyboards', t: 'Seven moments, six frames each', d: 'Each situation drawn from calm to safe before any screen existed.', p: 0 },
+  { k: 'B · Bench test', t: 'Model cars on a paper road', d: 'Every scenario acted out, with warnings drawn where the screen would show them.', p: 1 },
+  { k: 'C · Logic', t: 'Sensor in, screen out', d: 'Each scenario mapped, including the moment a warning becomes an alert.', p: 2 },
+  { k: 'D · What got cut', t: 'The rev counter, in traffic', d: 'At walking pace revs say nothing, so the space went to the map and the cars around you.', p: 3 },
+];
+const rulePics: Pic[] = [
+  { kind: 'one', src: cruise, alt: 'The cluster reading the road: speed, signs and cruise control' },
+  { kind: 'vs', items: [
+    { src: cruise, alt: 'Highway mode', cap: 'Open road' }, { src: traffic, alt: 'Traffic mode', cap: 'Traffic' }] },
+  { kind: 'grid', items: scale.map((r) => ({ src: r.src, alt: `${r.t}: ${r.d}`, cap: `${r.t} · ${r.d}`, c: r.c })) },
+  { kind: 'one', src: braking, alt: 'Emergency braking: the whole screen turns red' },
+  { kind: 'one', src: pedestrian, alt: 'Pedestrian Detected warning with a red cone ahead of the car' },
+  { kind: 'one', src: reversing, alt: 'Rear camera view beside a top-down car with sensor arcs' },
+  { kind: 'one', src: startup, alt: 'Startup screen with gauges at zero and all warning lights on' },
+];
+const ruleSteps: Step[] = [
+  ...how.map((h, i) => ({ k: `Rule ${String(i + 1).padStart(2, '0')}`, t: h.t, d: h.d, p: i })),
+  ...pressure.map((e, i) => ({ k: 'Under pressure', t: e.t, d: e.d, p: 4 + i })),
 ];
 const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-arm t-learn-arm-top" d="M6 4L10 8" /><path class="t-learn-arm t-learn-arm-bot" d="M10 8L6 12" /></svg>';
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -168,30 +218,64 @@ const pad = (n: number) => String(n).padStart(2, '0');
     </div>
   </section>
 
-  <!-- THE RESULT: the home screen, labelled part by part -->
+  <!-- THE RESULT: the home screen, one part at a time -->
   <section id="result" class="sec wrap" data-ch aria-labelledby="rs-h">
     <p class="chap mono"><span>&#9679;</span>The result</p>
     <h2 id="rs-h" class="display" data-scrub>A screen that shows what the moment needs</h2>
-    <p class="tldr" data-scrub><span class="mono acc">In short</span>This is the home screen on the open road. Each number explains one part.</p>
-    <figure class="labelled" data-scrub="pop">
-      <div class="shot">
-        <Image src={cruise} alt="The finished cluster's home screen on the open road" widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 720px, 100vw" loading="eager" fetchpriority="high" />
-        {parts.map((pt, i) => <span class="mark" style={`left:${pt.x}%; top:${pt.y}%; --k:${i}`} aria-hidden="true">{i + 1}</span>)}
+    <p class="tldr" data-scrub><span class="mono acc">In short</span>The home screen on the open road. Each step lights up one part.</p>
+    <div class="scrolly" data-scrolly>
+      <div class="pics">
+        {resultPics.map((pic, i) => (
+          <figure class:list={['pic', pic.kind, { on: i === 0 }]} data-pic={i}>
+            {pic.kind === 'marked' ? (
+              <div class="shot">
+                <Image src={cruise} alt="The finished cluster's home screen on the open road" widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
+                {parts.map((pt, j) => <span class="mark" data-mark={j} style={`left:${pt.x}%; top:${pt.y}%`} aria-hidden="true">{j + 1}</span>)}
+              </div>
+            ) : pic.kind === 'one' ? (
+              <Image src={pic.src} alt={pic.alt} widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
+            ) : pic.items.map((it) => (
+              <div class="cell" style={it.c ? `--c:${it.c}` : undefined}><Image src={it.src} alt={it.alt} widths={[400, 800]} sizes="(min-width: 1100px) 380px, 50vw" /><span class="mono">{it.cap}</span></div>
+            ))}
+          </figure>
+        ))}
       </div>
-      <figcaption>
-        <p class="mono muted">The home screen, on the open road</p>
-        <ol class="legend">{parts.map((pt, i) => <li data-scrub="left" style={`--d:${i * 0.06}`}><span class="n" aria-hidden="true">{i + 1}</span><span><b>{pt.t}</b> {pt.d}</span></li>)}</ol>
-      </figcaption>
-    </figure>
+      <ol class="steps">
+        {resultSteps.map((st, i) => <li data-step={i} data-p={st.p} data-m={st.m ?? -1} class:list={{ on: i === 0 }}><span class="mono acc">{st.k}</span><p class="st-t">{st.t}</p><p class="muted">{st.d}</p></li>)}
+      </ol>
+    </div>
   </section>
 
   <!-- 01 THE BRIEF -->
   <section id="brief" class="sec wrap" data-ch>
     <p class="chap mono"><span>01</span>The brief</p>
-    <p class="tldr" data-scrub><span class="mono acc">In short</span>Show less, but never miss what matters: a screen that changes with the road.</p>
     <p class="question" data-scrub>Can a cluster show <em>less</em> and still make sure nothing important is missed?</p>
-    <p class="aside" data-scrub>The answer was not a quieter screen. It was a screen that knows which road it is on.</p>
-
+    <p class="tldr" data-scrub><span class="mono acc">In short</span>Not a quieter screen: a screen that knows which road it is on.</p>
+    <div class="scrolly" data-scrolly>
+      <div class="pics">
+        {modePics.map((pic, i) => (
+          <figure class:list={['pic', pic.kind, { on: i === 0 }]} data-pic={i}>
+            {pic.kind === 'marked' ? (
+              <div class="shot">
+                <Image src={cruise} alt="The finished cluster's home screen on the open road" widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
+                {parts.map((pt, j) => <span class="mark" data-mark={j} style={`left:${pt.x}%; top:${pt.y}%`} aria-hidden="true">{j + 1}</span>)}
+              </div>
+            ) : pic.kind === 'one' ? (
+              <Image src={pic.src} alt={pic.alt} widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
+            ) : pic.items.map((it) => (
+              <div class="cell" style={it.c ? `--c:${it.c}` : undefined}><Image src={it.src} alt={it.alt} widths={[400, 800]} sizes="(min-width: 1100px) 380px, 50vw" /><span class="mono">{it.cap}</span></div>
+            ))}
+          </figure>
+        ))}
+      </div>
+      <ol class="steps">
+        {modeSteps.map((st, i) => <li data-step={i} data-p={st.p} data-m={st.m ?? -1} class:list={{ on: i === 0 }}><span class="mono acc">{st.k}</span><p class="st-t">{st.t}</p><p class="muted">{st.d}</p></li>)}
+      </ol>
+    </div>
+    <dl class="spec" data-scrub>
+      {spec.map(([k, v]) => <div><dt class="mono acc">{k}</dt><dd>{v}</dd></div>)}
+    </dl>
+    <p class="mono muted aud" data-scrub>Designed for drivers aged 25 to 35</p>
     {cluster && (
       <div class="screens">
         <h3 class="h3" data-scrub>Every screen, by type</h3>
@@ -199,41 +283,19 @@ const pad = (n: number) => String(n).padStart(2, '0');
         <ClusterPlayer block={cluster} />
       </div>
     )}
-
-    <p class="mono muted aud" data-scrub>Designed for drivers aged 25 to 35</p>
-    <dl class="spec" data-scrub>
-      {spec.map(([k, v]) => <div><dt class="mono acc">{k}</dt><dd>{v}</dd></div>)}
-    </dl>
   </section>
 
   <!-- 02 RESEARCH -->
   <section id="notes" class="sec wrap" data-ch>
     <p class="chap mono"><span>02</span>Research</p>
     <h2 class="display" data-scrub>What shaped it</h2>
-    <p class="tldr" data-scrub><span class="mono acc">In short</span>Four questions to drivers showed speed, route and warnings matter most, and touch distracts.</p>
+    <p class="tldr" data-scrub><span class="mono acc">In short</span>Four questions showed speed, route and warnings matter most, and that touch distracts.</p>
     <div class="readouts" data-scrub>
       <p><b class="num" data-count="4">4</b><span class="mono">questions asked</span></p>
       <p><b class="num" data-count="2">2</b><span class="mono">road contexts</span></p>
       <p><b class="num" data-count="9">9</b><span class="mono">pain points</span></p>
       <p><b class="num" data-count="7">7</b><span class="mono">scenarios</span></p>
     </div>
-
-    <h3 class="h3 sub" data-scrub>Logged complaints</h3>
-    <ol class="log">
-      {log.map((l, i) => <li data-scrub="left" style={`--d:${(i % 4) * 0.05}`}><span class="mono t">{`00:${pad(i * 7 + 3)}`}</span><span class:list={['sev', l.s]}>{l.s === 'hi' ? 'High' : l.s === 'md' ? 'Medium' : 'Low'}</span><span>{l.t}</span></li>)}
-    </ol>
-
-    <h3 class="h3 sub" data-scrub>Four patterns</h3>
-    <ol class="patterns">
-      {patterns.map((n, i) => (
-        <li data-scrub="left">
-          <span class="pn mono">{pad(i + 1)}</span>
-          <div><p class="pt">{n.t}</p><p class="muted">{n.d}</p></div>
-          <Image src={n.shot} alt={n.alt} widths={[500, 900]} sizes="(min-width: 1100px) 380px, 100vw" data-scrub="right" />
-        </li>
-      ))}
-    </ol>
-
     <h3 class="h3 sub" data-scrub>From the research board</h3>
     <div class="board">
       {board.map((col, i) => (
@@ -243,6 +305,28 @@ const pad = (n: number) => String(n).padStart(2, '0');
         </div>
       ))}
     </div>
+    <h3 class="h3 sub" data-scrub>What it meant for the design</h3>
+    <div class="scrolly" data-scrolly>
+      <div class="pics">
+        {patternPics.map((pic, i) => (
+          <figure class:list={['pic', pic.kind, { on: i === 0 }]} data-pic={i}>
+            {pic.kind === 'marked' ? (
+              <div class="shot">
+                <Image src={cruise} alt="The finished cluster's home screen on the open road" widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
+                {parts.map((pt, j) => <span class="mark" data-mark={j} style={`left:${pt.x}%; top:${pt.y}%`} aria-hidden="true">{j + 1}</span>)}
+              </div>
+            ) : pic.kind === 'one' ? (
+              <Image src={pic.src} alt={pic.alt} widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
+            ) : pic.items.map((it) => (
+              <div class="cell" style={it.c ? `--c:${it.c}` : undefined}><Image src={it.src} alt={it.alt} widths={[400, 800]} sizes="(min-width: 1100px) 380px, 50vw" /><span class="mono">{it.cap}</span></div>
+            ))}
+          </figure>
+        ))}
+      </div>
+      <ol class="steps">
+        {patternSteps.map((st, i) => <li data-step={i} data-p={st.p} data-m={st.m ?? -1} class:list={{ on: i === 0 }}><span class="mono acc">{st.k}</span><p class="st-t">{st.t}</p><p class="muted">{st.d}</p></li>)}
+      </ol>
+    </div>
   </section>
 
   <!-- 03 PROTOTYPING -->
@@ -250,59 +334,55 @@ const pad = (n: number) => String(n).padStart(2, '0');
     <p class="chap mono"><span>03</span>Prototyping</p>
     <h2 class="display" data-scrub>From storyboard to bench test</h2>
     <p class="tldr" data-scrub><span class="mono acc">In short</span>Seven situations were storyboarded, acted out with toy cars and mapped from sensor to screen.</p>
-
-    <div class="stage-row">
-      <div class="stage-txt" data-scrub><p class="mono acc">A · Storyboards</p><p class="st">Seven moments, six frames each.</p><p class="muted">Four shown: blind spot, exit, pedestrian, parking.</p></div>
-      <div class="grid2" data-scrub="pop">
-        {[[sbBlind, 'Blind spot on the highway'], [sbExit, 'Taking an exit'], [sbPed, 'Pedestrian in traffic'], [sbPark, 'Parking in town']].map(([src, t]) => (
-          <figure><Image src={src as ImageMetadata} alt={`Storyboard: ${t}`} widths={[600, 1100]} sizes="(min-width: 1100px) 420px, 100vw" /><figcaption class="mono muted">{t}</figcaption></figure>
+    <div class="scrolly" data-scrolly>
+      <div class="pics">
+        {protoPics.map((pic, i) => (
+          <figure class:list={['pic', pic.kind, { on: i === 0 }]} data-pic={i}>
+            {pic.kind === 'marked' ? (
+              <div class="shot">
+                <Image src={cruise} alt="The finished cluster's home screen on the open road" widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
+                {parts.map((pt, j) => <span class="mark" data-mark={j} style={`left:${pt.x}%; top:${pt.y}%`} aria-hidden="true">{j + 1}</span>)}
+              </div>
+            ) : pic.kind === 'one' ? (
+              <Image src={pic.src} alt={pic.alt} widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
+            ) : pic.items.map((it) => (
+              <div class="cell" style={it.c ? `--c:${it.c}` : undefined}><Image src={it.src} alt={it.alt} widths={[400, 800]} sizes="(min-width: 1100px) 380px, 50vw" /><span class="mono">{it.cap}</span></div>
+            ))}
+          </figure>
         ))}
       </div>
-    </div>
-    <div class="stage-row">
-      <div class="stage-txt" data-scrub><p class="mono acc">B · Bench test</p><p class="st">Model cars, a paper road.</p><p class="muted">Each scenario acted out, warnings drawn where the screen would put them.</p></div>
-      <div class="grid2" data-scrub="pop">
-        {[[toyLane, 'Drifting out of lane'], [toyChange, 'Clear to change lanes'], [toyKeep, 'Holding the lane'], [toyPark, 'Too close while parking']].map(([src, t]) => (
-          <figure><Image src={src as ImageMetadata} alt={`Model cars on a paper road: ${t}`} widths={[500, 900]} sizes="(min-width: 1100px) 420px, 100vw" /><figcaption class="mono muted">{t}</figcaption></figure>
-        ))}
-      </div>
-    </div>
-    <div class="stage-row">
-      <div class="stage-txt" data-scrub><p class="mono acc">C · Logic</p><p class="st">Sensor in, screen out.</p><p class="muted">Each scenario mapped, including the moment a warning becomes an alert.</p></div>
-      <figure data-scrub="pop"><Image class="wide" src={flows} alt="User and system flowcharts for lane change, speed breaker and traffic mode" widths={[800, 1400]} sizes="(min-width: 1100px) 860px, 100vw" /></figure>
-    </div>
-
-    <div class="cut" data-scrub="pop">
-      <p class="mono acc">What got cut</p>
-      <h3 class="h3">The rev counter, in traffic</h3>
-      <div class="vs">
-        <figure><Image src={cruise} alt="Highway screen with speed and rpm gauges" widths={[500, 900]} sizes="(min-width: 1100px) 520px, 100vw" /><figcaption><span class="mono">Kept on the highway</span>Speed and revs side by side.</figcaption></figure>
-        <figure><Image src={traffic} alt="Traffic screen with the rpm gauge removed" widths={[500, 900]} sizes="(min-width: 1100px) 520px, 100vw" /><figcaption><span class="mono acc">Dropped in traffic</span>At walking pace revs say nothing. The space goes to the map and the cars around you.</figcaption></figure>
-      </div>
+      <ol class="steps">
+        {protoSteps.map((st, i) => <li data-step={i} data-p={st.p} data-m={st.m ?? -1} class:list={{ on: i === 0 }}><span class="mono acc">{st.k}</span><p class="st-t">{st.t}</p><p class="muted">{st.d}</p></li>)}
+      </ol>
     </div>
   </section>
 
   <!-- 04 THE CLUSTER -->
   <section id="cluster" class="sec wrap" data-ch>
     <p class="chap mono"><span>04</span>The cluster</p>
-    <h2 class="display" data-scrub>One ring, four levels</h2>
-    <p class="tldr" data-scrub><span class="mono acc">In short</span>One ring around the speed shows four levels of danger, from clear to act now.</p>
-    <ol class="how">{how.map((h, i) => <li data-scrub style={`--d:${i * 0.1}`}><span class="mono acc">{pad(i + 1)}</span><p class="pt">{h.t}</p><p class="muted">{h.d}</p></li>)}</ol>
-    <p class="aside" data-scrub>The ring around the speed carries the threat level. You feel the colour change before you read a word.</p>
-    <div class="scale" data-scrub="pop">
-      <span class="bar" aria-hidden="true"></span>
-      <ol>{scale.map((r) => <li style={`--c:${r.c}`}><Image src={r.src} alt={`${r.t}: ${r.d}`} widths={[400, 800]} sizes="(min-width: 1100px) 290px, 50vw" /><p><b>{r.t}</b><span class="muted">{r.d}</span></p></li>)}</ol>
+    <h2 class="display" data-scrub>How it decides</h2>
+    <p class="tldr" data-scrub><span class="mono acc">In short</span>One ring around the speed shows four levels of danger, and only a critical moment takes over the screen.</p>
+    <div class="scrolly" data-scrolly>
+      <div class="pics">
+        {rulePics.map((pic, i) => (
+          <figure class:list={['pic', pic.kind, { on: i === 0 }]} data-pic={i}>
+            {pic.kind === 'marked' ? (
+              <div class="shot">
+                <Image src={cruise} alt="The finished cluster's home screen on the open road" widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
+                {parts.map((pt, j) => <span class="mark" data-mark={j} style={`left:${pt.x}%; top:${pt.y}%`} aria-hidden="true">{j + 1}</span>)}
+              </div>
+            ) : pic.kind === 'one' ? (
+              <Image src={pic.src} alt={pic.alt} widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
+            ) : pic.items.map((it) => (
+              <div class="cell" style={it.c ? `--c:${it.c}` : undefined}><Image src={it.src} alt={it.alt} widths={[400, 800]} sizes="(min-width: 1100px) 380px, 50vw" /><span class="mono">{it.cap}</span></div>
+            ))}
+          </figure>
+        ))}
+      </div>
+      <ol class="steps">
+        {ruleSteps.map((st, i) => <li data-step={i} data-p={st.p} data-m={st.m ?? -1} class:list={{ on: i === 0 }}><span class="mono acc">{st.k}</span><p class="st-t">{st.t}</p><p class="muted">{st.d}</p></li>)}
+      </ol>
     </div>
-
-    <h3 class="h3 sub" data-scrub>Under pressure</h3>
-    <ul class="pressure">
-      {pressure.map((e, i) => (
-        <li data-scrub="pop" style={`--d:${(i % 2) * 0.1}`}>
-          <Image src={e.src} alt={e.alt} widths={[600, 1100]} sizes="(min-width: 1100px) 560px, 100vw" />
-          <p class="pt">{e.t}</p><p class="muted">{e.d}</p>
-        </li>
-      ))}
-    </ul>
   </section>
 
   <!-- 05 DEBRIEF: the same evening, now with the new screen -->
@@ -390,20 +470,36 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .line { font-size: var(--t-lead); max-width: 40ch; line-height: 1.3; }
   .plain { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-5); margin-top: clamp(40px, 5vw, 64px); }
   .plain li { display: grid; gap: var(--s-2); align-content: start; padding-top: var(--s-3); border-top: 2px solid color-mix(in srgb, var(--ink) 16%, transparent); line-height: 1.45; }
-  .labelled { margin-top: clamp(40px, 5vw, 64px); display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(24px, 3vw, 48px); align-items: center; }
   .shot { position: relative; border-radius: 16px; overflow: hidden; box-shadow: 0 30px 80px hsl(0 0% 0% / .45); }
   .shot :global(img) { width: 100%; height: auto; display: block; }
-  .mark, .legend .n { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 700; font-size: 13px; }
-  .mark { position: absolute; translate: -50% -50%; scale: clamp(0, calc(var(--e, 1) * 6 - 1 - var(--k)), 1); box-shadow: 0 0 0 4px hsl(0 0% 0% / .35), 0 0 0 9px color-mix(in srgb, var(--accent) 30%, transparent); }
-  .legend { display: grid; gap: var(--s-3); margin-top: var(--s-3); }
-  .legend li { display: grid; grid-template-columns: 28px 1fr; gap: var(--s-3); align-items: start; line-height: 1.45; }
-  .legend b { display: block; }
   /* scroll-scrubbed motion: --e runs 0 to 1 as an element rises into view (set every frame by the script, 1 without it) */
   [data-scrub] { opacity: calc(.25 + .75 * var(--e, 1)); translate: 0 calc((1 - var(--e, 1)) * 48px); }
   [data-scrub='pop'] { translate: 0 calc((1 - var(--e, 1)) * 36px); scale: calc(.9 + .1 * var(--e, 1)); }
   [data-scrub='left'] { translate: calc((1 - var(--e, 1)) * -64px) 0; }
   [data-scrub='right'] { translate: calc((1 - var(--e, 1)) * 64px) 0; }
-  .aud { margin-top: var(--s-6); }
+  .aud { margin-top: var(--s-5); }
+  /* SCROLLY: pictures fixed on the left, steps scrolling on the right; the step being read lights up and picks the picture */
+  .scrolly { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(32px, 5vw, 80px); margin-top: clamp(40px, 5vw, 72px); }
+  .pics { position: sticky; top: max(96px, calc(50svh - 18vw)); align-self: start; display: grid; }
+  .pic { grid-area: 1 / 1; margin: 0; opacity: 0; scale: .97; transition: opacity 500ms var(--ease-smooth-out), scale 700ms var(--ease-out-expo); pointer-events: none; }
+  .pic.on { opacity: 1; scale: 1; pointer-events: auto; }
+  .pic :global(img) { width: 100%; height: auto; display: block; border-radius: 14px; }
+  .pic.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .pic.vs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: start; }
+  .cell { display: grid; gap: 6px; }
+  .cell :global(img) { border-radius: 10px; box-shadow: 0 0 0 2px var(--c, transparent); }
+  .cell .mono { color: var(--c, var(--graphite)); }
+  .shot { position: relative; border-radius: 14px; overflow: hidden; }
+  .mark { position: absolute; display: grid; place-items: center; width: 28px; height: 28px; translate: -50% -50%; border-radius: 50%; background: var(--accent); color: #fff;
+    font-weight: 700; font-size: 13px; box-shadow: 0 0 0 4px hsl(0 0% 0% / .35); transition: scale 400ms var(--ease-bounce), opacity 300ms var(--ease-smooth-out), box-shadow 400ms var(--ease-smooth-out); }
+  .shot.focus .mark { opacity: .35; }
+  .shot.focus .mark.hot { opacity: 1; scale: 1.35; box-shadow: 0 0 0 4px hsl(0 0% 0% / .35), 0 0 0 12px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .steps li { min-height: 62svh; display: grid; gap: var(--s-2); align-content: center; opacity: .3; transition: opacity 400ms var(--ease-smooth-out); }
+  .steps li:first-child { min-height: 40svh; align-content: start; }
+  .steps li:last-child { min-height: 50svh; }
+  .steps li.on { opacity: 1; }
+  .st-t { font-size: clamp(1.4rem, 1rem + 1.1vw, 2.1rem); font-weight: 600; letter-spacing: -.02em; line-height: 1.15; }
+  .steps .muted { font-size: 1.05rem; line-height: 1.5; max-width: 40ch; }
   /* the chapter in one line: a tag, then the sentence, set apart so it reads first */
   .tldr { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-top: var(--s-5); max-width: 60ch; padding: 14px 18px; border-radius: 12px;
     font-size: 1.1rem; line-height: 1.45; background: var(--surface); border-left: 3px solid var(--accent); }
@@ -419,9 +515,6 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .meta-row { display: flex; flex-wrap: wrap; gap: var(--s-6); margin-top: clamp(40px, 5vw, 64px); padding-top: var(--s-4); border-top: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); }
   .meta-row dt { color: var(--graphite); margin-bottom: 4px; }
   .meta-row dd { margin: 0; font-weight: 500; }
-  .how { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-4); margin-top: clamp(40px, 5vw, 64px); }
-  .how li { position: relative; display: grid; gap: var(--s-2); align-content: start; padding: var(--s-4); border-radius: 14px; background: var(--surface); }
-  .how li:not(:last-child)::after { content: '\2192'; position: absolute; right: 0; top: 50%; translate: 50% -50%; color: var(--accent); font-weight: 700; z-index: 1; }
 
   /* pinned scenes: a sticky stage, driven by how far the section has scrolled */
   .pin { position: relative; }
@@ -458,54 +551,20 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .readouts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-5); margin-top: clamp(48px, 6vw, 80px); }
   .readouts p { display: grid; gap: var(--s-2); padding-top: var(--s-3); border-top: 2px solid color-mix(in srgb, var(--ink) 16%, transparent); }
   .num { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(3rem, 1rem + 5vw, 6rem); letter-spacing: -.04em; line-height: .9; color: var(--ink); font-variant-numeric: tabular-nums; }
-  .log { margin-top: var(--s-5); border-top: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); }
-  .log li { display: grid; grid-template-columns: 70px 92px 1fr; gap: var(--s-4); align-items: center; padding: 16px 4px; border-bottom: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); font-size: 1.05rem; }
-  .log .t { color: var(--graphite); }
-  .sev { justify-self: start; padding: 3px 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
-  .sev.hi { background: color-mix(in srgb, var(--accent) 22%, transparent); color: #ff8aa0; }
-  .sev.md { background: hsl(32 80% 50% / .18); color: #f3b16b; }
-  .sev.lo { background: color-mix(in srgb, var(--ink) 10%, transparent); color: var(--graphite); }
-  .patterns { display: grid; margin-top: var(--s-5); }
-  .patterns li { display: grid; grid-template-columns: 60px minmax(0, 1fr) minmax(0, 380px); gap: var(--s-5); align-items: center; padding: var(--s-5) 0; border-top: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); }
-  .pn { color: var(--accent); font-size: 1rem; }
-  .pt { font-size: clamp(1.15rem, 1rem + .5vw, 1.5rem); font-weight: 600; letter-spacing: -.01em; line-height: 1.25; margin-bottom: 6px; }
-  .patterns :global(img) { width: 100%; height: auto; border-radius: 10px; }
   /* 02 */
   .question { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2.2rem, 1rem + 3.8vw, 5rem); letter-spacing: -.035em; line-height: 1.02;
     margin-top: var(--s-5); max-width: 20ch; text-wrap: balance; }
   .question em { font-style: normal; color: var(--accent); }
-  .aside { margin-top: var(--s-5); font-size: var(--t-lead); line-height: 1.35; max-width: 44ch; color: var(--graphite); }
   .screens { margin: clamp(80px, 9vw, 130px) calc(var(--inset) * -1) 0; }
   .screens > .h3, .screens > p { padding-inline: var(--inset); }
   .lede-s { margin-top: var(--s-2); max-width: 52ch; line-height: 1.45; }
   .screens :global(.cp) { margin-top: var(--s-5); }
-  .spec { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-5); margin-top: clamp(64px, 8vw, 110px); }
+  .spec { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-5); margin-top: clamp(40px, 5vw, 72px); }
   .spec div { display: grid; gap: var(--s-2); padding-top: var(--s-3); border-top: 2px solid var(--accent); }
   .spec dd { margin: 0; font-size: 1.05rem; line-height: 1.4; }
 
   /* 03 */
-  .stage-row { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: clamp(24px, 4vw, 56px); margin-top: clamp(64px, 8vw, 110px); align-items: start; }
-  .stage-txt { display: grid; gap: var(--s-2); position: sticky; top: 32px; }
-  .st { font-size: clamp(1.3rem, 1rem + .9vw, 1.9rem); font-weight: 600; letter-spacing: -.02em; line-height: 1.2; }
-  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); }
-  .grid2 figure, .vs figure { display: grid; gap: var(--s-2); }
-  .grid2 :global(img), .wide, .vs :global(img) { width: 100%; height: auto; border-radius: 10px; }
-  .cut { margin-top: clamp(80px, 9vw, 130px); display: grid; gap: var(--s-3); padding: clamp(20px, 2.6vw, 34px); border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); border-radius: 18px; }
-  .vs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-5); margin-top: var(--s-3); }
-  .vs figcaption { display: grid; gap: 4px; line-height: 1.45; }
-
   /* 04 */
-  .scale { position: relative; margin-top: var(--s-6); }
-  .bar { display: block; transform-origin: 0 50%; scale: var(--e, 1) 1; height: 6px; border-radius: 6px; background: linear-gradient(90deg, #3FD07A, #E8D53A 38%, #F08A2C 66%, #E8343C); margin-bottom: var(--s-5); }
-  .scale ol { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-4); }
-  .scale li { display: grid; gap: var(--s-3); }
-  .scale :global(img) { width: 100%; height: auto; border-radius: 10px; box-shadow: 0 0 0 2px var(--c); }
-  .scale p { display: grid; gap: 2px; }
-  .scale b { color: var(--c); }
-  .pressure { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-6) var(--s-5); margin-top: var(--s-5); }
-  .pressure li { display: grid; gap: var(--s-2); align-content: start; }
-  .pressure :global(img) { width: 100%; height: auto; border-radius: 10px; margin-bottom: var(--s-2); }
-
   /* 05 */
   .echo { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(1.8rem, 1rem + 2.6vw, 3.6rem); letter-spacing: -.03em; line-height: 1.08; max-width: 24ch; margin-top: var(--s-5); text-wrap: balance; }
   .replay { position: relative; margin-top: clamp(48px, 6vw, 80px); max-width: 900px; border-radius: 18px; overflow: hidden; }
@@ -521,19 +580,17 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .next-link:hover { color: var(--accent); }
   .next-link :global(svg) { width: .5em; height: .5em; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
 
-  @media (max-width: 1100px) { .rail { display: none; } .topbar { display: block; } .labelled { grid-template-columns: 1fr; } .how { grid-template-columns: repeat(2, minmax(0, 1fr)); } .how li::after { display: none; } }
+  @media (max-width: 1100px) { .rail { display: none; } .topbar { display: block; } }
   @media (max-width: 900px) {
+    .scrolly { grid-template-columns: 1fr; gap: var(--s-4); }
+    .pics { top: 56px; z-index: 2; padding-block: 8px; background: var(--paper); }
+    .steps li { min-height: 48svh; }
     .readouts, .spec { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .cols, .pressure, .vs, .stage-row { grid-template-columns: 1fr; }
+    .cols { grid-template-columns: 1fr; }
     .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .stage-txt { position: static; }
-    .patterns li { grid-template-columns: 40px 1fr; }
-    .patterns li :global(img) { grid-column: 1 / -1; }
     .scale ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .log li { grid-template-columns: 56px 1fr; }
-    .log li > :last-child { grid-column: 1 / -1; }
   }
-  @media (max-width: 560px) { .grid2, .board { grid-template-columns: 1fr; } .plain, .how { grid-template-columns: 1fr; } .mark { width: 22px; height: 22px; font-size: 11px; } }
+  @media (max-width: 560px) { .board, .plain { grid-template-columns: 1fr; } .mark { width: 22px; height: 22px; font-size: 11px; } }
   /* calm: the clip does not pin; its captions read as a short list */
   :global(:root[data-motion="calm"]) .story { height: auto; }
   :global(:root[data-motion="calm"]) .story .stage { position: relative; height: auto; padding-block: 16svh; }
@@ -552,6 +609,13 @@ const pad = (n: number) => String(n).padStart(2, '0');
   const beats = story ? [...story.querySelectorAll<HTMLElement>('[data-beat]')] : [];
   const ticks = story ? [...story.querySelectorAll<HTMLElement>('[data-tick]')] : [];
   const scrubs = [...document.querySelectorAll<HTMLElement>('[data-scrub]')];
+  const scrollies = [...document.querySelectorAll<HTMLElement>('[data-scrolly]')].map((el) => ({
+    steps: [...el.querySelectorAll<HTMLElement>('[data-step]')],
+    pics: [...el.querySelectorAll<HTMLElement>('[data-pic]')],
+    shot: el.querySelector<HTMLElement>('.shot'),
+    marks: [...el.querySelectorAll<HTMLElement>('[data-mark]')],
+    cur: -1,
+  }));
   const delays = scrubs.map((el) => Number(el.style.getPropertyValue('--d') || 0));
   const gauge = document.querySelector<HTMLElement>('[data-pin="gauge"]');
   const needle = document.querySelector<SVGGElement>('[data-needle]');
@@ -608,6 +672,19 @@ const pad = (n: number) => String(n).padStart(2, '0');
         b.style.setProperty('--ty', `${((1 - inn) * 30 - out * 40).toFixed(1)}px`);
       });
       ticks.forEach((k, i) => k.classList.toggle('on', i <= Math.floor(Math.min(t, beats.length - 0.001))));
+    }
+    // scrolly: the step being read is the last one whose middle has risen past 60% down the screen
+    for (const sc of scrollies) {
+      const line = innerHeight * 0.6;
+      let on = 0;
+      sc.steps.forEach((st, i) => { const r = st.getBoundingClientRect(); if (r.top + r.height / 2 < line) on = i; });
+      if (on === sc.cur) continue;
+      sc.cur = on;
+      const step = sc.steps[on], p = Number(step.dataset.p), m = Number(step.dataset.m);
+      sc.steps.forEach((st, i) => st.classList.toggle('on', i === on));
+      sc.pics.forEach((pic, i) => pic.classList.toggle('on', i === p));
+      sc.shot?.classList.toggle('focus', m >= 0);
+      sc.marks.forEach((mk, i) => mk.classList.toggle('hot', i === m));
     }
     if (!still) {
       // measure every element first, then move them all: one layout pass per frame, not one per element
