@@ -1,9 +1,11 @@
 ---
 // Contact lives in the footer of every page; this page gives it a direct address and an introduction.
 import Base from '../layouts/Base.astro';
+import Back from '../components/Back.astro';
 import { site } from '../site';
 ---
 <Base title="Contact" description={`Get in touch with ${site.name}: internships, projects and collaborations.`}>
+  <Back href="/" label="Back" />
   <section class="wrap top" aria-labelledby="c-h">
     <h1 id="c-h" class="display" data-reveal>Say hello</h1>
     <p class="lead" data-reveal style="--i:1">Internships, projects, or a question about the work. Write a line below, or reach me at <a href={`mailto:${site.email}`}>{site.email}</a>.</p>

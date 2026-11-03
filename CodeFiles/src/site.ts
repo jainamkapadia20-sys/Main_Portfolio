@@ -10,6 +10,7 @@ export const site = {
   description:
     'Jainam Kapadia, a design student working across UI/UX, graphic, service and HMI design, with a sketchbook always open.',
   nav: [
+    { href: '/', label: 'Home' },
     { href: '/work', label: 'Work' },
     { href: '/about', label: 'About me' },
     { href: '#contact', label: 'Contact' },

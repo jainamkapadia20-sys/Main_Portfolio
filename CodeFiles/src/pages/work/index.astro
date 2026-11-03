@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import Back from '../../components/Back.astro';
 import WorkList from '../../components/WorkList.astro';
 import { sortedProjects } from '../../lib/projects';
 
@@ -7,6 +8,7 @@ const projects = await sortedProjects();
 const real = projects.filter((p) => !p.data.placeholder).length;
 ---
 <Base title="Work" description="Projects by Jainam Kapadia across UI/UX, graphic, service and HMI design.">
+  <Back href="/" label="Back" />
   <section class="wrap top" aria-labelledby="work-h">
     <h1 id="work-h" class="display" data-reveal>Work</h1>
     <p class="lead muted" data-reveal style="--i:1">{projects.length} projects across UI/UX, graphic, service and HMI design. {real === 1 ? 'One is finished and documented; the rest are placeholders until their files arrive.' : ''}</p>

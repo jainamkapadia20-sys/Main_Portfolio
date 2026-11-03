@@ -28,9 +28,15 @@ const side = [
 const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-arm t-learn-arm-top" d="M6 4L10 8" /><path class="t-learn-arm t-learn-arm-bot" d="M10 8L6 12" /></svg>';
 ---
 <Base>
-  <!-- the opening plays on every load, never for reduced motion; decided before first paint so the page never flashes -->
+  <!-- the opening plays once per visit (coming back to the home page skips it), never for reduced motion; decided
+       before first paint so the page never flashes -->
   <script is:inline slot="head">
-    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('intro');
+    try {
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches && !sessionStorage.getItem('intro-seen')) {
+        document.documentElement.classList.add('intro');
+        sessionStorage.setItem('intro-seen', '1');
+      }
+    } catch {}
   </script>
   <Intro slot="intro" />
   <!-- Hero: one full screen over the glitter warp (the site background, strongest here);
@@ -64,12 +70,9 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
 
   <SideWork categories={side} />
 
-  <Motivation />
-
-
   <section class="section wrap note" aria-labelledby="note-h">
     <div class="letter">
-      <h2 id="note-h" class="sr-only">A note from Jainam</h2>
+      <h2 id="note-h" class="head about-h" data-reveal>About me</h2>
       <span class="avatar" aria-hidden="true">JK</span>
       <p data-reveal>Hi, I'm Jainam. I'm a design student, and I like problems where people meet systems: an app on a busy commute, a warning in a car at 90 km/h, a service with too many steps.</p>
       <p data-reveal style="--i:1">I start with the people using the thing, get ideas onto paper early, and keep going until the design is clear before it is clever.</p>
@@ -83,11 +86,14 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
     </aside>
   </section>
 
+  <Motivation />
+
+
   <section class="section clock" aria-labelledby="clock-h">
     <Road>
       <div class="clock-copy">
         <h2 id="clock-h" class="head" data-reveal>Off the clock</h2>
-        <p data-reveal style="--i:1">A 2016 Honda City that I keep changing, and a 3D model of it built from scratch in Blender. Press and hold the road to speed up.</p>
+        <p data-reveal style="--i:1">Press and hold the road to speed up.</p>
         <a class="t-learn" href="/car" data-reveal style="--i:2">See the car <span class="t-learn-chevron" set:html={arrow} /></a>
       </div>
     </Road>

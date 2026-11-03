@@ -3,6 +3,7 @@
 // until then), the facts and the approach on the right, then skills, music and interests.
 import { getImage } from 'astro:assets';
 import Base from '../layouts/Base.astro';
+import Back from '../components/Back.astro';
 import Skills from '../components/Skills.astro';
 import Metal from '../components/Metal.astro';
 import Music from '../components/Music.astro';
@@ -25,6 +26,7 @@ const facts = [
 const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-arm t-learn-arm-top" d="M6 4L10 8" /><path class="t-learn-arm t-learn-arm-bot" d="M10 8L6 12" /></svg>';
 ---
 <Base title="About" description="About Jainam Kapadia: a design student working across UI/UX, graphic, service and HMI design. Approach, skills and interests.">
+  <Back href="/" label="Back" />
   <div class="about">
     <div class="stage">
       {portrait ? <img src={portrait} alt={`Portrait of ${site.name}`} />

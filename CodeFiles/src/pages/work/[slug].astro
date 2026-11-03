@@ -7,6 +7,7 @@
 import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
 import Base from '../../layouts/Base.astro';
+import Back from '../../components/Back.astro';
 import ClusterPlayer from '../../components/ClusterPlayer.astro';
 import { sortedProjects } from '../../lib/projects';
 import { withBase } from '../../lib/url';
@@ -48,7 +49,7 @@ const check = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3
 const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-arm t-learn-arm-top" d="M6 4L10 8" /><path class="t-learn-arm t-learn-arm-bot" d="M10 8L6 12" /></svg>';
 ---
 <Base title={p.title} description={p.summary}>
-  <a class="back meta wrap" href="/#work">← All work</a>
+  <Back href="/work" label="All work" />
   {Story ? <Story project={project} next={next} /> : <Fragment>
 
   <!-- 1. The result: what was made, and the finished work, straight away -->
@@ -231,7 +232,6 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
   h1, .h2, .h3, h4, .statement, .stage-cap { text-wrap: balance; }
   p, li { text-wrap: pretty; }
   :global(html) { scroll-padding-bottom: 88px; }
-  .back { display: inline-block; margin-top: calc(var(--nav-h) + 12px); }
   .cs-sec { padding-top: clamp(96px, 11vw, 168px); scroll-margin-top: calc(var(--nav-h) - 24px); max-width: 1240px; margin-inline: auto; }
   .h2 { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2.2rem, 1rem + 3.6vw, 4.4rem); letter-spacing: -.03em; line-height: 1; margin-top: var(--s-3); }
   .h3 { font-size: var(--t-lead); font-weight: 600; letter-spacing: -.01em; margin-bottom: var(--s-5); }

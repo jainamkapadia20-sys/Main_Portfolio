@@ -1,0 +1,32 @@
+---
+// A way back, fixed at the top left beside the nav. It returns to the page you came from on this site (so the home
+// page keeps its scroll position); arriving from elsewhere, it goes to `href`. Hidden inside the home page's project
+// card, which has its own close button (global.css, .in-card .back).
+interface Props { href?: string; label?: string }
+const { href = '/', label = 'Back' } = Astro.props;
+---
+<a class="back" href={href} data-back>
+  <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" /></svg>
+  <span>{label}</span>
+</a>
+
+<style>
+  .back { position: fixed; z-index: 50; top: 16px; left: clamp(12px, 2vw, 28px); height: 48px; display: inline-flex; align-items: center; gap: 8px; padding: 0 18px 0 14px;
+    border-radius: 999px; font-size: var(--t-small); font-weight: 600; color: var(--ink);
+    background: color-mix(in srgb, var(--surface) 70%, transparent); backdrop-filter: blur(16px) saturate(1.4); -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+    transition: background-color var(--duration-fast) var(--ease-smooth-out), translate var(--duration-fast) var(--ease-smooth-out); }
+  .back:hover { background: color-mix(in srgb, var(--surface) 92%, transparent); translate: -2px 0; }
+  .back:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .back svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  /* phones: the arrow alone, so it never crowds the nav pill */
+  @media (max-width: 560px) { .back { width: 48px; padding: 0; justify-content: center; } .back span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLAnchorElement>('[data-back]').forEach((a) => a.addEventListener('click', (e) => {
+    let same = false;
+    try { same = !!document.referrer && new URL(document.referrer).origin === location.origin; } catch {}
+    if (same && history.length > 1) { e.preventDefault(); history.back(); }
+  }));
+</script>
