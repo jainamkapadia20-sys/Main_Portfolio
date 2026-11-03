@@ -4,16 +4,18 @@
 // seen: the cards rise from below and grow into place, and the lens bends in. Under the row, the centred project's
 // title and a rolling count. Click a card to open its project.
 // A plain list of the same links is there for screen readers and without JS.
+import { getImage } from 'astro:assets';
 import { sortedProjects } from '../lib/projects';
 import { withBase } from '../lib/url';
 
 const projects = await sortedProjects();
-const items = projects.map((p) => ({
+const items = await Promise.all(projects.map(async (p) => ({
   title: p.data.title,
   tag: p.data.category,
   sub: p.data.placeholder ? 'Coming soon' : `${p.data.type}, ${p.data.year}`,
   href: withBase(`/work/${p.id}`),   // JSON props aren't rebased after the build, so prefix here
-}));
+  img: p.data.cover ? (await getImage({ src: p.data.cover, width: 1200, format: 'webp' })).src : undefined,   // Astro adds the base itself
+})));
 const total = String(items.length).padStart(2, '0');
 ---
 <div class="flex-carousel" tabindex="0" role="region" aria-roledescription="carousel" aria-label="Projects" data-flex-carousel={JSON.stringify(items)}>
@@ -61,7 +63,7 @@ const total = String(items.length).padStart(2, '0');
   import { createFlexCarousel } from '../fx/flex-carousel';
   import { palette } from '../lib/theme';
 
-  type Item = { title: string; tag: string; sub: string; href: string };
+  type Item = { title: string; tag: string; sub: string; href: string; img?: string };
   const pad = (n: number) => String(n).padStart(2, '0');
   // '#rrggbb' blended toward another, t = 0 → a, 1 → b
   const mix = (a: string, b: string, t: number) => {
@@ -119,7 +121,7 @@ const total = String(items.length).padStart(2, '0');
     new IntersectionObserver(([e], io) => {
       if (!e.isIntersecting) return;
       io.disconnect();
-      document.fonts.ready.then(() => createFlexCarousel(root, items.map((it, i) => ({ src: cover(it, i), alt: it.title, title: it.title })), {
+      document.fonts.ready.then(() => createFlexCarousel(root, items.map((it, i) => ({ src: it.img ?? cover(it, i), alt: it.title, title: it.title })), {
         preset: 'liquid', intro: 'rise', cardHeight: 0.5, gap: 12, radius: 0, fit: 'natural', focusOnClick: false,   // a click opens the project
         captureWheel: false,   // up and down stay with the page; sideways swipes turn the row
       }, {

@@ -28,13 +28,14 @@ const cover = p.cover ? await web(p.cover) : undefined;
 
 // the story's beats: the project's own, or labelled sample beats until it is written
 const process = p.process.length ? await Promise.all(p.process.map(async (s) => ({ phase: s.phase, title: s.title, points: s.points,
-  img: s.media ? await web(s.media) : undefined, alt: s.alt }))) : [
+  img: s.media ? await web(s.media) : undefined, alt: s.alt,
+  gallery: s.gallery ? await Promise.all(s.gallery.map(async (g) => ({ src: await web(g.src, 800), alt: g.alt }))) : [] }))) : [
   { phase: 'Discover', title: 'Listening before drawing', points: ['Who uses this, and where it goes wrong for them.', 'Interviews, observation and the existing product, taken apart.'] },
   { phase: 'Define', title: 'One problem worth solving', points: ['Everything heard, sorted into a few clear needs.', 'A single sentence the rest of the work has to answer.'] },
   { phase: 'Ideate', title: 'Many ideas, quickly', points: ['Sketches first, lots of them, nothing precious.', 'The strongest few taken further, side by side.'] },
   { phase: 'Prototype', title: 'Making it real enough to test', points: ['Clickable flows and screens at full fidelity.', 'Built to answer a question, not to impress.'] },
   { phase: 'Test', title: 'Watching it meet people', points: ['Sessions with the people it is for.', 'What broke, what changed, and the round after that.'] },
-].map((s) => ({ ...s, img: undefined as string | undefined, alt: '' }));
+].map((s) => ({ ...s, img: undefined as string | undefined, alt: '', gallery: [] as { src: string; alt: string }[] }));
 const results = p.results.length ? p.results : ['The result, in one line, goes here.', 'What changed for the people using it.', 'What I would carry into the next project.'];
 const stats = p.stats.length ? p.stats : [{ value: 12, suffix: '', label: 'conversations' }, { value: 40, suffix: '+', label: 'sketches' }, { value: 3, suffix: '', label: 'rounds of testing' }];
 const takeaway = p.summary;
@@ -84,6 +85,17 @@ const TUNNEL = 9;   // rings in the tunnel
     </div>
   </section>
 
+  <!-- 2b. The result up close: the real screens, one at a time, by mode -->
+  {cluster && (
+    <section class="section try" aria-labelledby="try-h">
+      <div class="wrap try-head">
+        <h2 id="try-h" class="head" data-reveal>Try the cluster</h2>
+        <p class="muted" data-reveal style="--i:1">Pick a mode, then a moment.</p>
+      </div>
+      <ClusterPlayer block={cluster} />
+    </section>
+  )}
+
   <!-- 3. The process: one line at a time, a stroke drawing itself down the page beside it -->
   <section class="process section" aria-labelledby="proc-h" data-process>
     <svg class="stroke" viewBox="0 0 200 1000" preserveAspectRatio="none" aria-hidden="true">
@@ -103,7 +115,9 @@ const TUNNEL = 9;   // rings in the tunnel
             <p class="phase meta" data-line>{String(i + 1).padStart(2, '0')} — {s.phase}</p>
             <h3 class="mask"><span data-line>{s.title}</span></h3>
             {s.points.map((pt) => <p class="point mask"><span data-line>{pt}</span></p>)}
-            {s.img ? <img class="pop" src={s.img} alt={s.alt} loading="lazy" data-pop /> : <div class="pop ph" data-pop role="img" aria-label={`Placeholder: ${s.phase} work`}><span class="meta">{s.phase} · placeholder</span></div>}
+            {s.img ? <img class="pop" src={s.img} alt={s.alt} loading="lazy" data-pop />
+              : s.gallery.length ? <ul class="gallery">{s.gallery.map((g) => <li data-pop class="pop-in"><img src={g.src} alt="" loading="lazy" /><span class="meta">{g.alt}</span></li>)}</ul>
+              : !p.process.length && <div class="pop ph" data-pop role="img" aria-label={`Placeholder: ${s.phase} work`}><span class="meta">{s.phase} · placeholder</span></div>}
             {i === 1 && (
               <div class="stats">
                 {stats.map((st) => <p class="stat"><span class="num" data-count={st.value} data-suffix={st.suffix}>0{st.suffix}</span><span class="meta">{st.label}</span></p>)}
@@ -114,16 +128,6 @@ const TUNNEL = 9;   // rings in the tunnel
       </ol>
     </div>
   </section>
-
-  {cluster && (
-    <section class="section try" aria-labelledby="try-h">
-      <div class="wrap try-head">
-        <h2 id="try-h" class="head" data-reveal>Try the cluster</h2>
-        <p class="muted" data-reveal style="--i:1">Pick a mode, then a moment. Each screen says what the car senses and what the driver sees.</p>
-      </div>
-      <ClusterPlayer block={cluster} />
-    </section>
-  )}
 
   <!-- 4. The takeaway: its words light up as you read down to them -->
   <section class="takeaway section wrap" aria-label="Takeaway">
@@ -172,6 +176,8 @@ const TUNNEL = 9;   // rings in the tunnel
   .result-h { position: absolute; top: calc(var(--nav-h) + 4vh); font-size: var(--t-head); opacity: calc(1 - var(--g) * 1.4); }
   .frame { position: absolute; inset: 0; overflow: hidden; background: var(--surface);
     clip-path: inset(calc((1 - var(--g)) * 30%) calc((1 - var(--g)) * 32%) round calc((1 - var(--g)) * 28px + 0px)); }
+  /* the picture dims as the outcomes rise over it, so they stay readable on a busy screen */
+  .frame::after { content: ''; position: absolute; inset: 0; background: rgb(0 0 0 / calc(var(--o) * .65)); pointer-events: none; }
   .frame img, .frame video { width: 100%; height: 100%; object-fit: cover; scale: calc(1.25 - var(--g) * .25); }
   .frame .ph { width: 100%; height: 100%; display: grid; place-items: center;
     background: radial-gradient(110% 90% at 30% 20%, color-mix(in srgb, var(--accent) 65%, #fff), color-mix(in srgb, var(--accent) 35%, #0A0910) 85%); }
@@ -206,7 +212,12 @@ const TUNNEL = 9;   // rings in the tunnel
   .pop { width: 100%; aspect-ratio: 16 / 10; margin-top: var(--s-4); border-radius: var(--radius); object-fit: cover; display: grid; place-items: center;
     transition: scale 900ms cubic-bezier(.3, 1.3, .4, 1), opacity 600ms ease, filter 700ms ease; }
   .pop.ph { background: radial-gradient(110% 90% at 30% 20%, color-mix(in srgb, var(--accent) 40%, var(--paper)), color-mix(in srgb, var(--accent) 18%, var(--surface)) 85%); }
-  :global(.js) .pop:not(.in) { scale: .86; opacity: 0; filter: blur(10px); }
+  img.pop { aspect-ratio: auto; height: auto; background: var(--surface); }
+  :global(.js) .pop:not(.in), :global(.js) .pop-in:not(.in) { scale: .86; opacity: 0; filter: blur(10px); }
+  /* a row of final screens, each with a short label */
+  .gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); margin-top: var(--s-4); }
+  .gallery li { display: grid; gap: var(--s-2); transition: scale 900ms cubic-bezier(.3, 1.3, .4, 1), opacity 600ms ease, filter 700ms ease; }
+  .gallery img { width: 100%; aspect-ratio: 2 / 1; object-fit: cover; border-radius: var(--radius); }
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s-5); margin-top: var(--s-7); }
   .stat { display: grid; gap: var(--s-2); }
   .num { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(3rem, 1rem + 6vw, 7rem); letter-spacing: -.04em; line-height: .9; color: var(--accent);
@@ -235,7 +246,7 @@ const TUNNEL = 9;   // rings in the tunnel
   :global(:root[data-motion="calm"]) .tunnel-stage { --p: 1; }
   :global(:root[data-motion="calm"]) .result-stage { position: relative; }
   :global(:root[data-motion="calm"]) .result-stage { --g: 1; --o: 1; }
-  :global(:root[data-motion="calm"]) [data-line], :global(:root[data-motion="calm"]) .pop { translate: none !important; opacity: 1 !important; scale: 1 !important; filter: none !important; }
+  :global(:root[data-motion="calm"]) [data-line], :global(:root[data-motion="calm"]) .pop, :global(:root[data-motion="calm"]) .pop-in { translate: none !important; opacity: 1 !important; scale: 1 !important; filter: none !important; }
   :global(:root[data-motion="calm"]) .words span { --lit: 1; }
 </style>
 
