@@ -1,7 +1,8 @@
 ---
 // The Adaptive Dashboard case study, written for someone who has never heard of the project. It opens by saying, in
-// plain words, what an instrument cluster is and what changed, with the finished screen labelled part by part. Then
-// the problem is told as a short scenario in words, an attention gauge fills into the red, and five chapters walk
+// plain words, what an instrument cluster is and what changed. Then
+// the problem is told as a short scenario in words, an attention gauge fills into the red, the result (the home
+// screen, labelled part by part) follows, and five chapters walk
 // through it: the brief, research, prototyping, the cluster, the debrief. Everything moves with the scroll. On the left a road runs down the page:
 // a car drives down it as you scroll, and the signposts beside it jump to each chapter. Shared behaviour (count-up
 // numbers, the next-project link) lives in src/pages/work/[slug].astro.
@@ -35,7 +36,7 @@ const p = project.data;
 const cluster = p.blocks.find((b) => b.type === 'cluster') as Extract<typeof p.blocks[number], { type: 'cluster' }> | undefined;
 
 const route = [
-  { id: 'start', t: 'What it is' }, { id: 'problem', t: 'The problem' }, { id: 'brief', t: 'The brief' }, { id: 'notes', t: 'Research' },
+  { id: 'start', t: 'Overview' }, { id: 'problem', t: 'The problem' }, { id: 'result', t: 'The result' }, { id: 'brief', t: 'The brief' }, { id: 'notes', t: 'Research' },
   { id: 'proto', t: 'Prototyping' }, { id: 'cluster', t: 'The cluster' }, { id: 'debrief', t: 'Debrief' },
 ];
 // the finished home screen, labelled: marker positions are percentages of the 1400 × 700 screenshot
@@ -116,7 +117,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   </nav>
   <span class="topbar" aria-hidden="true"><span></span><svg class="mini" viewBox="0 0 40 24"><rect x="2" y="3" width="36" height="18" rx="6" /><rect x="26" y="6" width="7" height="12" rx="2" class="glass" /></svg></span>
 
-  <!-- WHAT IT IS: plain words first, then the finished screen, labelled -->
+  <!-- OVERVIEW: what it is, the problem and the idea, in plain words -->
   <section id="start" class="sec wrap intro" data-ch>
     <header class="ident">
       <p class="mono acc">HMI · instrument cluster concept</p>
@@ -128,16 +129,6 @@ const pad = (n: number) => String(n).padStart(2, '0');
       <li data-scrub style="--d:.12"><p class="mono acc">The problem</p><p>Today it shows everything, all the time. Warnings get lost, and drivers look away from the road to find things.</p></li>
       <li data-scrub style="--d:.24"><p class="mono acc">The idea</p><p>Let it change with the road: calm on the highway, focused in traffic, loud only when something is dangerous.</p></li>
     </ol>
-    <figure class="labelled" data-scrub="pop">
-      <div class="shot">
-        <Image src={cruise} alt="The finished cluster's home screen on the open road" widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 720px, 100vw" loading="eager" fetchpriority="high" />
-        {parts.map((pt, i) => <span class="mark" style={`left:${pt.x}%; top:${pt.y}%; --k:${i}`} aria-hidden="true">{i + 1}</span>)}
-      </div>
-      <figcaption>
-        <p class="mono muted">The home screen, on the open road</p>
-        <ol class="legend">{parts.map((pt, i) => <li data-scrub="left" style={`--d:${i * 0.06}`}><span class="n" aria-hidden="true">{i + 1}</span><span><b>{pt.t}</b> {pt.d}</span></li>)}</ol>
-      </figcaption>
-    </figure>
     <dl class="meta-row">
       <div><dt class="mono">Role</dt><dd>{p.role.join(', ')}</dd></div>
       <div><dt class="mono">Length</dt><dd>{p.duration}</dd></div>
@@ -177,9 +168,27 @@ const pad = (n: number) => String(n).padStart(2, '0');
     </div>
   </section>
 
+  <!-- THE RESULT: the home screen, labelled part by part -->
+  <section id="result" class="sec wrap" data-ch aria-labelledby="rs-h">
+    <p class="chap mono"><span>&#9679;</span>The result</p>
+    <h2 id="rs-h" class="display" data-scrub>A screen that shows what the moment needs</h2>
+    <p class="tldr" data-scrub><span class="mono acc">In short</span>This is the home screen on the open road. Each number explains one part.</p>
+    <figure class="labelled" data-scrub="pop">
+      <div class="shot">
+        <Image src={cruise} alt="The finished cluster's home screen on the open road" widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 720px, 100vw" loading="eager" fetchpriority="high" />
+        {parts.map((pt, i) => <span class="mark" style={`left:${pt.x}%; top:${pt.y}%; --k:${i}`} aria-hidden="true">{i + 1}</span>)}
+      </div>
+      <figcaption>
+        <p class="mono muted">The home screen, on the open road</p>
+        <ol class="legend">{parts.map((pt, i) => <li data-scrub="left" style={`--d:${i * 0.06}`}><span class="n" aria-hidden="true">{i + 1}</span><span><b>{pt.t}</b> {pt.d}</span></li>)}</ol>
+      </figcaption>
+    </figure>
+  </section>
+
   <!-- 01 THE BRIEF -->
   <section id="brief" class="sec wrap" data-ch>
     <p class="chap mono"><span>01</span>The brief</p>
+    <p class="tldr" data-scrub><span class="mono acc">In short</span>Show less, but never miss what matters: a screen that changes with the road.</p>
     <p class="question" data-scrub>Can a cluster show <em>less</em> and still make sure nothing important is missed?</p>
     <p class="aside" data-scrub>The answer was not a quieter screen. It was a screen that knows which road it is on.</p>
 
@@ -201,6 +210,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   <section id="notes" class="sec wrap" data-ch>
     <p class="chap mono"><span>02</span>Research</p>
     <h2 class="display" data-scrub>What shaped it</h2>
+    <p class="tldr" data-scrub><span class="mono acc">In short</span>Four questions to drivers showed speed, route and warnings matter most, and touch distracts.</p>
     <div class="readouts" data-scrub>
       <p><b class="num" data-count="4">4</b><span class="mono">questions asked</span></p>
       <p><b class="num" data-count="2">2</b><span class="mono">road contexts</span></p>
@@ -239,6 +249,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   <section id="proto" class="sec wrap" data-ch>
     <p class="chap mono"><span>03</span>Prototyping</p>
     <h2 class="display" data-scrub>From storyboard to bench test</h2>
+    <p class="tldr" data-scrub><span class="mono acc">In short</span>Seven situations were storyboarded, acted out with toy cars and mapped from sensor to screen.</p>
 
     <div class="stage-row">
       <div class="stage-txt" data-scrub><p class="mono acc">A · Storyboards</p><p class="st">Seven moments, six frames each.</p><p class="muted">Four shown: blind spot, exit, pedestrian, parking.</p></div>
@@ -275,6 +286,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   <section id="cluster" class="sec wrap" data-ch>
     <p class="chap mono"><span>04</span>The cluster</p>
     <h2 class="display" data-scrub>One ring, four levels</h2>
+    <p class="tldr" data-scrub><span class="mono acc">In short</span>One ring around the speed shows four levels of danger, from clear to act now.</p>
     <ol class="how">{how.map((h, i) => <li data-scrub style={`--d:${i * 0.1}`}><span class="mono acc">{pad(i + 1)}</span><p class="pt">{h.t}</p><p class="muted">{h.d}</p></li>)}</ol>
     <p class="aside" data-scrub>The ring around the speed carries the threat level. You feel the colour change before you read a word.</p>
     <div class="scale" data-scrub="pop">
@@ -293,13 +305,14 @@ const pad = (n: number) => String(n).padStart(2, '0');
     </ul>
   </section>
 
-  <!-- 05 DEBRIEF: the same clip, now with the cluster -->
+  <!-- 05 DEBRIEF: the same evening, now with the new screen -->
   <section id="debrief" class="sec wrap" data-ch>
     <p class="chap mono"><span>05</span>Debrief</p>
+    <p class="tldr" data-scrub><span class="mono acc">In short</span>What worked, what fell short, and what comes next.</p>
     <p class="echo" data-scrub>Back to 9:04 pm. Same rain, same traffic.</p>
-    <p class="echo acc" data-scrub style="--d:.1">Now the screen shows the car ahead, the gap and the next turn. Your eyes stay on the road.</p>
+    <p class="echo acc" data-scrub style="--d:.1">Now the screen shows only what the moment needs. Your eyes stay on the road.</p>
     <figure class="replay" data-scrub="pop">
-      <Image src={traffic} alt="Traffic mode: speed ring, the car ahead, map and range" widths={[800, 1400, 2000]} sizes="(min-width: 1300px) 1240px, 100vw" />
+      <Image src={cruise} alt="The home screen: speed, revs, road signs and cruise control" widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 900px, 100vw" />
     </figure>
     <div class="cols">
       {[
@@ -377,7 +390,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .line { font-size: var(--t-lead); max-width: 40ch; line-height: 1.3; }
   .plain { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-5); margin-top: clamp(40px, 5vw, 64px); }
   .plain li { display: grid; gap: var(--s-2); align-content: start; padding-top: var(--s-3); border-top: 2px solid color-mix(in srgb, var(--ink) 16%, transparent); line-height: 1.45; }
-  .labelled { margin-top: clamp(56px, 7vw, 96px); display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(24px, 3vw, 48px); align-items: center; }
+  .labelled { margin-top: clamp(40px, 5vw, 64px); display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(24px, 3vw, 48px); align-items: center; }
   .shot { position: relative; border-radius: 16px; overflow: hidden; box-shadow: 0 30px 80px hsl(0 0% 0% / .45); }
   .shot :global(img) { width: 100%; height: auto; display: block; }
   .mark, .legend .n { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 700; font-size: 13px; }
@@ -386,11 +399,14 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .legend li { display: grid; grid-template-columns: 28px 1fr; gap: var(--s-3); align-items: start; line-height: 1.45; }
   .legend b { display: block; }
   /* scroll-scrubbed motion: --e runs 0 to 1 as an element rises into view (set every frame by the script, 1 without it) */
-  [data-scrub] { opacity: calc(.06 + .94 * var(--e, 1)); translate: 0 calc((1 - var(--e, 1)) * 48px); }
+  [data-scrub] { opacity: calc(.25 + .75 * var(--e, 1)); translate: 0 calc((1 - var(--e, 1)) * 48px); }
   [data-scrub='pop'] { translate: 0 calc((1 - var(--e, 1)) * 36px); scale: calc(.9 + .1 * var(--e, 1)); }
   [data-scrub='left'] { translate: calc((1 - var(--e, 1)) * -64px) 0; }
   [data-scrub='right'] { translate: calc((1 - var(--e, 1)) * 64px) 0; }
   .aud { margin-top: var(--s-6); }
+  /* the chapter in one line: a tag, then the sentence, set apart so it reads first */
+  .tldr { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-top: var(--s-5); max-width: 60ch; padding: 14px 18px; border-radius: 12px;
+    font-size: 1.1rem; line-height: 1.45; background: var(--surface); border-left: 3px solid var(--accent); }
   /* the research board: a column per question, its notes in Miro's colours, set slightly askew like the real board */
   .board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-5); margin-top: var(--s-5); }
   .col { display: grid; gap: var(--s-4); align-content: start; }
@@ -492,7 +508,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
 
   /* 05 */
   .echo { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(1.8rem, 1rem + 2.6vw, 3.6rem); letter-spacing: -.03em; line-height: 1.08; max-width: 24ch; margin-top: var(--s-5); text-wrap: balance; }
-  .replay { position: relative; margin-top: clamp(48px, 6vw, 80px); border-radius: 18px; overflow: hidden; }
+  .replay { position: relative; margin-top: clamp(48px, 6vw, 80px); max-width: 900px; border-radius: 18px; overflow: hidden; }
   .replay :global(img) { width: 100%; height: auto; display: block; }
   .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-5); margin: clamp(64px, 8vw, 110px) 0 var(--s-5); }
   .cols > div { display: grid; gap: var(--s-3); align-content: start; padding-top: var(--s-3); border-top: 2px solid color-mix(in srgb, var(--ink) 16%, transparent); }
@@ -597,7 +613,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
       // measure every element first, then move them all: one layout pass per frame, not one per element
       const tops = scrubs.map((el) => el.getBoundingClientRect().top);
       scrubs.forEach((el, i) => {
-        const e = Math.min(1, Math.max(0, (innerHeight * 0.98 - tops[i]) / (innerHeight * 0.4) - delays[i]));
+        const e = Math.min(1, Math.max(0, (innerHeight - tops[i]) / (innerHeight * 0.25) - delays[i]));
         el.style.setProperty('--e', (e * (2 - e)).toFixed(3));   // eased out, so it settles gently
       });
     }
