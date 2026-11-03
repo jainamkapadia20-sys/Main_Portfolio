@@ -35,14 +35,25 @@ const projects = defineCollection({
       coverAlt: z.string().default(''),
       coverRatio: z.string().default('4 / 3'),
       blocks: z.array(block).default([]),
-      // the case study's hook: what came out of it, one short line each
+      // The case study, result first (src/pages/work/[slug].astro). Every part is optional: a section shows only when it has content.
+      // Impact: what came out of it, measured against the goals (one short line each), and big numbers that count up
       results: z.array(z.string()).default([]),
-      // a few numbers that count up as the story passes them, e.g. { value: 12, label: 'interviews' }
       stats: z.array(z.object({ value: z.number(), suffix: z.string().default(''), label: z.string() })).default([]),
-      // the process as steps: a phase word, a title, two to four short points, and the picture the stage shows
-      process: z.array(z.object({ phase: z.string(), title: z.string(), points: z.array(z.string()).min(1).max(5),
-        media: image().optional(), alt: z.string().default(''), caption: z.string().optional(),
-        gallery: z.array(z.object({ src: image(), alt: z.string() })).optional() })).default([]),
+      deliverables: z.array(z.string()).default([]),
+      // The challenge: the problem in up to three sentences, goals on two tracks, the limits worked within
+      challenge: z.object({ problem: z.string(), userGoals: z.array(z.string()).default([]), systemGoals: z.array(z.string()).default([]),
+        constraints: z.array(z.string()).default([]) }).optional(),
+      // Discovery: why it was researched, what was found, and the maps (flows, IA) drawn before any screen
+      research: z.object({ intent: z.string().optional(), insights: z.array(z.object({ title: z.string(), text: z.string() })).default([]),
+        media: z.array(z.object({ src: image(), alt: z.string(), caption: z.string().optional() })).default([]) }).optional(),
+      // Ideation, in order: each stage's pictures with one line on its logic
+      exploration: z.array(z.object({ label: z.string(), caption: z.string(), images: z.array(z.object({ src: image(), alt: z.string() })).min(1) })).default([]),
+      // Decisions and pivots: what it was, what it became, and why
+      decisions: z.array(z.object({ title: z.string(), before: z.string(), after: z.string(), why: z.string().optional(),
+        images: z.array(z.object({ src: image(), alt: z.string() })).default([]) })).default([]),
+      // Edge cases: how the design behaves when it matters most
+      edgeCases: z.array(z.object({ title: z.string(), text: z.string(), src: image(), alt: z.string() })).default([]),
+      retro: z.object({ well: z.array(z.string()).default([]), hurdles: z.array(z.string()).default([]), next: z.array(z.string()).default([]) }).optional(),
       featured: z.boolean().default(false),
       order: z.number().int(),
       placeholder: z.boolean().default(false),

@@ -10,14 +10,95 @@ category: HMI
 cover: ../../assets/hmi/03-traffic-main.png
 coverAlt: The traffic-mode cluster at night, with the speed ring in green, the car ahead and a mini map
 coverRatio: 2 / 1
-results:
-  - Two modes, highway and traffic
-  - One ring that warns, green to red
-  - Twelve screens, from parked to emergency braking
 stats:
-  - { value: 4, label: research questions }
+  - { value: 2, label: adaptive modes }
+  - { value: 4, label: warning levels }
   - { value: 7, label: scenarios storyboarded }
   - { value: 12, label: final screens }
+results:
+  - Traffic mode drops the rev counter, so the busiest drive has the calmest screen
+  - One colour ring ranks every warning, readable without reading
+  - Only a critical event takes over the whole cluster
+deliverables: [12 cluster screens, 7 storyboards, User and system flows, Layout sketches]
+challenge:
+  problem: Modern clusters show everything, all the time. Drivers check their speed constantly, miss alerts buried in clutter and look away from the road to find things.
+  userGoals:
+    - See speed and the next step at a glance
+    - Notice a hazard before reading a word
+    - Never dig through menus while driving
+  systemGoals:
+    - Show only what the road needs right now
+    - Rank safety alerts above everything else
+    - One cluster that adapts, not two products
+  constraints:
+    - No real vehicle data or sensors
+    - Readable in a two-second glance
+    - One fixed 1920 × 960 cluster screen
+    - Warnings can never hide the speed
+    - Concept work, not affiliated with Porsche
+research:
+  intent: Four questions, asked about how people drive, sorted into what matters on the highway and what matters in traffic.
+  insights:
+    - { title: Speed is checked constantly, text: "On highways, drivers glance at their speed every few seconds." }
+    - { title: Priority moves with the road, text: "Navigation in new places, parking in tight spaces, ADAS at night." }
+    - { title: Alerts get buried, text: "Too many notifications, and the important one gets lost." }
+    - { title: Touch pulls eyes away, text: "Small targets and deep menus take attention off the road." }
+  media:
+    - { src: ../../assets/hmi/research.jpg, alt: "Miro wall of sticky notes under four research questions, with highway and traffic clusters, the brief and the scenarios", caption: "The research wall: four questions, then highway and traffic needs." }
+    - { src: ../../assets/hmi/flows.jpg, alt: "User and system flowcharts for lane change, speed breaker and traffic mode", caption: "From sensor to screen: a flow for each scenario, with the points where a warning becomes an alert." }
+exploration:
+  - label: Storyboard
+    caption: Seven moments, six shots each, from calm to safe.
+    images:
+      - { src: ../../assets/hmi/sb-blindspot.jpg, alt: "Storyboard: blind spot warning on the highway" }
+      - { src: ../../assets/hmi/sb-exit.jpg, alt: "Storyboard: highway exit guidance" }
+      - { src: ../../assets/hmi/sb-pedestrian.jpg, alt: "Storyboard: pedestrian crossing in traffic" }
+      - { src: ../../assets/hmi/sb-parking.jpg, alt: "Storyboard: parking assist in traffic" }
+  - label: Sketch
+    caption: Three traffic and three highway layouts on paper, then four revised ones.
+    images:
+      - { src: ../../assets/hmi/sketches.jpg, alt: "Four hand-drawn cluster layouts with speed, rpm, range and status bars" }
+  - label: Act it out
+    caption: Toy cars on a paper road, warnings drawn where the screen would show them.
+    images:
+      - { src: ../../assets/hmi/toy-lane.jpg, alt: "Model car drifting toward the lane edge with warning arrows drawn beside it" }
+      - { src: ../../assets/hmi/toy-change.jpg, alt: "Model car changing lanes with a green arrow showing it is clear" }
+      - { src: ../../assets/hmi/toy-keep.jpg, alt: "Model car centred in its lane with green lane guides" }
+      - { src: ../../assets/hmi/toy-park.jpg, alt: "Model car parking too close to another, with red sensor arcs" }
+decisions:
+  - title: Traffic mode drops the rev counter
+    before: Early sketches kept speed and rpm side by side in both modes.
+    after: In traffic the rpm gauge goes, and the map and 360° view take its place.
+    why: Revs mean little at 20 km/h. Space is better spent on what is around the car.
+    images:
+      - { src: ../../assets/hmi/02-dashboard-main.png, alt: "Highway: speed and rpm" }
+      - { src: ../../assets/hmi/03-traffic-main.png, alt: "Traffic: rpm removed" }
+  - title: Warn with colour before words
+    before: Research said pop-ups interrupt, and the important alert gets buried.
+    after: The ring around the speed shifts green, yellow, orange, red.
+    why: Colour reaches peripheral vision first, so the level is felt before any text is read.
+    images:
+      - { src: ../../assets/hmi/03-traffic-main.png, alt: Green · clear }
+      - { src: ../../assets/hmi/06-blindspot-traffic.png, alt: Yellow · car alongside }
+      - { src: ../../assets/hmi/07-proximity-warning.png, alt: Orange · closing in }
+      - { src: ../../assets/hmi/08-proximity-alert.png, alt: Red · cut-in }
+edgeCases:
+  - { title: Emergency braking, text: "The whole cluster turns red with a single message. Nothing else competes.", src: ../../assets/hmi/12-crash-alert.png, alt: "The whole cluster washed red with the words Emergency Braking" }
+  - { title: Pedestrian ahead, text: "A red cone points at the person, not just a generic warning.", src: ../../assets/hmi/09-proximity-alert-2.png, alt: "Pedestrian Detected warning with a red cone ahead of the car" }
+  - { title: Reversing, text: "The cluster becomes the rear camera, with sensor arcs that go green, amber, red.", src: ../../assets/hmi/11-parking-manual.png, alt: "Rear camera view with guide lines next to a top-down car with sensor arcs" }
+  - { title: Startup, text: "Every warning light checks itself once, then clears before driving.", src: ../../assets/hmi/01-startup.png, alt: "Startup screen with both gauges at zero and all warning lights on" }
+retro:
+  well:
+    - Every screen traces back to a research question
+    - One ring carries four warning levels
+    - Toy-car runs made each scenario concrete before drawing
+  hurdles:
+    - Speed and range stay static across screens
+    - Three storyboarded scenarios never reached a final screen
+  next:
+    - Screens for fatigue, speed breaker and motorcycle alerts
+    - Sound and haptic cues paired with each ring colour
+    - Glance tests with drivers in a simulator
 blocks:
   - type: cluster
     ratio: 2 / 1
@@ -40,71 +121,6 @@ blocks:
         steps:
           - { src: ../../assets/hmi/10-park-auto.png, alt: A free space highlighted green beside the car with a Confirm OK prompt, title: Auto park, sensors: Ultrasonics find a free space., screen: "The space glows green. One tap: Confirm, OK." }
           - { src: ../../assets/hmi/11-parking-manual.png, alt: Rear camera view with guide lines next to a top-down car with sensor arcs, title: Manual park, sensors: Rear camera and twelve sensors., screen: "Camera, guide lines and arcs that go green, amber, red." }
-process:
-  - phase: Define
-    title: Too much on one screen
-    points:
-      - Drivers need speed, navigation and safety cues at a glance.
-      - Clutter and deep menus pull eyes off the road.
-      - "The question: can the cluster show less, at the right time?"
-  - phase: Discover
-    title: Four questions, one wall
-    points:
-      - What matters most while driving?
-      - How does that change with the road?
-      - What distracts, and what would help?
-    media: ../../assets/hmi/research.jpg
-    alt: Miro wall of sticky notes grouped under four research questions, with highway and traffic clusters and the brief
-  - phase: Decide
-    title: Two modes, not one dashboard
-    points:
-      - "Highway: speed, range, exit guidance, blind spot, fatigue."
-      - "Traffic: 360° proximity, pedestrians, parking, the next turn."
-      - Anything the moment doesn't need, hidden.
-  - phase: Imagine
-    title: Seven moments, storyboarded
-    points:
-      - Blind spot, fatigue, exit, speed breaker, pedestrian, motorcycle, parking.
-      - Each told in six shots, from calm to safe.
-    gallery:
-      - { src: ../../assets/hmi/sb-blindspot.jpg, alt: "Blind spot, highway" }
-      - { src: ../../assets/hmi/sb-exit.jpg, alt: "Exit guidance, highway" }
-      - { src: ../../assets/hmi/sb-pedestrian.jpg, alt: "Pedestrian, traffic" }
-      - { src: ../../assets/hmi/sb-parking.jpg, alt: "Parking assist, traffic" }
-  - phase: Map
-    title: What the car senses, what you see
-    points:
-      - A flow for every scenario, from sensor to screen.
-      - Decision points decide when a warning becomes an alert.
-    media: ../../assets/hmi/flows.jpg
-    alt: User and system flowcharts for lane change, speed breaker and traffic mode
-  - phase: Sketch
-    title: Layouts on paper first
-    points:
-      - Three traffic and three highway layouts.
-      - Four revised variations, one picked to build.
-    media: ../../assets/hmi/sketches.jpg
-    alt: Four hand-drawn cluster layouts with speed, rpm, range and status bars
-  - phase: Test
-    title: Toy cars on a paper road
-    points:
-      - Every scenario acted out with model cars.
-      - Lanes and warnings drawn where the screen would show them.
-    gallery:
-      - { src: ../../assets/hmi/toy-lane.jpg, alt: Lane drift }
-      - { src: ../../assets/hmi/toy-change.jpg, alt: Safe lane change }
-      - { src: ../../assets/hmi/toy-keep.jpg, alt: Lane keeping }
-      - { src: ../../assets/hmi/toy-park.jpg, alt: Too close to park }
-  - phase: Build
-    title: One ring that warns
-    points:
-      - Green, yellow, orange, red. Felt before it is read.
-      - Twelve screens in Figma, from startup to emergency braking.
-    gallery:
-      - { src: ../../assets/hmi/03-traffic-main.png, alt: Green ring, all clear }
-      - { src: ../../assets/hmi/06-blindspot-traffic.png, alt: Yellow ring, a car alongside }
-      - { src: ../../assets/hmi/07-proximity-warning.png, alt: Orange ring, cars closing in }
-      - { src: ../../assets/hmi/08-proximity-alert.png, alt: Red ring, a car cutting in }
 featured: true
 order: 2
 ---

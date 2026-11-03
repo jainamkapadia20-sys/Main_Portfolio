@@ -1,10 +1,11 @@
 ---
-// A project, told as a story you scroll through. It opens on its title; then the result first, a frame that grows to fill the screen; then the process, one line at a time, with
-// a stroke that draws itself down the page alongside it, numbers that count up and pictures that pop in as they
-// arrive; then the takeaway, whose words light up as you read; then the next project.
-// Projects still to be written show a labelled placeholder story, so the shape can be seen.
-import { getImage } from 'astro:assets';
-import { render, type CollectionEntry } from 'astro:content';
+// A project as a result-first case study. The finished work comes first (hero picture, then the real screens), then
+// the proof (numbers, goals met, the facts), then how it got there: the challenge, discovery, ideation with its
+// decisions and edge cases, and a short retrospective. Each section shows only when the project has content for it,
+// and a dock at the bottom jumps between them. Text stays short: a few lines, then the picture it belongs to.
+// Projects still to be written show the title, a labelled placeholder and the next project.
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import ClusterPlayer from '../../components/ClusterPlayer.astro';
 import { sortedProjects } from '../../lib/projects';
@@ -18,291 +19,372 @@ type P = CollectionEntry<'projects'>;
 interface Props { project: P; next: P }
 const { project, next } = Astro.props;
 const p = project.data;
-const { Content } = await render(project);
 
-const web = async (src: ImageMetadata, width = 1600) => (src.format === 'svg' ? src.src : (await getImage({ src, width, format: 'webp' })).src);
 const film = p.blocks.find((b) => b.type === 'video' && b.src) as Extract<typeof p.blocks[number], { type: 'video' }> | undefined;
 const cluster = p.blocks.find((b) => b.type === 'cluster') as Extract<typeof p.blocks[number], { type: 'cluster' }> | undefined;
-const cover = p.cover ? await web(p.cover) : undefined;
-
-// the story's beats: the project's own, or labelled sample beats until it is written
-const process = p.process.length ? await Promise.all(p.process.map(async (s) => ({ phase: s.phase, title: s.title, points: s.points,
-  img: s.media ? await web(s.media) : undefined, alt: s.alt,
-  gallery: s.gallery ? await Promise.all(s.gallery.map(async (g) => ({ src: await web(g.src, 800), alt: g.alt }))) : [] }))) : [
-  { phase: 'Discover', title: 'Listening before drawing', points: ['Who uses this, and where it goes wrong for them.', 'Interviews, observation and the existing product, taken apart.'] },
-  { phase: 'Define', title: 'One problem worth solving', points: ['Everything heard, sorted into a few clear needs.', 'A single sentence the rest of the work has to answer.'] },
-  { phase: 'Ideate', title: 'Many ideas, quickly', points: ['Sketches first, lots of them, nothing precious.', 'The strongest few taken further, side by side.'] },
-  { phase: 'Prototype', title: 'Making it real enough to test', points: ['Clickable flows and screens at full fidelity.', 'Built to answer a question, not to impress.'] },
-  { phase: 'Test', title: 'Watching it meet people', points: ['Sessions with the people it is for.', 'What broke, what changed, and the round after that.'] },
-].map((s) => ({ ...s, img: undefined as string | undefined, alt: '', gallery: [] as { src: string; alt: string }[] }));
-const results = p.results.length ? p.results : ['The result, in one line, goes here.', 'What changed for the people using it.', 'What I would carry into the next project.'];
-const stats = p.stats.length ? p.stats : [{ value: 12, suffix: '', label: 'conversations' }, { value: 40, suffix: '+', label: 'sketches' }, { value: 3, suffix: '', label: 'rounds of testing' }];
-const takeaway = p.summary;
+const { challenge, research, retro } = p;
 const facts = [
   { k: 'Role', v: p.role.join(', ') },
-  { k: 'Type', v: p.type },
+  { k: 'Timeline', v: p.duration },
   { k: 'Tools', v: p.tools.join(', ') },
-  { k: 'Year', v: String(p.year) },
-];
+  ...(p.deliverables.length ? [{ k: 'Deliverables', v: p.deliverables.join(', ') }] : []),
+].filter((f) => f.v && f.v !== 'To confirm');
+
+// the dock lists only the sections this project has
+const sections = [
+  { id: 'result', label: 'Result', on: true },
+  { id: 'impact', label: 'Impact', on: !p.placeholder && (p.stats.length > 0 || p.results.length > 0 || facts.length > 0) },
+  { id: 'challenge', label: 'Problem', on: !!challenge },
+  { id: 'research', label: 'Research', on: !!research },
+  { id: 'process', label: 'Process', on: p.exploration.length > 0 || p.decisions.length > 0 || p.edgeCases.length > 0 },
+  { id: 'retro', label: 'Retro', on: !!retro },
+].filter((s) => s.on);
+const num = (i: number) => String(i + 1).padStart(2, '0');
+const sizes = '(min-width: 1100px) 1100px, 100vw';
+const check = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" /></svg>';
 const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-arm t-learn-arm-top" d="M6 4L10 8" /><path class="t-learn-arm t-learn-arm-bot" d="M10 8L6 12" /></svg>';
 ---
 <Base title={p.title} description={p.summary}>
-  <!-- 1. The way in: the title, still and centred -->
-  <section class="intro" aria-labelledby="case-h">
-    <a class="back meta" href="/#work">← All work</a>
-    <header class="intro-title">
-      <p class="label">{p.category}</p>
+  <a class="back meta wrap" href="/#work">← All work</a>
+
+  <!-- 1. The result: what was made, and the finished work, straight away -->
+  <section id="result" class="cs-sec hero" aria-labelledby="case-h" data-sec>
+    <header class="hero-head wrap">
+      <p class="label">{p.category}{p.type !== 'To confirm' && ` · ${p.type}`}</p>
       <h1 id="case-h">{p.title}</h1>
-      {!p.placeholder && <p class="lead">{p.summary}</p>}
-      <p class="hint meta" aria-hidden="true">Scroll</p>
+      {!p.placeholder && <p class="lead muted">{p.summary}</p>}
     </header>
-  </section>
-
-  <!-- 2. The result first: a frame grows from the middle until it fills the screen, then the outcomes rise over it -->
-  <section class="result" data-pin="result" aria-labelledby="res-h">
-    <div class="result-stage">
-      <h2 id="res-h" class="result-h">The result</h2>
-      <div class="frame" data-frame>
-        {film ? <video src={withBase(film.src!)} muted loop playsinline autoplay preload="metadata" data-autoplay aria-label={film.alt}></video>
-          : cover ? <img src={cover} alt={p.coverAlt} /> : <div class="ph" role="img" aria-label={`Placeholder: ${p.title}, the final design`}><span class="meta">Final design · placeholder</span></div>}
+    <div class="wrap">
+      <div class="hero-media" style={`aspect-ratio:${p.coverRatio}`}>
+        {film ? <video src={withBase(film.src!)} muted loop playsinline autoplay preload="metadata" aria-label={film.alt}></video>
+          : p.cover ? <Image src={p.cover} alt={p.coverAlt} widths={[800, 1400, 2000]} sizes={sizes} loading="eager" fetchpriority="high" />
+          : <div class="ph" role="img" aria-label={`Placeholder: ${p.title}, the final design`}><span class="meta">Final design · placeholder</span></div>}
       </div>
-      <ul class="outcomes" data-outcomes>{results.map((r) => <li>{r}</li>)}</ul>
     </div>
+    {p.placeholder && <p class="wrap muted soon">This case study is being written.</p>}
+    {cluster && (
+      <div class="showcase">
+        <div class="wrap sub-head">
+          <h2 class="h2" data-reveal>The final screens</h2>
+          <p class="muted" data-reveal style="--i:1">Pick a mode, then a moment.</p>
+        </div>
+        <ClusterPlayer block={cluster} />
+      </div>
+    )}
   </section>
 
-  <!-- 2b. The result up close: the real screens, one at a time, by mode -->
-  {cluster && (
-    <section class="section try" aria-labelledby="try-h">
-      <div class="wrap try-head">
-        <h2 id="try-h" class="head" data-reveal>Try the cluster</h2>
-        <p class="muted" data-reveal style="--i:1">Pick a mode, then a moment.</p>
-      </div>
-      <ClusterPlayer block={cluster} />
+  <!-- 2. Impact: the numbers, the goals met, and the facts of the project -->
+  {sections.some((s) => s.id === 'impact') && (
+    <section id="impact" class="cs-sec wrap" aria-labelledby="impact-h" data-sec>
+      <p class="label" data-reveal>Impact</p>
+      <h2 id="impact-h" class="h2" data-reveal style="--i:1">What it delivers</h2>
+      {p.stats.length > 0 && (
+        <div class="stats" style={`--n:${p.stats.length}`}>
+          {p.stats.map((st, i) => <p class="stat" data-reveal style={`--i:${i}`}><span class="num" data-count={st.value} data-suffix={st.suffix}>{st.value}{st.suffix}</span><span class="meta">{st.label}</span></p>)}
+        </div>
+      )}
+      {p.results.length > 0 && (
+        <div class="block">
+          <h3 class="h3" data-reveal>Against the goals</h3>
+          <ul class="checks">{p.results.map((r, i) => <li data-reveal style={`--i:${i}`}><span class="tick" set:html={check} />{r}</li>)}</ul>
+        </div>
+      )}
+      {facts.length > 0 && (
+        <dl class="facts" data-reveal>
+          {facts.map((f) => <div><dt class="label">{f.k}</dt><dd>{f.v}</dd></div>)}
+        </dl>
+      )}
     </section>
   )}
 
-  <!-- 3. The process: one line at a time, a stroke drawing itself down the page beside it -->
-  <section class="process section" aria-labelledby="proc-h" data-process>
-    <svg class="stroke" viewBox="0 0 200 1000" preserveAspectRatio="none" aria-hidden="true">
-      <path d="M100 0 C 20 90, 180 160, 100 250 S 20 410, 100 500 S 180 660, 100 750 S 20 910, 100 1000" pathLength="1" data-stroke />
-    </svg>
-    <div class="wrap proc-inner">
-      <p class="label" data-line>The process</p>
-      <h2 id="proc-h" class="proc-h"><span class="mask"><span data-line>How it came together</span></span></h2>
+  <!-- 3. The challenge: the problem, the goals on two tracks, the limits -->
+  {challenge && (
+    <section id="challenge" class="cs-sec wrap" aria-labelledby="ch-h" data-sec>
+      <p class="label" data-reveal>The challenge</p>
+      <h2 id="ch-h" class="h2" data-reveal style="--i:1">The problem</h2>
+      <p class="statement" data-reveal style="--i:2">{challenge.problem}</p>
+      <div class="cols two">
+        {challenge.userGoals.length > 0 && <div class="card" data-reveal><h3 class="label">User goals</h3><ul class="dots">{challenge.userGoals.map((g) => <li>{g}</li>)}</ul></div>}
+        {challenge.systemGoals.length > 0 && <div class="card" data-reveal style="--i:1"><h3 class="label">System goals</h3><ul class="dots">{challenge.systemGoals.map((g) => <li>{g}</li>)}</ul></div>}
+      </div>
+      {challenge.constraints.length > 0 && (
+        <div class="block">
+          <h3 class="h3" data-reveal>Constraints</h3>
+          <ul class="chips">{challenge.constraints.map((c, i) => <li data-reveal style={`--i:${i}`}>{c}</li>)}</ul>
+        </div>
+      )}
+    </section>
+  )}
 
-      <dl class="facts">
-        {facts.map((f) => <div data-line><dt class="label">{f.k}</dt><dd>{f.v}</dd></div>)}
-      </dl>
+  <!-- 4. Discovery: what was found, and the maps drawn before any screen -->
+  {research && (
+    <section id="research" class="cs-sec wrap" aria-labelledby="rs-h" data-sec>
+      <p class="label" data-reveal>Discovery</p>
+      <h2 id="rs-h" class="h2" data-reveal style="--i:1">What research showed</h2>
+      {research.intent && <p class="lead muted narrow" data-reveal style="--i:2">{research.intent}</p>}
+      {research.insights.length > 0 && (
+        <ol class="insights">
+          {research.insights.map((ins, i) => <li class="card" data-reveal style={`--i:${i}`}><span class="n meta">{num(i)}</span><h3>{ins.title}</h3><p class="muted">{ins.text}</p></li>)}
+        </ol>
+      )}
+      {research.media.map((m) => (
+        <figure class="fig" data-reveal>
+          <Image src={m.src} alt={m.alt} widths={[800, 1400, 2000]} sizes={sizes} />
+          {m.caption && <figcaption class="muted">{m.caption}</figcaption>}
+        </figure>
+      ))}
+    </section>
+  )}
 
-      <ol class="steps">
-        {process.map((s, i) => (
-          <li class="step">
-            <p class="phase meta" data-line>{String(i + 1).padStart(2, '0')} — {s.phase}</p>
-            <h3 class="mask"><span data-line>{s.title}</span></h3>
-            {s.points.map((pt) => <p class="point mask"><span data-line>{pt}</span></p>)}
-            {s.img ? <img class="pop" src={s.img} alt={s.alt} loading="lazy" data-pop />
-              : s.gallery.length ? <ul class="gallery">{s.gallery.map((g) => <li data-pop class="pop-in"><img src={g.src} alt="" loading="lazy" /><span class="meta">{g.alt}</span></li>)}</ul>
-              : !p.process.length && <div class="pop ph" data-pop role="img" aria-label={`Placeholder: ${s.phase} work`}><span class="meta">{s.phase} · placeholder</span></div>}
-            {i === 1 && (
-              <div class="stats">
-                {stats.map((st) => <p class="stat"><span class="num" data-count={st.value} data-suffix={st.suffix}>0{st.suffix}</span><span class="meta">{st.label}</span></p>)}
+  <!-- 5. Ideation: the work as it evolved, the decisions that changed it, and the cases it has to survive -->
+  {sections.some((s) => s.id === 'process') && (
+    <section id="process" class="cs-sec wrap" aria-labelledby="pr-h" data-sec>
+      <p class="label" data-reveal>Ideation</p>
+      <h2 id="pr-h" class="h2" data-reveal style="--i:1">How it took shape</h2>
+      {p.exploration.length > 0 && (
+        <ol class="stages">
+          {p.exploration.map((st, i) => (
+            <li class="stage">
+              <div class="stage-text" data-reveal>
+                <p class="meta accent">{num(i)} — {st.label}</p>
+                <p class="stage-cap">{st.caption}</p>
               </div>
-            )}
-          </li>
+              <div class:list={['grid', { single: st.images.length === 1 }]} data-reveal style="--i:1">
+                {st.images.map((im) => <Image src={im.src} alt={im.alt} widths={[600, 1200, 1800]} sizes={st.images.length === 1 ? sizes : '(min-width: 1100px) 550px, 50vw'} />)}
+              </div>
+            </li>
+          ))}
+        </ol>
+      )}
+      {p.decisions.length > 0 && (
+        <div class="block">
+          <h3 class="h3" data-reveal>Decisions</h3>
+          {p.decisions.map((d) => (
+            <article class="decision card" data-reveal>
+              <h4>{d.title}</h4>
+              <div class="ba">
+                <div><p class="label">Before</p><p>{d.before}</p></div>
+                <div><p class="label accent">After</p><p>{d.after}</p></div>
+              </div>
+              {d.why && <p class="muted why">{d.why}</p>}
+              {d.images.length > 0 && (
+                <ul class="thumbs" style={`--n:${Math.min(d.images.length, 4)}`}>
+                  {d.images.map((im) => <li><Image src={im.src} alt="" widths={[500, 900]} sizes="(min-width: 1100px) 270px, 50vw" /><span class="meta">{im.alt}</span></li>)}
+                </ul>
+              )}
+            </article>
+          ))}
+        </div>
+      )}
+      {p.edgeCases.length > 0 && (
+        <div class="block">
+          <h3 class="h3" data-reveal>Edge cases</h3>
+          <ul class="edges">
+            {p.edgeCases.map((e, i) => (
+              <li class="card" data-reveal style={`--i:${i % 2}`}>
+                <Image src={e.src} alt={e.alt} widths={[600, 1100]} sizes="(min-width: 1100px) 540px, 100vw" />
+                <h4>{e.title}</h4>
+                <p class="muted">{e.text}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
+  )}
+
+  <!-- 6. Retrospective -->
+  {retro && (
+    <section id="retro" class="cs-sec wrap" aria-labelledby="rt-h" data-sec>
+      <p class="label" data-reveal>Retrospective</p>
+      <h2 id="rt-h" class="h2" data-reveal style="--i:1">Looking back</h2>
+      <div class="cols three">
+        {[{ k: 'Went well', v: retro.well }, { k: 'Hurdles', v: retro.hurdles }, { k: 'Next time', v: retro.next }].filter((c) => c.v.length).map((c, i) => (
+          <div class="card" data-reveal style={`--i:${i}`}><h3 class="label">{c.k}</h3><ul class="dots">{c.v.map((x) => <li>{x}</li>)}</ul></div>
         ))}
-      </ol>
-    </div>
-  </section>
+      </div>
+    </section>
+  )}
 
-  <!-- 4. The takeaway: its words light up as you read down to them -->
-  <section class="takeaway section wrap" aria-label="Takeaway">
-    <p class="label">What it taught me</p>
-    <p class="words" data-words>{takeaway.split(' ').map((w) => <span>{w} </span>)}</p>
-  </section>
-
-  <section class="wrap full" aria-label="Full write-up">
-    <details class="t-more">
-      <summary>Read the full write-up</summary>
-      <div class="prose"><Content /></div>
-    </details>
-  </section>
-
-  <section class="section wrap next" aria-labelledby="next-h">
+  <section class="cs-sec wrap next" aria-labelledby="next-h">
     <p class="label">Next project</p>
     <a class="next-link" href={`/work/${next.id}`} id="next-h">{next.data.title} <span class="t-learn-chevron" set:html={arrow} /></a>
   </section>
+
+  <!-- the section dock: jump to any part; the current one is marked -->
+  {sections.length > 1 && (
+    <nav class="dock" aria-label="Case study sections" data-dock>
+      <span class="pill" aria-hidden="true"></span>
+      {sections.map((s) => <a href={`#${s.id}`} data-dock-link={s.id}>{s.label}</a>)}
+    </nav>
+  )}
 </Base>
 
 <style>
-  /* 1. intro: one screen, the title in the middle; long titles shrink with the window so they never run off the side */
-  .intro { position: relative; min-height: 100svh; display: grid; place-items: center; padding-inline: var(--inset); }
-  .intro-title { display: grid; justify-items: center; gap: var(--s-4); width: 100%; max-width: 1200px; text-align: center; }
-  .intro-title h1 { font-family: var(--font-display); font-weight: var(--display-weight); font-size: min(var(--t-display), 11vw);
-    letter-spacing: -.035em; line-height: .92; overflow-wrap: anywhere; }
-  .intro-title .lead { max-width: 36ch; color: var(--graphite); }
-  .back { position: absolute; z-index: 2; top: calc(var(--nav-h) + 12px); left: var(--inset); }
-  .hint { margin-top: var(--s-6); animation: hint 1.8s ease-in-out infinite; }
-  @keyframes hint { 50% { translate: 0 6px; opacity: .5; } }
+  /* headings never leave an orphan; the bottom dock never covers a focused link */
+  h1, .h2, .h3, h4, .statement, .stage-cap { text-wrap: balance; }
+  p, li { text-wrap: pretty; }
+  :global(html) { scroll-padding-bottom: 88px; }
+  .back { display: inline-block; margin-top: calc(var(--nav-h) + 12px); }
+  .cs-sec { padding-top: clamp(96px, 11vw, 168px); scroll-margin-top: calc(var(--nav-h) - 24px); max-width: 1240px; margin-inline: auto; }
+  .h2 { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2.2rem, 1rem + 3.6vw, 4.4rem); letter-spacing: -.03em; line-height: 1; margin-top: var(--s-3); }
+  .h3 { font-size: var(--t-lead); font-weight: 600; letter-spacing: -.01em; margin-bottom: var(--s-5); }
+  .block { margin-top: clamp(56px, 7vw, 96px); }
+  .accent { color: var(--accent); }
+  .card { background: var(--surface); border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent); border-radius: var(--radius); padding: clamp(20px, 2.4vw, 32px); }
+  .muted { color: var(--graphite); }
+  .narrow { max-width: 52ch; margin-top: var(--s-4); }
 
-  /* 2. result: pinned; the frame grows from a card to the whole screen, then the outcomes rise over it */
-  .result { height: 300svh; }
-  .result-stage { position: sticky; top: 0; height: 100svh; display: grid; place-items: center; overflow: hidden; --g: 0; --o: 0; }
-  .result-h { position: absolute; top: calc(var(--nav-h) + 4vh); font-size: var(--t-head); opacity: calc(1 - var(--g) * 1.4); }
-  .frame { position: absolute; inset: 0; overflow: hidden; background: var(--surface);
-    clip-path: inset(calc((1 - var(--g)) * 30%) calc((1 - var(--g)) * 32%) round calc((1 - var(--g)) * 28px + 0px)); }
-  /* the picture dims as the outcomes rise over it, so they stay readable on a busy screen */
-  .frame::after { content: ''; position: absolute; inset: 0; background: rgb(0 0 0 / calc(var(--o) * .65)); pointer-events: none; }
-  .frame img, .frame video { width: 100%; height: 100%; object-fit: cover; scale: calc(1.25 - var(--g) * .25); }
-  .frame .ph { width: 100%; height: 100%; display: grid; place-items: center;
-    background: radial-gradient(110% 90% at 30% 20%, color-mix(in srgb, var(--accent) 65%, #fff), color-mix(in srgb, var(--accent) 35%, #0A0910) 85%); }
-  .frame .ph .meta { color: hsl(0 0% 100% / .85); }
-  .outcomes { position: relative; z-index: 1; display: grid; gap: var(--s-4); padding-inline: var(--inset); text-align: center; color: #fff;
-    text-shadow: 0 2px 30px hsl(0 0% 0% / .35); }
-  .outcomes li { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(1.6rem, 1rem + 2.4vw, 3.4rem); letter-spacing: -.025em; line-height: 1.05;
-    opacity: clamp(0, calc((var(--o) * 3 - var(--k, 0)) ), 1); translate: 0 calc((1 - clamp(0, calc(var(--o) * 3 - var(--k, 0)), 1)) * 40px); }
-  .outcomes li:nth-child(2) { --k: 1; }
-  .outcomes li:nth-child(3) { --k: 2; }
+  /* 1. result */
+  .hero { padding-top: clamp(32px, 5vw, 72px); max-width: none; }
+  .hero-head { display: grid; justify-items: center; gap: var(--s-4); text-align: center; max-width: 1100px; margin-inline: auto; }
+  .hero-head h1 { font-family: var(--font-display); font-weight: var(--display-weight); font-size: min(var(--t-display), 11vw); letter-spacing: -.035em; line-height: .92;
+    overflow-wrap: anywhere; }
+  .hero-head .lead { max-width: 40ch; }
+  .hero-media { max-width: 1240px; margin: clamp(32px, 5vw, 64px) auto 0; border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+  .hero-media :global(img), .hero-media video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .ph { width: 100%; height: 100%; display: grid; place-items: center;
+    background: radial-gradient(110% 90% at 30% 20%, color-mix(in srgb, var(--accent) 45%, var(--paper)), color-mix(in srgb, var(--accent) 15%, var(--surface)) 85%); }
+  .soon { text-align: center; margin-top: var(--s-6); }
+  .showcase { margin-top: clamp(80px, 9vw, 140px); max-width: 1500px; margin-inline: auto; }
+  .sub-head { display: grid; gap: var(--s-2); margin-bottom: var(--s-6); }
 
-  /* 3. process, with the stroke drawing down beside it */
-  .process { position: relative; }
-  .stroke { position: absolute; left: max(8px, calc(50% - 640px)); top: 0; width: 140px; height: 100%; overflow: visible; pointer-events: none; }
-  .stroke path { fill: none; stroke: var(--accent); stroke-width: 3; vector-effect: non-scaling-stroke; stroke-linecap: round;
-    stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--draw, 0)); }
-  .proc-inner { position: relative; display: grid; gap: var(--s-6); max-width: 900px; margin-inline: auto; padding-left: clamp(24px, 12vw, 180px); }
-  .proc-h { font-size: var(--t-head); }
-  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--s-5); margin-block: var(--s-4) var(--s-7); }
-  .facts dd { margin: 4px 0 0; font-weight: 500; }
-  .steps { display: grid; gap: clamp(96px, 14vh, 180px); }
-  .step { display: grid; gap: var(--s-3); }
-  .step h3 { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(1.8rem, 1rem + 2.6vw, 3.6rem); letter-spacing: -.025em; line-height: 1; margin-bottom: var(--s-3); }
-  .point { font-size: var(--t-lead); line-height: 1.4; max-width: 46ch; }
-  .phase { color: var(--accent); }
-  /* lines slide up out of a mask, one after another */
-  .mask { display: block; overflow: hidden; padding-bottom: .08em; }
-  [data-line] { display: inline-block; transition: translate 900ms cubic-bezier(.22, 1, .36, 1), opacity 700ms ease; }
-  :global(.js) [data-line]:not(.in) { translate: 0 105%; opacity: 0; }
-  :global(.js) .label[data-line]:not(.in), :global(.js) .phase[data-line]:not(.in), :global(.js) .facts [data-line]:not(.in) { translate: 0 16px; }
-  /* pictures pop in */
-  .pop { width: 100%; aspect-ratio: 16 / 10; margin-top: var(--s-4); border-radius: var(--radius); object-fit: cover; display: grid; place-items: center;
-    transition: scale 900ms cubic-bezier(.3, 1.3, .4, 1), opacity 600ms ease, filter 700ms ease; }
-  .pop.ph { background: radial-gradient(110% 90% at 30% 20%, color-mix(in srgb, var(--accent) 40%, var(--paper)), color-mix(in srgb, var(--accent) 18%, var(--surface)) 85%); }
-  img.pop { aspect-ratio: auto; height: auto; background: var(--surface); }
-  :global(.js) .pop:not(.in), :global(.js) .pop-in:not(.in) { scale: .86; opacity: 0; filter: blur(10px); }
-  /* a row of final screens, each with a short label */
-  .gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); margin-top: var(--s-4); }
-  .gallery li { display: grid; gap: var(--s-2); transition: scale 900ms cubic-bezier(.3, 1.3, .4, 1), opacity 600ms ease, filter 700ms ease; }
-  .gallery img { width: 100%; height: auto; border-radius: var(--radius); }
-  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s-5); margin-top: var(--s-7); }
-  .stat { display: grid; gap: var(--s-2); }
-  .num { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(3rem, 1rem + 6vw, 7rem); letter-spacing: -.04em; line-height: .9; color: var(--accent);
-    font-variant-numeric: tabular-nums; }
+  /* 2. impact */
+  .stats { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: var(--s-5); margin-top: clamp(40px, 5vw, 64px); }
+  .stat { display: grid; gap: var(--s-2); padding-top: var(--s-4); border-top: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); }
+  .num { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(3rem, 1rem + 5vw, 6.5rem); letter-spacing: -.04em; line-height: .9;
+    color: var(--accent); font-variant-numeric: tabular-nums; }
+  .checks { display: grid; gap: var(--s-4); }
+  .checks li { display: grid; grid-template-columns: 28px 1fr; gap: var(--s-3); align-items: start; font-size: var(--t-lead); line-height: 1.3; }
+  .tick { display: grid; place-items: center; width: 28px; height: 28px; margin-top: .1em; border-radius: 50%; background: color-mix(in srgb, var(--accent) 22%, transparent); }
+  .tick :global(svg) { width: 16px; height: 16px; fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--s-5); margin-top: clamp(56px, 7vw, 96px); padding-top: var(--s-5);
+    border-top: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); }
+  .facts dd { margin: 6px 0 0; font-weight: 500; line-height: 1.4; }
 
-  /* 4. takeaway: words light up as you read */
-  .takeaway { display: grid; gap: var(--s-5); max-width: 1100px; }
-  .words { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2rem, 1rem + 3.4vw, 4.6rem); letter-spacing: -.03em; line-height: 1.08; }
-  .words span { opacity: var(--lit, .14); transition: opacity 200ms linear; }
+  /* 3. challenge */
+  .statement { font-size: clamp(1.4rem, 1rem + 1.4vw, 2.2rem); line-height: 1.25; letter-spacing: -.015em; max-width: 34ch; margin-top: var(--s-6); }
+  .cols { display: grid; gap: var(--s-5); margin-top: clamp(40px, 5vw, 64px); }
+  .cols.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cols.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cols .card { display: grid; gap: var(--s-4); align-content: start; }
+  .dots { display: grid; gap: var(--s-3); }
+  .dots li { position: relative; padding-left: 20px; line-height: 1.45; }
+  .dots li::before { content: ''; position: absolute; left: 0; top: .6em; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+  .chips { display: flex; flex-wrap: wrap; gap: var(--s-3); }
+  .chips li { padding: 10px 16px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent); line-height: 1.3; }
 
-  .full { padding-top: var(--section); }
-  .next { display: grid; gap: 8px; }
-  .next-link { display: inline-flex; align-items: center; gap: 16px; font-family: var(--font-display); font-weight: var(--display-weight); font-size: var(--t-display);
+  /* 4. research */
+  .insights { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--s-4); margin-top: clamp(40px, 5vw, 64px); }
+  .insights li { display: grid; gap: var(--s-3); align-content: start; }
+  .insights h3 { font-size: 1.2rem; font-weight: 600; letter-spacing: -.01em; line-height: 1.25; }
+  .insights .n { color: var(--accent); }
+  .fig { margin-top: clamp(40px, 5vw, 64px); display: grid; gap: var(--s-3); }
+  .fig :global(img) { width: 100%; height: auto; border-radius: var(--radius); background: var(--surface); }
+
+  /* 5. process */
+  .stages { display: grid; gap: clamp(56px, 7vw, 96px); margin-top: clamp(40px, 5vw, 64px); }
+  .stage { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: clamp(24px, 4vw, 56px); align-items: start; }
+  .stage-text { display: grid; gap: var(--s-3); position: sticky; top: calc(var(--nav-h) + 24px); }
+  .stage-cap { font-size: var(--t-lead); line-height: 1.3; letter-spacing: -.01em; }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); }
+  .grid.single { grid-template-columns: 1fr; }
+  .grid :global(img) { width: 100%; height: auto; border-radius: calc(var(--radius) * .6); background: var(--surface); }
+  .decision { display: grid; gap: var(--s-5); }
+  .decision + .decision { margin-top: var(--s-5); }
+  .decision h4, .edges h4 { font-size: 1.3rem; font-weight: 600; letter-spacing: -.01em; }
+  .ba { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-5); }
+  .ba > div { display: grid; gap: var(--s-2); align-content: start; line-height: 1.45; }
+  .ba > div:last-child { padding-left: var(--s-5); border-left: 2px solid var(--accent); }
+  .why { line-height: 1.45; }
+  .thumbs { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: var(--s-3); }
+  .thumbs li { display: grid; gap: var(--s-2); }
+  .thumbs :global(img) { width: 100%; height: auto; border-radius: calc(var(--radius) * .5); }
+  .edges { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); }
+  .edges li { display: grid; gap: var(--s-3); align-content: start; }
+  .edges :global(img) { width: 100%; height: auto; border-radius: calc(var(--radius) * .5); margin-bottom: var(--s-2); }
+  .edges p { line-height: 1.45; }
+
+  .next { display: grid; gap: 8px; padding-bottom: 140px; }
+  .next-link { display: inline-flex; align-items: center; gap: 16px; font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2.4rem, 1rem + 5vw, 6rem);
     letter-spacing: -.04em; line-height: 1; transition: color var(--duration-fast) var(--ease-smooth-out); }
   .next-link:hover { color: var(--accent); }
   .next-link :global(svg) { width: .5em; height: .5em; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
 
-  @media (max-width: 720px) {
-    .stroke { left: 4px; width: 40px; }
-    .proc-inner { padding-left: 40px; }
-    .stats { grid-template-columns: 1fr; }
+  /* the dock: a glass pill at the bottom; a highlight slides to the section in view (transitions.dev sliding tabs) */
+  .dock { position: fixed; z-index: 40; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); translate: -50% 0; display: flex; gap: 2px; padding: 5px;
+    max-width: calc(100vw - 24px); overflow-x: auto; scrollbar-width: none; border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 72%, transparent); backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); box-shadow: 0 10px 40px hsl(0 0% 0% / .35);
+    opacity: 0; translate: -50% 16px; pointer-events: none; transition: opacity 350ms var(--ease-smooth-out), translate 450ms var(--ease-out-expo); }
+  .dock.show { opacity: 1; translate: -50% 0; pointer-events: auto; }
+  .dock a { position: relative; z-index: 1; padding: 10px 16px; min-height: 40px; display: grid; place-items: center; border-radius: 999px; white-space: nowrap;
+    font-size: var(--t-small); font-weight: 500; color: var(--graphite); transition: color var(--duration-fast) var(--ease-smooth-out); }
+  .dock a:hover, .dock a[aria-current='true'] { color: var(--ink); }
+  .dock a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .pill { position: absolute; z-index: 0; top: 5px; bottom: 5px; left: 0; width: 0; border-radius: 999px; background: color-mix(in srgb, var(--ink) 12%, transparent);
+    transition: translate 400ms var(--ease-smooth-out), width 400ms var(--ease-smooth-out); }
+
+  @media (max-width: 860px) {
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cols.two, .cols.three, .stage, .ba, .edges { grid-template-columns: 1fr; }
+    .stage-text { position: static; }
+    .ba > div:last-child { padding-left: 0; padding-top: var(--s-4); border-left: 0; border-top: 2px solid var(--accent); }
+    .thumbs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .dock a { padding: 10px 12px; }
   }
-  /* calm: everything shown, nothing pinned or travelling */
-  :global(:root[data-motion="calm"]) .result { height: auto; }
-  :global(:root[data-motion="calm"]) .result-stage { position: relative; }
-  :global(:root[data-motion="calm"]) .result-stage { --g: 1; --o: 1; }
-  :global(:root[data-motion="calm"]) [data-line], :global(:root[data-motion="calm"]) .pop, :global(:root[data-motion="calm"]) .pop-in { translate: none !important; opacity: 1 !important; scale: 1 !important; filter: none !important; }
-  :global(:root[data-motion="calm"]) .words span { --lit: 1; }
+  :global(:root[data-motion="calm"]) .pill, :global(:root[data-motion="calm"]) .dock { transition-duration: 0ms; }
 </style>
 
 <script>
   import { calm } from '../../lib/motion';
   import { addStops } from '../../lib/scroll';
   const still = calm();
-  // The story scrolls beat by beat: each scroll glides to the next stop and holds there. The stops: the way in; the
-  // result as a card, as the full screen, and with its outcomes; each step of the process; the takeaway; the end.
-  const top = (el: Element) => el.getBoundingClientRect().top + scrollY;
-  const centre = (el: Element) => top(el) + (el as HTMLElement).offsetHeight / 2 - innerHeight / 2;
-  addStops('step', () => {
-    const stops = [0];
-    const res = document.querySelector<HTMLElement>('[data-pin="result"]');
-    if (res) { const span = res.offsetHeight - innerHeight; stops.push(top(res), top(res) + span * 0.55, top(res) + span * 0.97); }
-    const proc = document.querySelector('[data-process]');
-    if (proc) stops.push(top(proc) - 40);
-    document.querySelectorAll('.step, .try, .takeaway, .next').forEach((el) => stops.push(centre(el)));
-    stops.push(document.documentElement.scrollHeight - innerHeight);
-    return stops;
-  });
-  // how far through a pinned section the page is: 0 as it pins, 1 as it lets go
-  const progress = (el: HTMLElement) => {
-    const r = el.getBoundingClientRect();
-    return Math.min(1, Math.max(0, -r.top / Math.max(1, r.height - innerHeight)));
-  };
-  const result = document.querySelector<HTMLElement>('[data-pin="result"]');
-  const resultStage = result?.querySelector<HTMLElement>('.result-stage');
-  const proc = document.querySelector<HTMLElement>('[data-process]');
-  const stroke = document.querySelector<SVGPathElement>('[data-stroke]');
-  const words = [...document.querySelectorAll<HTMLElement>('[data-words] span')];
+  // sections settle into place when a scroll comes to rest near the start of one; long sections scroll freely
+  addStops('proximity', () => [...document.querySelectorAll('[data-sec]')].map((el) => el.getBoundingClientRect().top + scrollY - 56));
 
-  const frame = () => {
-    raf = 0;
-    if (result && resultStage) {
-      const k = progress(result);
-      resultStage.style.setProperty('--g', Math.min(1, k / 0.55).toFixed(4));                       // grow over the first half
-      resultStage.style.setProperty('--o', Math.min(1, Math.max(0, (k - 0.55) / 0.4)).toFixed(4));   // then the outcomes rise
-    }
-    if (proc && stroke) {
-      const r = proc.getBoundingClientRect();
-      const d = Math.min(1, Math.max(0, (innerHeight * 0.6 - r.top) / r.height));                  // the stroke's tip rides 60% down the screen
-      stroke.style.setProperty('--draw', d.toFixed(4));
-    }
-    words.forEach((w) => {
-      const t = w.getBoundingClientRect().top;
-      w.style.setProperty('--lit', String(Math.min(1, Math.max(0.14, (innerHeight * 0.85 - t) / (innerHeight * 0.3)))));
+  // the dock appears once the title has gone by, and marks the section that fills the middle of the screen
+  const dock = document.querySelector<HTMLElement>('[data-dock]');
+  if (dock) {
+    const pill = dock.querySelector<HTMLElement>('.pill')!;
+    const links = [...dock.querySelectorAll<HTMLAnchorElement>('[data-dock-link]')];
+    const secs = links.map((a) => document.getElementById(a.dataset.dockLink!)).filter(Boolean) as HTMLElement[];
+    const end = document.querySelector('.next');
+    const mark = (id: string) => links.forEach((a) => {
+      const on = a.dataset.dockLink === id;
+      a.setAttribute('aria-current', String(on));
+      if (on) { pill.style.width = `${a.offsetWidth}px`; pill.style.translate = `${a.offsetLeft}px 0`; if (dock.scrollWidth > dock.clientWidth) a.scrollIntoView({ block: 'nearest', inline: 'center' }); }
     });
-  };
-  let raf = 0;
-  if (!still) {
-    addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(frame); }, { passive: true });
-    addEventListener('resize', frame);
-    frame();
+    const update = () => {
+      // shown between the title and the next-project link, so it never sits on the footer
+      dock.classList.toggle('show', scrollY > innerHeight * 0.5 && (end?.getBoundingClientRect().top ?? Infinity) > innerHeight * 0.7);
+      const mid = innerHeight * 0.45;
+      const cur = secs.filter((s) => s.getBoundingClientRect().top <= mid).pop() ?? secs[0];
+      if (cur && dock.dataset.cur !== cur.id) { dock.dataset.cur = cur.id; mark(cur.id); }
+    };
+    let raf = 0;
+    addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; update(); }); }, { passive: true });
+    addEventListener('resize', () => { delete dock.dataset.cur; update(); });
+    update();
   }
 
-  // lines slide up, pictures pop in and numbers count, once each, as they arrive
-  const watched = new Map<Element, HTMLElement>();
-  const io = new IntersectionObserver((entries) => entries.forEach((e) => {
-    if (!e.isIntersecting) return;
-    const el = watched.get(e.target) ?? (e.target as HTMLElement);
-    el.classList.add('in');
-    io.unobserve(e.target);
-    if (el.dataset.count) {
-      const to = Number(el.dataset.count), suffix = el.dataset.suffix ?? '', t0 = performance.now();
+  // the big numbers count up once, as they arrive
+  if (!still) {
+    const io = new IntersectionObserver((entries) => entries.forEach((e) => {
+      if (!e.isIntersecting) return;
+      io.unobserve(e.target);
+      const el = e.target as HTMLElement, to = Number(el.dataset.count), suffix = el.dataset.suffix ?? '', t0 = performance.now();
       const tick = (now: number) => {
-        const k = Math.min(1, (now - t0) / 1400), eased = 1 - Math.pow(1 - k, 3);
-        el.textContent = `${Math.round(to * eased)}${suffix}`;
+        const k = Math.min(1, (now - t0) / 1400);
+        el.textContent = `${Math.round(to * (1 - Math.pow(1 - k, 3)))}${suffix}`;
         if (k < 1) requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
-    }
-  }), { rootMargin: '0px 0px -12% 0px' });
-  document.querySelectorAll<HTMLElement>('[data-line], [data-pop], [data-count]').forEach((el, i) => {
-    if (still) { el.classList.add('in'); return; }
-    el.style.transitionDelay = `${(i % 4) * 70}ms`;   // a small stagger within each group
-    // a line hides below its mask, where it can never count as visible: watch the mask instead
-    const box = el.closest('.mask') ?? el;
-    watched.set(box, el);
-    io.observe(box);
-  });
-  if (still) document.querySelectorAll<HTMLElement>('[data-count]').forEach((el) => { el.textContent = `${el.dataset.count}${el.dataset.suffix ?? ''}`; });
+    }), { rootMargin: '0px 0px -15% 0px' });
+    document.querySelectorAll<HTMLElement>('[data-count]').forEach((el) => { el.textContent = `0${el.dataset.suffix ?? ''}`; io.observe(el); });
+  }
 
-  // ← / → step to the next project (ignored while typing)
+  // → steps to the next project (ignored while typing)
   addEventListener('keydown', (e) => {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
     if (e.key === 'ArrowRight') document.querySelector<HTMLAnchorElement>('.next-link')?.click();
