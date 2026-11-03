@@ -1,8 +1,7 @@
 ---
 // The Adaptive Dashboard case study, written for someone who has never heard of the project. It opens by saying, in
-// plain words, what an instrument cluster is and what changed. Then
-// the problem is told as a short scenario in words, an attention gauge fills into the red, the result (the home
-// screen, labelled part by part) follows, and five chapters walk
+// plain words, what an instrument cluster is and what changed. The result follows (the home screen, part by part),
+// then the problem is told as a short scenario in words, an attention gauge fills into the red, and five chapters walk
 // through it: the brief, research, prototyping, the cluster, the debrief. Everything moves with the scroll. On the left a road runs down the page:
 // a car drives down it as you scroll, and the signposts beside it jump to each chapter. Shared behaviour (count-up
 // numbers, the next-project link) lives in src/pages/work/[slug].astro.
@@ -36,7 +35,7 @@ const p = project.data;
 const cluster = p.blocks.find((b) => b.type === 'cluster') as Extract<typeof p.blocks[number], { type: 'cluster' }> | undefined;
 
 const route = [
-  { id: 'start', t: 'Overview' }, { id: 'problem', t: 'The problem' }, { id: 'result', t: 'The result' }, { id: 'brief', t: 'The brief' }, { id: 'notes', t: 'Research' },
+  { id: 'start', t: 'Overview' }, { id: 'result', t: 'The result' }, { id: 'problem', t: 'The problem' }, { id: 'brief', t: 'The brief' }, { id: 'notes', t: 'Research' },
   { id: 'proto', t: 'Prototyping' }, { id: 'cluster', t: 'The cluster' }, { id: 'debrief', t: 'Debrief' },
 ];
 // the finished home screen, labelled: marker positions are percentages of the 1400 × 700 screenshot
@@ -186,6 +185,34 @@ const pad = (n: number) => String(n).padStart(2, '0');
     </dl>
   </section>
 
+  <!-- THE RESULT: the home screen, one part at a time -->
+  <section id="result" class="sec wrap" data-ch aria-labelledby="rs-h">
+    <p class="chap mono"><span>&#9679;</span>The result</p>
+    <h2 id="rs-h" class="display" data-scrub>A screen that shows what the moment needs</h2>
+    <p class="tldr" data-scrub><span class="mono acc">In short</span>The home screen on the open road. Each step lights up one part.</p>
+    <div class="scrolly" data-scrolly>
+      <div class="pics">
+        {resultPics.map((pic, i) => (
+          <figure class:list={['pic', pic.kind, { on: i === 0 }]} data-pic={i}>
+            {pic.kind === 'marked' ? (
+              <div class="shot">
+                <Image src={cruise} alt="The finished cluster's home screen on the open road" widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
+                {parts.map((pt, j) => <span class="mark" data-mark={j} style={`left:${pt.x}%; top:${pt.y}%`} aria-hidden="true">{j + 1}</span>)}
+              </div>
+            ) : pic.kind === 'one' ? (
+              <Image src={pic.src} alt={pic.alt} widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
+            ) : pic.items.map((it) => (
+              <div class="cell" style={it.c ? `--c:${it.c}` : undefined}><Image src={it.src} alt={it.alt} widths={[400, 800]} sizes="(min-width: 1100px) 380px, 50vw" /><span class="mono">{it.cap}</span></div>
+            ))}
+          </figure>
+        ))}
+      </div>
+      <ol class="steps">
+        {resultSteps.map((st, i) => <li data-step={i} data-p={st.p} data-m={st.m ?? -1} class:list={{ on: i === 0 }}><span class="mono acc">{st.k}</span><p class="st-t">{st.t}</p><p class="muted">{st.d}</p></li>)}
+      </ol>
+    </div>
+  </section>
+
   <!-- THE PROBLEM: a scenario in words only, one beat at a time -->
   <section id="problem" class="pin story" data-ch data-pin="story" style={`--n:${beats.length}`} aria-labelledby="pb-h">
     <div class="stage">
@@ -215,34 +242,6 @@ const pad = (n: number) => String(n).padStart(2, '0');
       </svg>
       <p class="verdict mono" data-verdict>Within budget</p>
       <ul class="asks">{load.map((l) => <li data-ask>{l}</li>)}</ul>
-    </div>
-  </section>
-
-  <!-- THE RESULT: the home screen, one part at a time -->
-  <section id="result" class="sec wrap" data-ch aria-labelledby="rs-h">
-    <p class="chap mono"><span>&#9679;</span>The result</p>
-    <h2 id="rs-h" class="display" data-scrub>A screen that shows what the moment needs</h2>
-    <p class="tldr" data-scrub><span class="mono acc">In short</span>The home screen on the open road. Each step lights up one part.</p>
-    <div class="scrolly" data-scrolly>
-      <div class="pics">
-        {resultPics.map((pic, i) => (
-          <figure class:list={['pic', pic.kind, { on: i === 0 }]} data-pic={i}>
-            {pic.kind === 'marked' ? (
-              <div class="shot">
-                <Image src={cruise} alt="The finished cluster's home screen on the open road" widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
-                {parts.map((pt, j) => <span class="mark" data-mark={j} style={`left:${pt.x}%; top:${pt.y}%`} aria-hidden="true">{j + 1}</span>)}
-              </div>
-            ) : pic.kind === 'one' ? (
-              <Image src={pic.src} alt={pic.alt} widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
-            ) : pic.items.map((it) => (
-              <div class="cell" style={it.c ? `--c:${it.c}` : undefined}><Image src={it.src} alt={it.alt} widths={[400, 800]} sizes="(min-width: 1100px) 380px, 50vw" /><span class="mono">{it.cap}</span></div>
-            ))}
-          </figure>
-        ))}
-      </div>
-      <ol class="steps">
-        {resultSteps.map((st, i) => <li data-step={i} data-p={st.p} data-m={st.m ?? -1} class:list={{ on: i === 0 }}><span class="mono acc">{st.k}</span><p class="st-t">{st.t}</p><p class="muted">{st.d}</p></li>)}
-      </ol>
     </div>
   </section>
 
@@ -490,7 +489,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .cell :global(img) { border-radius: 10px; box-shadow: 0 0 0 2px var(--c, transparent); }
   .cell .mono { color: var(--c, var(--graphite)); }
   .shot { position: relative; border-radius: 14px; overflow: hidden; }
-  .mark { position: absolute; display: grid; place-items: center; width: 28px; height: 28px; translate: -50% -50%; border-radius: 50%; background: var(--accent); color: #fff;
+  .mark { position: absolute; display: grid; place-items: center; width: 28px; height: 28px; translate: -50% -50%; border-radius: 50%; background: var(--accent); color: var(--on-accent);
     font-weight: 700; font-size: 13px; box-shadow: 0 0 0 4px hsl(0 0% 0% / .35); transition: scale 400ms var(--ease-bounce), opacity 300ms var(--ease-smooth-out), box-shadow 400ms var(--ease-smooth-out); }
   .shot.focus .mark { opacity: .35; }
   .shot.focus .mark.hot { opacity: 1; scale: 1.35; box-shadow: 0 0 0 4px hsl(0 0% 0% / .35), 0 0 0 12px color-mix(in srgb, var(--accent) 35%, transparent); }

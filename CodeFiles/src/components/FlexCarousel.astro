@@ -80,9 +80,9 @@ const total = String(items.length).padStart(2, '0');
     const g = c.getContext('2d')!;
     const { paper, ink, accent } = palette();
     const bg = g.createLinearGradient(0, 0, W, H);
-    bg.addColorStop(0, accent); bg.addColorStop(1, mix(accent, '#000000', 0.55));
+    bg.addColorStop(0, mix(accent, '#000000', 0.5)); bg.addColorStop(1, mix(accent, '#000000', 0.88));
     g.fillStyle = bg; g.fillRect(0, 0, W, H);
-    g.fillStyle = mix(accent, paper, 0.7); g.globalAlpha = 0.9;
+    g.fillStyle = mix(accent, '#000000', 0.3); g.globalAlpha = 0.9;
     g.beginPath();
     switch (i % 7) {
       case 0: g.arc(W * 0.66, H * 0.4, H * 0.26, 0, Math.PI * 2); break;

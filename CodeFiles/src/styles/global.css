@@ -33,10 +33,11 @@
 
 @layer tokens {
   :root {
-    /* colour (user-pinned): ink, paper and one red per theme. Dark is the default; light is one toggle away.
-       Wine red and black. Contrast: ink on paper 18, graphite 7, white on the wine accent 5.9. The canvas effects read the same values from src/lib/theme.ts. */
-    --paper: #0B0708; --ink: #F6F0F1; --graphite: #A3959A; --surface: #171012; --surface-2: #211519; --accent: #C21E45;
-    --on-accent: #FFFFFF;
+    /* colour (user-pinned): ink, paper and one accent per theme. Dark is the default; light is one toggle away.
+       Polished black and silver. Contrast: ink on paper 19, graphite 7.4, silver accent on paper 12, near-black on silver 12.
+       The canvas effects read the same values from src/lib/theme.ts. */
+    --paper: #070708; --ink: #F5F5F7; --graphite: #9C9CA5; --surface: #131316; --surface-2: #1B1B1F; --accent: #C8C8D0;
+    --on-accent: #0B0B0D;
     color-scheme: dark;
     /* the projects' neon tube (NeonReveal.astro): tube, the light it pours, and the heading cut out of it */
     --neon-tube: #F1DDFF; --neon-light: #9D5CFF; --neon-title: #F8F1FF;
