@@ -44,6 +44,8 @@ const canonical = new URL(Astro.url.pathname.replace(/(\/index)?\.html$/, '') ||
       const era = sessionStorage.getItem('era');
       if (era) root.dataset.era = era;
     } catch {}
+    // opened inside the home page's project card (an iframe): the page shows only its own story
+    if (window.self !== window.top) root.classList.add('in-card');
     root.dataset.motion = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'calm' : 'full';
     // Entrances start hidden only when JS runs; if the motion script never arrives, show everything
     root.classList.add('js');

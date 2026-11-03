@@ -1,0 +1,144 @@
+---
+// Projects open in a card over the home page instead of a new page. The card grows out of the project's tile to fill
+// the window (a few pixels short of the edges, so the home page still shows around it), and the case study plays
+// inside it: the project's own page, loaded in a frame, which hides the site's chrome when it finds itself in one.
+// The address gets #project-<slug>, so a card can be linked to and the Back button closes it; Esc and × close it too.
+// Opened with a 'project:open' event ({ slug, rect? }), or by a message from inside the card (its next-project link).
+import { sortedProjects } from '../lib/projects';
+import { withBase } from '../lib/url';
+
+const projects = Object.fromEntries((await sortedProjects()).map((p) => [p.id, { href: withBase(`/work/${p.id}`), title: p.data.title }]));
+---
+<div class="pc" role="dialog" aria-modal="true" aria-labelledby="pc-title" hidden data-pc={JSON.stringify(projects)}>
+  <div class="pc-backdrop" data-pc-close></div>
+  <div class="pc-card" data-pc-card>
+    <h2 id="pc-title" class="sr-only" data-pc-title>Project</h2>
+    <iframe class="pc-frame" title="Case study" data-pc-frame></iframe>
+    <button class="pc-close" type="button" aria-label="Close the case study" data-pc-close>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+    </button>
+  </div>
+</div>
+
+<style>
+  .pc { position: fixed; inset: 0; z-index: 90; }
+  .pc[hidden] { display: none; }
+  .pc-backdrop { position: absolute; inset: 0; background: hsl(0 0% 0% / .55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .pc-card { position: absolute; inset: clamp(10px, 2.2vw, 32px); border-radius: 20px; overflow: hidden; background: var(--paper);
+    box-shadow: 0 30px 120px hsl(0 0% 0% / .6), 0 0 0 1px color-mix(in srgb, var(--ink) 10%, transparent); }
+  .pc-frame { width: 100%; height: 100%; border: 0; display: block; opacity: 0; transition: opacity 500ms var(--ease-smooth-out); background: var(--paper); }
+  .pc-frame.ready { opacity: 1; }
+  .pc-close { position: absolute; top: 16px; right: 16px; z-index: 2; width: 48px; height: 48px; display: grid; place-items: center; border-radius: 50%;
+    background: color-mix(in srgb, var(--surface) 70%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); color: var(--ink); cursor: pointer;
+    transition: scale var(--duration-fast) var(--ease-smooth-out), background-color var(--duration-fast) var(--ease-smooth-out); }
+  .pc-close:hover { background: color-mix(in srgb, var(--surface) 92%, transparent); }
+  .pc-close:active { scale: .94; }
+  .pc-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .pc-close svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+</style>
+
+<script>
+  import { lenis } from '../lib/scroll';
+  import { calm } from '../lib/motion';
+
+  const root = document.querySelector<HTMLElement>('[data-pc]');
+  if (root) {
+    const projects: Record<string, { href: string; title: string }> = JSON.parse(root.dataset.pc!);
+    const card = root.querySelector<HTMLElement>('[data-pc-card]')!;
+    const backdrop = root.querySelector<HTMLElement>('.pc-backdrop')!;
+    const frame = root.querySelector<HTMLIFrameElement>('[data-pc-frame]')!;
+    const title = root.querySelector<HTMLElement>('[data-pc-title]')!;
+    const closeBtn = root.querySelector<HTMLButtonElement>('.pc-close')!;
+    const EASE = 'cubic-bezier(.22, 1, .36, 1)';
+    let current = '', from: DOMRect | null = null, opener: Element | null = null, pushed = false;
+
+    // the card's clip, as an inset from its own edges, so it starts exactly over the tile it came from
+    const clipFrom = (r: DOMRect | null) => {
+      const c = card.getBoundingClientRect();
+      if (!r) return `inset(6% 6% 6% 6% round 28px)`;
+      const t = Math.max(0, r.top - c.top), l = Math.max(0, r.left - c.left);
+      const b = Math.max(0, c.bottom - r.bottom), rr = Math.max(0, c.right - r.right);
+      return `inset(${t}px ${rr}px ${b}px ${l}px round 14px)`;
+    };
+    // replace() rather than src=, so the frame's page loads never add entries to the Back button's history
+    const go = (url: string) => frame.contentWindow!.location.replace(new URL(url, location.href).href);
+    const load = (slug: string) => {
+      frame.classList.remove('ready');
+      go(projects[slug].href);
+      title.textContent = projects[slug].title;
+    };
+    frame.addEventListener('load', () => { if (frame.contentWindow?.location.href !== 'about:blank') frame.classList.add('ready'); });
+
+    function open(slug: string, rect: DOMRect | null = null, push = true) {
+      if (!projects[slug]) return;
+      if (current === slug && !root!.hidden) return;
+      opener = document.activeElement;
+      from = rect;
+      if (push) { history.pushState({ pc: slug }, '', `#project-${slug}`); pushed = true; }
+      if (!root!.hidden) { current = slug; load(slug); return; }   // already open: just change what's inside
+      current = slug;
+      root!.hidden = false;
+      lenis?.stop();
+      document.documentElement.style.overflow = 'hidden';
+      load(slug);
+      if (!calm()) {
+        card.animate([{ clipPath: clipFrom(rect) }, { clipPath: 'inset(0 0 0 0 round 20px)' }], { duration: 700, easing: EASE });
+        backdrop.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 400, easing: 'ease-out' });
+      }
+      closeBtn.focus({ preventScroll: true });
+    }
+
+    let closing = false;
+    function close(fromHistory = false) {
+      if (root!.hidden || closing) return;
+      closing = true;
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true; closing = false;
+        card.getAnimations().forEach((a) => a.cancel());
+        backdrop.getAnimations().forEach((a) => a.cancel());
+        root!.hidden = true;
+        go('about:blank');
+        frame.classList.remove('ready');
+        current = '';
+        lenis?.start();
+        document.documentElement.style.overflow = '';
+        (opener as HTMLElement | null)?.focus?.({ preventScroll: true });
+      };
+      if (!fromHistory) {
+        if (pushed && history.state?.pc) history.back();   // the Back button and × end in the same place
+        else history.replaceState(null, '', location.pathname + location.search);
+      }
+      pushed = false;
+      if (calm()) { finish(); return; }
+      frame.classList.remove('ready');
+      card.animate([{ clipPath: 'inset(0 0 0 0 round 20px)' }, { clipPath: clipFrom(from) }], { duration: 450, easing: 'cubic-bezier(.5, 0, .75, 0)', fill: 'forwards' })
+        .finished.then(finish, finish);
+      backdrop.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 450, easing: 'ease-in', fill: 'forwards' });
+      setTimeout(finish, 600);   // a hidden tab pauses animations; the card still closes
+    }
+
+    root.querySelectorAll('[data-pc-close]').forEach((el) => el.addEventListener('click', () => close()));
+    addEventListener('keydown', (e) => { if (e.key === 'Escape' && !root!.hidden) close(); });
+    // keep focus inside the dialog: the close button and the frame are its only stops
+    root.addEventListener('keydown', (e) => {
+      if (e.key !== 'Tab') return;
+      e.preventDefault();
+      (document.activeElement === closeBtn ? frame : closeBtn).focus();
+    });
+    addEventListener('project:open', ((e: CustomEvent) => open(e.detail.slug, e.detail.rect ?? null)) as EventListener);
+    // the next-project link inside the card swaps the story in place
+    addEventListener('message', (e) => {
+      if (e.origin !== location.origin || e.data?.type !== 'project:open') return;
+      const slug = Object.keys(projects).find((k) => projects[k].href === new URL(e.data.href).pathname.replace(/\/$/, ''));
+      if (slug) { history.replaceState({ pc: slug }, '', `#project-${slug}`); current = ''; open(slug, null, false); }
+    });
+    const fromHash = () => location.hash.match(/^#project-(.+)$/)?.[1];
+    addEventListener('popstate', () => { const s = fromHash(); if (s && projects[s]) open(s, null, false); else close(true); });
+    const initial = fromHash();
+    if (initial && projects[initial]) open(initial, null, false);
+  }
+</script>

@@ -14,6 +14,8 @@ const items = await Promise.all(projects.map(async (p) => ({
   tag: p.data.category,
   sub: p.data.placeholder ? 'Coming soon' : `${p.data.type}, ${p.data.year}`,
   href: withBase(`/work/${p.id}`),   // JSON props aren't rebased after the build, so prefix here
+  slug: p.id,
+  ratio: p.data.cover ? p.data.cover.width / p.data.cover.height : 4 / 3,   // generated covers are 1200 × 900
   img: p.data.cover ? (await getImage({ src: p.data.cover, width: 1200, format: 'webp' })).src : undefined,   // Astro adds the base itself
 })));
 const total = String(items.length).padStart(2, '0');
@@ -63,7 +65,7 @@ const total = String(items.length).padStart(2, '0');
   import { createFlexCarousel } from '../fx/flex-carousel';
   import { palette } from '../lib/theme';
 
-  type Item = { title: string; tag: string; sub: string; href: string; img?: string };
+  type Item = { title: string; tag: string; sub: string; href: string; slug: string; ratio: number; img?: string };
   const pad = (n: number) => String(n).padStart(2, '0');
   // '#rrggbb' blended toward another, t = 0 → a, 1 → b
   const mix = (a: string, b: string, t: number) => {
@@ -128,7 +130,12 @@ const total = String(items.length).padStart(2, '0');
         onActive: show,
         onRevealed: () => root.classList.add('ready'),
         onFocusOpen: () => {},
-        onSelect: (i) => { location.href = items[i].href; },
+        // the project opens in a card over this page (ProjectCard.astro), growing out of the centred tile
+        onSelect: (i) => {
+          const r = root.getBoundingClientRect(), h = r.height * 0.5, w = Math.min(r.width, h * items[i].ratio);
+          const rect = new DOMRect(r.left + (r.width - w) / 2, r.top + (r.height - h) / 2, w, h);
+          dispatchEvent(new CustomEvent('project:open', { detail: { slug: items[i].slug, rect } }));
+        },
       }));
     }, { threshold: 0.35 }).observe(root);
   });

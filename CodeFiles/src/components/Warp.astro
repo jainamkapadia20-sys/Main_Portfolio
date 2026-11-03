@@ -17,7 +17,7 @@
   import { mountWarp } from '../fx/warp';
   import { onTheme, theme } from '../lib/theme';
   const c = document.querySelector<HTMLCanvasElement>('[data-warp]');
-  if (c) mountWarp(c);
+  if (c && !document.documentElement.classList.contains('in-card')) mountWarp(c);   // inside a project card the home page's background shows through
   // the highway loads only the first time someone lands in the Wangan era, and runs only while they're there
   const road = document.querySelector<HTMLElement>('[data-hyperspeed]');
   let run: ((on: boolean) => void) | null = null, loading = false;

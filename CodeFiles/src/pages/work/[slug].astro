@@ -19,6 +19,9 @@ type P = CollectionEntry<'projects'>;
 interface Props { project: P; next: P }
 const { project, next } = Astro.props;
 const p = project.data;
+// a project can tell its own story (src/components/stories/<slug>.astro); the rest use the template below
+const stories = import.meta.glob<{ default: any }>('../../components/stories/*.astro', { eager: true });
+const Story = stories[`../../components/stories/${project.id}.astro`]?.default;
 
 const film = p.blocks.find((b) => b.type === 'video' && b.src) as Extract<typeof p.blocks[number], { type: 'video' }> | undefined;
 const cluster = p.blocks.find((b) => b.type === 'cluster') as Extract<typeof p.blocks[number], { type: 'cluster' }> | undefined;
@@ -46,6 +49,7 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
 ---
 <Base title={p.title} description={p.summary}>
   <a class="back meta wrap" href="/#work">← All work</a>
+  {Story ? <Story project={project} next={next} /> : <Fragment>
 
   <!-- 1. The result: what was made, and the finished work, straight away -->
   <section id="result" class="cs-sec hero" aria-labelledby="case-h" data-sec>
@@ -211,8 +215,10 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
     <a class="next-link" href={`/work/${next.id}`} id="next-h">{next.data.title} <span class="t-learn-chevron" set:html={arrow} /></a>
   </section>
 
-  <!-- the section dock: jump to any part; the current one is marked -->
-  {sections.length > 1 && (
+  </Fragment>}
+
+  <!-- the section dock: jump to any part; the current one is marked (a story brings its own) -->
+  {!Story && sections.length > 1 && (
     <nav class="dock" aria-label="Case study sections" data-dock>
       <span class="pill" aria-hidden="true"></span>
       {sections.map((s) => <a href={`#${s.id}`} data-dock-link={s.id}>{s.label}</a>)}
@@ -382,6 +388,14 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
       requestAnimationFrame(tick);
     }), { rootMargin: '0px 0px -15% 0px' });
     document.querySelectorAll<HTMLElement>('[data-count]').forEach((el) => { el.textContent = `0${el.dataset.suffix ?? ''}`; io.observe(el); });
+  }
+
+  // inside the home page's project card, the next project opens in the same card
+  if (document.documentElement.classList.contains('in-card')) {
+    document.querySelectorAll<HTMLAnchorElement>('.next-link').forEach((a) => a.addEventListener('click', (e) => {
+      e.preventDefault();
+      parent.postMessage({ type: 'project:open', href: a.href }, location.origin);
+    }));
   }
 
   // → steps to the next project (ignored while typing)
