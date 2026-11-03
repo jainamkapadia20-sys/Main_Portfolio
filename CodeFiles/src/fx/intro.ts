@@ -63,11 +63,10 @@ const clamp = (v: number) => Math.min(1, Math.max(0, v));
 
 // the phrase, drawn once into a wide strip of texture
 async function phraseTexture(gl: WebGL2RenderingContext) {
-  // broad heavy capitals, like tejj's: the name's face in the current era (SF Pro Display Bold today, Archivo Expanded on the Wangan,
-  // Big Shoulders Stencil in 2049)
+  // the same face as the name on the home screen (--font-name: SF Pro Display where the system has it, Inter elsewhere)
   const css = getComputedStyle(document.documentElement);
-  const font = css.getPropertyValue('--font-display').trim() || 'system-ui, sans-serif';
-  const weight = css.getPropertyValue('--display-weight').trim() || '800';
+  const font = css.getPropertyValue('--font-name').trim() || 'system-ui, sans-serif';
+  const weight = '700';
   await document.fonts.load(`${weight} 100px ${font}`).catch(() => {});
   const h = 192, c = document.createElement('canvas'), g = c.getContext('2d')!;
   const w = Math.round(h * ASPECT);

@@ -9,7 +9,7 @@ const letters = [...site.name];
 <span class="hello" aria-hidden="true" data-hello>{letters.map((c, i) => <span class="c" style={`--i:${i}`}>{c === ' ' ? ' ' : c}</span>)}</span>
 
 <style>
-  .hello { display: block; overflow: hidden; padding-block: .06em; font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, var(--font); font-weight: 600;
+  .hello { display: block; overflow: hidden; padding-block: .06em; font-family: var(--font-name); font-weight: 600;
     font-size: var(--name-size, clamp(2.2rem, 7.2vw, 7.5rem)); letter-spacing: -.03em; line-height: 1; white-space: nowrap; color: var(--ink); }
   /* each letter carries the same top-lit gradient, so the word reads as one sheen */
   .c { display: inline-block; color: transparent; -webkit-background-clip: text; background-clip: text;

@@ -16,9 +16,9 @@ import { site } from '../site';
     transition: opacity 1800ms cubic-bezier(.45, 0, .55, 1); }
   .intro.leaving { opacity: 0; pointer-events: none; }
   .room { position: absolute; inset: 0; width: 100%; height: 100%; }
-  /* the name: small, in the accent; it fades as the room begins */
-  .mark { position: absolute; left: 50%; top: 50%; translate: -50% -50%; font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(14px, 1.5vw, 22px); white-space: nowrap;
-    color: var(--accent); letter-spacing: .04em;
+  /* the name: small, in the same face as the home screen's name; it fades as the room begins */
+  .mark { position: absolute; left: 50%; top: 50%; translate: -50% -50%; font-family: var(--font-name); font-weight: 600; font-size: clamp(14px, 1.5vw, 22px); white-space: nowrap;
+    color: var(--ink); letter-spacing: -.01em;
     transition: opacity 400ms cubic-bezier(.45, 0, .55, 1) 200ms; }
   .mark.gone { opacity: 0; }
   /* while the opening plays, the page underneath waits: the name holds its stagger until the room clears */

@@ -46,6 +46,7 @@
     --font: "Inter", system-ui, sans-serif;
     --font-display: "Cenios", "Inter", sans-serif;
     --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    --font-name: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Inter", sans-serif;   /* the name, wherever it appears: the home screen and the opening */
     --display-weight: 400;   /* Cenios comes in one weight; asking for more would make the browser fake a bold */
     /* space: one 8-point scale; related things sit a step apart, groups two or three */
     --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px;
@@ -169,6 +170,11 @@
   .cta:hover::before, .cta:focus-visible::before { opacity: 1; filter: blur(20px); scale: 1.18; }
   .cta::after { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; box-shadow: 0 0 0 0 var(--accent); opacity: 0; }
   .cta:active::after { animation: cta-pulse 600ms var(--ease-out-expo); }
+  /* silver: for the black aurora on the home screen, a brushed-metal pill lit from above, with a soft white glow */
+  .btn.cta.silver { background: linear-gradient(180deg, #F7F7F9, #C9C9D1 55%, #A9A9B3); color: #0B0B0D; box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 hsl(0 0% 0% / .18); }
+  .btn.cta.silver:hover { background: linear-gradient(180deg, #FFFFFF, #D8D8DF 55%, #B8B8C1); }
+  .cta.silver::before { background: conic-gradient(from 210deg, #9a9aa3, #ffffff, #6f6f78, #d9d9e0, #9a9aa3); opacity: .35; }
+  .cta.silver::after { box-shadow: 0 0 0 0 hsl(0 0% 100% / .6); }
   @keyframes cta-pulse { from { opacity: .7; box-shadow: 0 0 0 0 var(--accent); } to { opacity: 0; box-shadow: 0 0 0 14px var(--accent); } }
 
   /* border trail: a short bright run travels round a card's edge while it is hovered (add <span class="bt"> inside) */
