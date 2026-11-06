@@ -14,7 +14,7 @@ const letters = [...site.name];
   /* each letter carries the same top-lit gradient, so the word reads as one sheen */
   .c { display: inline-block; color: transparent; -webkit-background-clip: text; background-clip: text;
     background-image: linear-gradient(180deg, var(--ink) 30%, color-mix(in srgb, var(--ink) 52%, var(--paper)) 100%);
-    animation: rise 1100ms cubic-bezier(.22, 1, .36, 1) both; animation-delay: calc(250ms + var(--i) * 45ms); }
+    animation: rise 1100ms cubic-bezier(.22, 1, .36, 1) both; animation-delay: calc(120ms + var(--i) * 40ms); }
   @keyframes rise { from { translate: 0 105%; } }
   /* while the opening room plays, the letters wait below the line */
   :global(html.intro) .c { animation-play-state: paused; }

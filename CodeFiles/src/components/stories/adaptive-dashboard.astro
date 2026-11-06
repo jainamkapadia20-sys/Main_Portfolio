@@ -8,6 +8,7 @@
 import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
 import ClusterPlayer from '../ClusterPlayer.astro';
+import { withBase } from '../../lib/url';
 import startup from '../../assets/hmi/01-startup.png';
 import cruise from '../../assets/hmi/02-dashboard-main.png';
 import traffic from '../../assets/hmi/03-traffic-main.png';
@@ -29,7 +30,7 @@ import toyKeep from '../../assets/hmi/toy-keep.jpg';
 import toyPark from '../../assets/hmi/toy-park.jpg';
 
 type P = CollectionEntry<'projects'>;
-interface Props { project: P; next: P }
+interface Props { project: P; next?: P }
 const { project, next } = Astro.props;
 const p = project.data;
 const cluster = p.blocks.find((b) => b.type === 'cluster') as Extract<typeof p.blocks[number], { type: 'cluster' }> | undefined;
@@ -183,6 +184,22 @@ const pad = (n: number) => String(n).padStart(2, '0');
       <div><dt class="mono">Length</dt><dd>{p.duration}</dd></div>
       <div><dt class="mono">Made with</dt><dd>{p.tools.join(', ')}</dd></div>
     </dl>
+  </section>
+
+  <!-- THE FILM: the whole project in 20 seconds; plays muted once it is mostly on screen, pauses when it leaves -->
+  <section class="sec wrap film" aria-labelledby="film-h">
+    <p class="chap mono"><span>&#9654;</span><span id="film-h">The project in 20 seconds</span></p>
+    <figure class="reel" data-scrub="pop" data-film>
+      <video src={withBase('/media/hmi-film.mp4')} poster={withBase('/media/hmi-film.jpg')} muted loop playsinline preload="metadata" width="1280" height="720"
+        aria-label="A 20-second film: a cluster buried in alerts, the research and sketches, then the adaptive screens in highway, traffic and emergency braking"></video>
+      <button class="snd" type="button" data-sound>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" /><path class="off" d="M16 9.5l5 5M21 9.5l-5 5" /><path class="on" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" /></svg>
+        <span data-sound-label>Sound on</span>
+      </button>
+      <button class="play" type="button" aria-label="Pause the film" data-play>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path class="pz" d="M8 5h3v14H8zM13 5h3v14h-3z" /><path class="pl" d="M8 5l11 7-11 7z" /></svg>
+      </button>
+    </figure>
   </section>
 
   <!-- THE RESULT: the home screen, one part at a time -->
@@ -404,8 +421,8 @@ const pad = (n: number) => String(n).padStart(2, '0');
   </section>
 
   <section class="sec wrap next" aria-labelledby="next-h">
-    <p class="mono acc">Next project</p>
-    <a class="next-link" href={`/work/${next.id}`} id="next-h">{next.data.title} <span class="t-learn-chevron" set:html={arrow} /></a>
+    <p class="mono acc">{next ? 'Next project' : 'More work'}</p>
+    <a class="next-link" href={next ? `/work/${next.id}` : '/work'} id="next-h">{next?.data.title ?? 'All projects'} <span class="t-learn-chevron" set:html={arrow} /></a>
   </section>
 </article>
 
@@ -573,6 +590,35 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .cols ul { display: grid; gap: var(--s-3); }
   .cols li { line-height: 1.45; }
 
+  /* the film: framed, never wider than a comfortable reading width, so it never takes over the screen */
+  .film { padding-top: clamp(96px, 10vw, 160px); }
+  .film .chap span + span { color: inherit; font-size: inherit; letter-spacing: inherit; }
+  .reel { position: relative; margin: clamp(28px, 3vw, 44px) auto 0; max-width: min(960px, 100%, calc((100svh - 220px) * 16 / 9)); border-radius: 18px; overflow: hidden;
+    background: #000; box-shadow: 0 30px 80px hsl(0 0% 0% / .5), 0 0 0 1px color-mix(in srgb, var(--ink) 10%, transparent); }
+  .reel video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
+  .snd, .play { position: absolute; bottom: 14px; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px 0 12px; border-radius: 999px;
+    color: #fff; font-size: 13px; font-weight: 500; background: hsl(0 0% 0% / .55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    box-shadow: inset 0 0 0 1px hsl(0 0% 100% / .14); transition: background-color var(--duration-fast) var(--ease-smooth-out), scale var(--duration-quick) var(--ease-smooth-out); }
+  .snd { right: 14px; }
+  .play { left: 14px; width: 44px; padding: 0; justify-content: center; }
+  .snd:hover, .play:hover { background: hsl(0 0% 0% / .75); }
+  .snd:active, .play:active { scale: .96; }
+  .snd:focus-visible, .play:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .snd svg, .play svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .snd .spk, .play path { fill: currentColor; stroke: none; }
+  .snd .on, .snd.live .off { display: none; }
+  .snd.live .on { display: inline; }
+  .play .pl, .play.paused .pz { display: none; }
+  .play.paused .pl { display: inline; }
+  /* on a phone the film is small: icon-only controls, tucked into the corners (the label stays for screen readers) */
+  @media (max-width: 560px) {
+    .reel { border-radius: 12px; }
+    .snd, .play { bottom: 6px; }
+    .snd { right: 6px; width: 44px; padding: 0; justify-content: center; }
+    .play { left: 6px; }
+    .snd span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  }
+
   .next { display: grid; gap: 8px; padding-bottom: 120px; }
   .next-link { display: inline-flex; align-items: center; gap: 16px; font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2.4rem, 1rem + 5vw, 6rem);
     letter-spacing: -.04em; line-height: 1; transition: color var(--duration-fast) var(--ease-smooth-out); }
@@ -702,6 +748,28 @@ const pad = (n: number) => String(n).padStart(2, '0');
       verdict.textContent = over ? 'Over budget' : 'Within budget';
     }
   };
+  // the film plays (muted) once at least half of it is on screen and pauses when it leaves; the reader can pause it
+  // or turn the sound on. Calm motion never starts it by itself.
+  const film = document.querySelector<HTMLElement>('[data-film]');
+  if (film) {
+    const v = film.querySelector('video')!, snd = film.querySelector<HTMLButtonElement>('[data-sound]')!, play = film.querySelector<HTMLButtonElement>('[data-play]')!;
+    const sndLabel = film.querySelector<HTMLElement>('[data-sound-label]')!;
+    let held = still;   // held: paused by the reader (or by calm motion), so scrolling back never restarts it
+    const sync = () => { play.classList.toggle('paused', v.paused); play.setAttribute('aria-label', v.paused ? 'Play the film' : 'Pause the film'); };
+    v.addEventListener('play', sync); v.addEventListener('pause', sync); sync();
+    new IntersectionObserver(([e]) => {
+      if (e.intersectionRatio < 0.5) v.pause();
+      else if (!held) v.play().catch(() => {});
+    }, { threshold: [0, 0.5] }).observe(v);
+    play.addEventListener('click', () => { if (v.paused) { held = false; v.play().catch(() => {}); } else { held = true; v.pause(); } });
+    snd.addEventListener('click', () => {
+      v.muted = !v.muted;
+      snd.classList.toggle('live', !v.muted);   // the label names the action, so no pressed state is announced on top of it
+      sndLabel.textContent = v.muted ? 'Sound on' : 'Sound off';
+      if (!v.muted && v.paused) { held = false; v.currentTime = 0; v.play().catch(() => {}); }   // sound on from the top
+    });
+  }
+
   const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
   place();
   addEventListener('resize', () => { place(); kick(); });

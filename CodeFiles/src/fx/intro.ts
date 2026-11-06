@@ -8,7 +8,7 @@ import { palettes, rgb, theme } from '../lib/theme';
 
 const PHRASE = 'STEP INTO MY MIND ';   // tejj.in's line, made mine
 const ROWS = 7;
-const ENTRY = 1200, STAGGER = 430, HOLD = 700, EXIT = 1100;   // ms
+const ENTRY = 1100, STAGGER = 340, HOLD = 600, EXIT = 1000;   // ms
 export const INTRO_MS = STAGGER * (ROWS - 1) + ENTRY + HOLD + EXIT;
 const FOV = Math.PI / 3;                  // 60°, vertical
 // The room's mouth keeps one shape on every screen (landscape 1214 × 596, turned for portrait), with strips 163 deep.
@@ -167,6 +167,9 @@ export async function playIntro(canvas: HTMLCanvasElement, signal: { skipped: bo
 
   const slide = new Float32Array(ROWS);
   const t0 = performance.now();
+  // hand over while the last rows are still sliding out, so the page fades up under moving type, not an empty room
+  const handAt = INTRO_MS - EXIT * 0.55;
+  let handed = false;
   await new Promise<void>((done) => {
     const frame = (now: number) => {
       const t = now - t0;
@@ -179,8 +182,8 @@ export async function playIntro(canvas: HTMLCanvasElement, signal: { skipped: bo
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.drawElements(gl.TRIANGLES, geo.idx.length, gl.UNSIGNED_SHORT, 0);
-      if (t >= INTRO_MS || signal.skipped) done();
-      else requestAnimationFrame(frame);
+      if (!handed && (t >= handAt || signal.skipped)) { handed = true; done(); }
+      if (t < INTRO_MS && !signal.skipped) requestAnimationFrame(frame);
     };
     requestAnimationFrame(frame);
   });

@@ -122,7 +122,7 @@ blocks:
           - { src: ../../assets/hmi/10-park-auto.png, alt: A free space highlighted green beside the car with a Confirm OK prompt, title: Auto park, sensors: Ultrasonics find a free space., screen: "The space glows green. One tap: Confirm, OK." }
           - { src: ../../assets/hmi/11-parking-manual.png, alt: Rear camera view with guide lines next to a top-down car with sensor arcs, title: Manual park, sensors: Rear camera and twelve sensors., screen: "Camera, guide lines and arcs that go green, amber, red." }
 featured: true
-order: 2
+order: 0
 ---
 
 ## Overview

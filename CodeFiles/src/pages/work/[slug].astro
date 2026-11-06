@@ -14,10 +14,12 @@ import { withBase } from '../../lib/url';
 
 export async function getStaticPaths() {
   const all = await sortedProjects();
-  return all.map((project, i) => ({ params: { slug: project.id }, props: { project, next: all[(i + 1) % all.length] } }));
+  // the next finished project after this one; placeholders are skipped, and with none left the link goes to all work
+  const nextOf = (i: number) => all.slice(i + 1).concat(all.slice(0, i)).find((p) => !p.data.placeholder);
+  return all.map((project, i) => ({ params: { slug: project.id }, props: { project, next: nextOf(i) } }));
 }
 type P = CollectionEntry<'projects'>;
-interface Props { project: P; next: P }
+interface Props { project: P; next?: P }
 const { project, next } = Astro.props;
 const p = project.data;
 // a project can tell its own story (src/components/stories/<slug>.astro); the rest use the template below
@@ -212,8 +214,8 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
   )}
 
   <section class="cs-sec wrap next" aria-labelledby="next-h">
-    <p class="label">Next project</p>
-    <a class="next-link" href={`/work/${next.id}`} id="next-h">{next.data.title} <span class="t-learn-chevron" set:html={arrow} /></a>
+    <p class="label">{next ? 'Next project' : 'More work'}</p>
+    <a class="next-link" href={next ? `/work/${next.id}` : '/work'} id="next-h">{next?.data.title ?? 'All projects'} <span class="t-learn-chevron" set:html={arrow} /></a>
   </section>
 
   </Fragment>}

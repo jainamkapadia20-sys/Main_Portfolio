@@ -135,6 +135,7 @@ const projects = Object.fromEntries((await sortedProjects()).map((p) => [p.id, {
       if (e.origin !== location.origin || e.data?.type !== 'project:open') return;
       const slug = Object.keys(projects).find((k) => projects[k].href === new URL(e.data.href).pathname.replace(/\/$/, ''));
       if (slug) { history.replaceState({ pc: slug }, '', `#project-${slug}`); current = ''; open(slug, null, false); }
+      else location.href = e.data.href;   // a link out of the projects (all work) leaves the card
     });
     const fromHash = () => location.hash.match(/^#project-(.+)$/)?.[1];
     addEventListener('popstate', () => { const s = fromHash(); if (s && projects[s]) open(s, null, false); else close(true); });

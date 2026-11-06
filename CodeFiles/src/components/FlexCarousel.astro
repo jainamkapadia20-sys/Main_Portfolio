@@ -34,7 +34,8 @@ const total = String(items.length).padStart(2, '0');
 </div>
 
 <style>
-  .flex-carousel { position: relative; width: 100%; height: min(86svh, 820px); min-height: 480px; overflow: hidden; cursor: grab; touch-action: pan-y;
+  /* cards are half the height; capping the height by the width keeps the widest (2:1) card on a phone screen */
+  .flex-carousel { position: relative; width: 100%; height: min(86svh, 820px, 92vw); min-height: 340px; overflow: hidden; cursor: grab; touch-action: pan-y;
     user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; outline: none; --half: 25%; }
   .flex-carousel[data-hover='open'] { cursor: pointer; }
   .flex-carousel[data-hover='close'] { cursor: zoom-out; }
@@ -137,6 +138,6 @@ const total = String(items.length).padStart(2, '0');
           dispatchEvent(new CustomEvent('project:open', { detail: { slug: items[i].slug, rect } }));
         },
       }));
-    }, { threshold: 0.35 }).observe(root);
+    }, { threshold: 0.2 }).observe(root);
   });
 </script>
