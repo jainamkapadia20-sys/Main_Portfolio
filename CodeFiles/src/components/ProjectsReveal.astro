@@ -50,8 +50,8 @@ const word = 'My projects';
       // in: the letters rise one after another over the first stretch of the pin
       letters.forEach((c, k) => c.style.setProperty('--r', outQuart(clamp((shown - k * 0.022) / 0.2)).toFixed(4)));
       sec.style.setProperty('--ki', outQuart(clamp((shown - 0.12) / 0.22)).toFixed(4));
-      // out: the words open up and blur away as the carousel's middle climbs from the bottom of the screen to the
-      // middle, so the words and the cards always overlap and the screen is never empty in between
+      // out: the words open up and blur away as the next section's top climbs from the bottom of the screen to 40%
+      // of the way down, so the words and what follows always overlap and the screen is never empty in between
       sec.style.setProperty('--o', inOut(out).toFixed(4));
     };
     const glide = () => {
@@ -67,8 +67,7 @@ const word = 'My projects';
       // 0 when the section's top reaches the bottom third of the screen, 1 as the pin lets go
       target = clamp((innerHeight * 0.66 - r.top) / (r.height - innerHeight + innerHeight * 0.66));
       if (next) {
-        const n = next.getBoundingClientRect(), mid = n.top + n.height / 2;
-        outTarget = clamp((innerHeight * 1.05 - mid) / (innerHeight * 0.5));
+        outTarget = clamp((innerHeight - next.getBoundingClientRect().top) / (innerHeight * 0.6));
       } else outTarget = clamp((target - 0.5) / 0.42);
       if (!raf) raf = requestAnimationFrame(glide);
     };

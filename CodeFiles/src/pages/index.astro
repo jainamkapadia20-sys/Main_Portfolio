@@ -4,7 +4,7 @@ import HeroName from '../components/HeroName.astro';
 import Intro from '../components/Intro.astro';
 import Roles from '../components/Roles.astro';
 import Cta from '../components/Cta.astro';
-import FlexCarousel from '../components/FlexCarousel.astro';
+import RoadTrip from '../components/RoadTrip.astro';
 import ProjectCard from '../components/ProjectCard.astro';
 import SideWork from '../components/SideWork.astro';
 import Motivation from '../components/Motivation.astro';
@@ -72,7 +72,7 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
   <Motivation />
   <ProjectsReveal id="featured-h" next="work" />
   <section class="featured" id="work" aria-labelledby="featured-h">
-    <FlexCarousel />
+    <RoadTrip />
   </section>
 
   <Marquee words={['UI/UX design', 'HMI', 'Graphic design', 'Service design', 'Sketching', 'Prototyping']} />
@@ -124,7 +124,8 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
   addStops('proximity', () => {
     const top = (el: Element) => el.getBoundingClientRect().top + scrollY;
     const stops = [0];
-    document.querySelectorAll('#work, .side').forEach((el) => stops.push(top(el) - 24));
+    // not the projects: the drive runs on the scroll itself, and a stop there would pull the car back to the start
+    document.querySelectorAll('.side').forEach((el) => stops.push(top(el) - 24));
     stops.push(document.documentElement.scrollHeight - innerHeight);
     return stops;
   });
@@ -159,7 +160,7 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
   .sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px 24px; flex-wrap: wrap; margin-bottom: 48px; }
   .sec-head p { max-width: 44ch; }
   /* the carousel rides up over the last stretch of the "My projects" pin, so the words leave as the cards arrive */
-  .featured { position: relative; padding-top: 0; margin-top: -55svh; }
+  .featured { position: relative; padding-top: 0; margin-top: -45svh; }
   :global(:root[data-motion="calm"]) .featured { margin-top: 0; }
   /* the line from the primary action down to the neon tube; scripts below place it and draw it with the scroll */
   :global(#main) { position: relative; }
