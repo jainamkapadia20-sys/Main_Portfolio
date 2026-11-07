@@ -1,0 +1,104 @@
+---
+// My ID card on a lanyard (React Bits' Lanyard, ported to src/fx/lanyard.ts): it hangs from the top of its box, swings,
+// can be grabbed and thrown, and flips over on a click. The card and the strap are drawn here in the site's own fonts:
+// the front carries my cut-out photo, name and role; the back the JK monogram; the strap repeats JK and my name.
+// Reduced motion: it hangs still (no breeze, no drop-in). Without WebGL the box shows the card's front as a picture.
+import { withBase } from '../lib/url';
+import { site } from '../site';
+interface Props { size?: number; strap?: number; class?: string }
+const { size = 0.6, strap = 0.5, class: cls } = Astro.props;
+---
+<div class:list={['lanyard', cls]} data-lanyard data-face={withBase('/media/lanyard-face.webp')} data-size={size} data-strap={strap}
+  role="img" aria-label={`${site.name}'s ID card on a lanyard: a photo, the name and "Designer, student". Drag it to swing it; click to flip it.`}></div>
+
+<style>
+  .lanyard { position: relative; width: 100%; height: 100%; overflow: hidden; touch-action: pan-y; }
+  /* the strap comes down out of the dark rather than starting at a hard edge */
+  .lanyard.fade { -webkit-mask: linear-gradient(to bottom, transparent, #000 22%); mask: linear-gradient(to bottom, transparent, #000 22%); }
+</style>
+
+<script>
+  import { mountLanyard } from '../fx/lanyard';
+  import { site } from '../site';
+
+  const W = 1024, H = 1440;   // the card's portrait face, 1.6 × 2.25
+  // the JK monogram (public/monogram.svg), as paths in a 120 × 120 box, stroke 15
+  const monogram = ['M60 12V76a23 23 0 0 1-46 0', 'M60 66L100 12', 'M76 45L106 108'].map((d) => new Path2D(d));
+  const mark = (g: CanvasRenderingContext2D, x: number, y: number, size: number, color: string) => {
+    g.save(); g.translate(x, y); g.scale(size / 120, size / 120);
+    g.strokeStyle = color; g.lineWidth = 15; g.lineCap = 'butt';
+    monogram.forEach((p) => g.stroke(p));
+    g.restore();
+  };
+  const css = getComputedStyle(document.documentElement);
+  const display = css.getPropertyValue('--font-display').trim() || 'sans-serif';
+  const mono = css.getPropertyValue('--font-mono').trim() || 'monospace';
+  const body = css.getPropertyValue('--font').trim() || 'sans-serif';
+  const weight = css.getPropertyValue('--display-weight').trim() || '400';
+  const load = (src: string) => new Promise<HTMLImageElement | null>((done) => { const i = new Image(); i.onload = () => done(i); i.onerror = () => done(null); i.src = src; });
+  const canvas = (w: number, h: number) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return [c, c.getContext('2d')!] as const; };
+
+  // FRONT: dark card, a soft light behind the photo, the photo fading into the card, then name, role and a footer row
+  function front(face: HTMLImageElement | null) {
+    const [c, g] = canvas(W, H);
+    const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#1a1a1f'); bg.addColorStop(1, '#0a0a0c');
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    const glow = g.createRadialGradient(W / 2, 560, 40, W / 2, 560, 520);
+    glow.addColorStop(0, 'rgba(210,212,222,.20)'); glow.addColorStop(1, 'rgba(210,212,222,0)');
+    g.fillStyle = glow; g.fillRect(0, 0, W, H);
+    mark(g, 64, 64, 64, '#E8E8EE');   // top left, clear of the strap slot in the middle
+    g.font = `500 22px ${mono}`; g.fillStyle = 'rgba(232,232,238,.55)'; g.textAlign = 'right';
+    g.fillText('ID · 2026', W - 64, 104);
+    if (face) {
+      const s = 980 / face.width, w = face.width * s, h = face.height * s, x = (W - w) / 2, y = 190;
+      g.drawImage(face, x, y, w, h);
+      const fade = g.createLinearGradient(0, y + h - 260, 0, y + h);   // the chest fades into the card
+      fade.addColorStop(0, 'rgba(12,12,14,0)'); fade.addColorStop(1, 'rgba(12,12,14,1)');
+      g.fillStyle = fade; g.fillRect(0, y + h - 262, W, 264);
+    }
+    g.textAlign = 'left';
+    g.fillStyle = '#F5F5F7'; g.font = `${weight} 104px ${display}`;
+    g.fillText('Jainam', 64, 1140); g.fillText('Kapadia', 64, 1240);
+    g.fillStyle = 'rgba(232,232,238,.62)'; g.font = `500 34px ${body}`;
+    g.fillText('Designer, student', 64, 1300);
+    g.strokeStyle = 'rgba(232,232,238,.16)'; g.lineWidth = 2; g.beginPath(); g.moveTo(64, 1336); g.lineTo(W - 64, 1336); g.stroke();
+    g.font = `500 22px ${mono}`; g.fillStyle = 'rgba(232,232,238,.55)';
+    g.fillText('UI/UX · HMI · GRAPHIC · SERVICE', 64, 1384);
+    const status = 'OPEN TO INTERNSHIPS', sw = g.measureText(status).width;
+    g.fillStyle = '#7CF29A'; g.beginPath(); g.arc(W - 64 - sw - 20, 1376, 7, 0, Math.PI * 2); g.fill();
+    g.fillStyle = 'rgba(232,232,238,.75)'; g.textAlign = 'right'; g.fillText(status, W - 64, 1384);
+    return c.toDataURL('image/png');
+  }
+  // BACK: the monogram, large, and how to reach me
+  function back() {
+    const [c, g] = canvas(W, H);
+    g.fillStyle = '#0c0c0e'; g.fillRect(0, 0, W, H);
+    mark(g, W / 2 - 210, 380, 420, '#E8E8EE');
+    g.textAlign = 'center'; g.fillStyle = 'rgba(232,232,238,.62)'; g.font = `500 26px ${mono}`;
+    g.fillText(site.email.toUpperCase(), W / 2, 1150);
+    g.fillText('BASED IN INDIA', W / 2, 1200);
+    return c.toDataURL('image/png');
+  }
+  // STRAP: one tile along the strap (the lanyard turns it to run lengthwise): JK, then my name, on black webbing
+  function strap() {
+    const [c, g] = canvas(900, 192);
+    g.fillStyle = '#111114'; g.fillRect(0, 0, 900, 192);
+    mark(g, 60, 51, 90, '#D9DCE2');
+    g.fillStyle = '#D9DCE2'; g.font = `600 46px ${mono}`; g.textBaseline = 'middle';
+    g.fillText('JAINAM KAPADIA', 200, 98);
+    return c.toDataURL('image/png');
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-lanyard]').forEach(async (box) => {
+    await Promise.all([`${weight} 104px ${display}`, `500 26px ${mono}`, `600 46px ${mono}`, `500 34px ${body}`].map((f) => document.fonts.load(f).catch(() => {})));
+    const face = await load(box.dataset.face!);
+    const frontImage = front(face);
+    mountLanyard(box, {
+      frontImage, backImage: back(), strapImage: strap(),
+      cardColor: '#0c0c0e', finish: 'glossy', metal: 'silver', strapColor: '#111114',
+      size: Number(box.dataset.size), strapLength: Number(box.dataset.strap), cornerRadius: 0.3,
+    });
+    // without WebGL, nothing mounts: show the card's front as a picture instead
+    if (!box.querySelector('canvas')) box.style.background = `center / contain no-repeat url(${frontImage})`;
+  });
+</script>

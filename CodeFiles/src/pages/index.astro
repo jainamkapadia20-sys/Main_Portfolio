@@ -9,6 +9,7 @@ import ProjectCard from '../components/ProjectCard.astro';
 import SideWork from '../components/SideWork.astro';
 import Motivation from '../components/Motivation.astro';
 import Music from '../components/Music.astro';
+import Lanyard from '../components/Lanyard.astro';
 import Road from '../components/Road.astro';
 import Aurora from '../components/Aurora.astro';
 import { site } from '../site';
@@ -75,17 +76,19 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
   <section class="section wrap note" aria-labelledby="note-h">
     <div class="letter">
       <h2 id="note-h" class="head about-h" data-reveal>About me</h2>
-      <span class="avatar" aria-hidden="true">JK</span>
       <p data-reveal>Hi, I'm Jainam. I'm a design student, and I like problems where people meet systems: an app on a busy commute, a warning in a car at 90 km/h, a service with too many steps.</p>
       <p data-reveal style="--i:1">I start with the people using the thing, get ideas onto paper early, and keep going until the design is clear before it is clever.</p>
       <p data-reveal style="--i:2">I'm looking for an internship where I can do that with a team.</p>
       <p class="sign" data-reveal style="--i:3">Jainam Kapadia<span class="muted small">Designer, student</span></p>
       <a class="t-learn" href="/about" data-reveal style="--i:4">More about me <span class="t-learn-chevron" set:html={arrow} /></a>
     </div>
-    <aside class="panel onrepeat" aria-labelledby="music-h" data-reveal style="--i:2">
-      <h3 id="music-h">On repeat while I design</h3>
-      <Music uri={site.spotify.uri} label={site.spotify.label} />
-    </aside>
+    <div class="badge-col">
+      <div class="badge"><Lanyard size={0.66} strap={0.42} class="fade" /></div>
+      <aside class="panel onrepeat" aria-labelledby="music-h" data-reveal style="--i:2">
+        <h3 id="music-h">On repeat while I design</h3>
+        <Music uri={site.spotify.uri} label={site.spotify.label} />
+      </aside>
+    </div>
   </section>
 
   <Motivation />
@@ -145,7 +148,9 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
 
   .note { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 48px; align-items: start; }
   .letter { display: grid; gap: 20px; max-width: 560px; font-size: var(--t-lead); line-height: 1.45; letter-spacing: -.01em; }
-  .avatar { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font-size: 1.125rem; font-weight: 500; }
+  /* my ID card hangs over the music panel; the strap runs up past the top of its box */
+  .badge-col { display: grid; gap: 16px; }
+  .badge { height: clamp(480px, 64svh, 660px); margin-top: -96px; }
   .sign { display: grid; gap: 2px; font-weight: 500; }
   .letter .t-learn { font-size: var(--t-body); }
   .onrepeat { margin: 0; padding: 28px; display: grid; gap: 20px; }

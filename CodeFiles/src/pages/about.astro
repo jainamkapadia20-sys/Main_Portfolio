@@ -1,17 +1,14 @@
 ---
-// About as a split stage: the person on the left (a portrait once one is added to src/assets/about/, the monogram
-// until then), the facts and the approach on the right, then skills, music and interests.
-import { getImage } from 'astro:assets';
+// About as a split stage: my ID card on a lanyard on the left (drag it, click to flip it), the facts and the approach
+// on the right, then skills, music and interests.
 import Base from '../layouts/Base.astro';
 import Back from '../components/Back.astro';
 import Skills from '../components/Skills.astro';
-import Metal from '../components/Metal.astro';
+import Lanyard from '../components/Lanyard.astro';
 import Music from '../components/Music.astro';
 import Cta from '../components/Cta.astro';
 import { site } from '../site';
 
-const found = Object.values(import.meta.glob<{ default: ImageMetadata }>('../assets/about/portrait.{jpg,jpeg,png,webp}', { eager: true }))[0];
-const portrait = found ? (await getImage({ src: found.default, width: 1400, format: 'webp' })).src : undefined;
 const approach = [
   { t: 'Start with people', d: 'Who is using this, where, and in what hurry. The answer shapes everything after it.' },
   { t: 'Sketch early', d: 'Ideas go on paper and into rough prototypes fast, so they get tested instead of argued over.' },
@@ -29,8 +26,7 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
   <Back href="/" label="Back" />
   <div class="about">
     <div class="stage">
-      {portrait ? <img src={portrait} alt={`Portrait of ${site.name}`} />
-        : <div class="mono-fx"><Metal reform /></div>}
+      <Lanyard size={0.56} strap={0.4} />
       <p class="stage-cap small"><span class="dot" aria-hidden="true"></span>{site.status}</p>
     </div>
 
@@ -73,8 +69,6 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
 <style>
   .about { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 12px; padding: 0 var(--edge); align-items: start; }
   .stage { position: sticky; top: 0; margin: 0; height: 100svh; border-radius: var(--radius); overflow: hidden; }
-  .stage img { width: 100%; height: 100%; object-fit: cover; }
-  .mono-fx { position: absolute; inset: calc(var(--nav-h) + 6%) 8% 12%; }
   .stage-cap { position: absolute; left: 20px; bottom: 18px; display: inline-flex; align-items: center; gap: 10px; }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
   .col { padding: calc(var(--nav-h) + clamp(48px, 7vw, 120px)) var(--pad) 24px; display: grid; gap: 56px; }
