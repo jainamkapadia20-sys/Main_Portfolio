@@ -138,6 +138,6 @@ const total = String(items.length).padStart(2, '0');
           dispatchEvent(new CustomEvent('project:open', { detail: { slug: items[i].slug, rect } }));
         },
       }));
-    }, { threshold: 0.2 }).observe(root);
+    }, { threshold: 0.02 }).observe(root);   // starts as soon as it shows, so its rise plays as it arrives
   });
 </script>

@@ -1,0 +1,52 @@
+---
+// A band of what I do, in big outlined type, drifting sideways. It answers the scroll: scrolling speeds it up (and
+// leans the letters a touch), scrolling back up turns it round, and when the page rests it eases back to a slow
+// drift. Pauses off screen. Calm motion: it stands still.
+interface Props { words: string[] }
+const { words } = Astro.props;
+---
+<div class="mq" data-mq aria-hidden="true">
+  <div class="track" data-mq-track>
+    {[0, 1].map(() => <span class="run">{words.map((w, i) => <Fragment><span class:list={['w', { solid: i % 2 === 0 }]}>{w}</span><span class="star">✦</span></Fragment>)}</span>)}
+  </div>
+</div>
+
+<style>
+  .mq { position: relative; overflow: hidden; padding-block: clamp(24px, 4vw, 56px); border-block: 1px solid color-mix(in srgb, var(--ink) 10%, transparent); }
+  .track { display: flex; width: max-content; will-change: transform; }
+  .run { display: flex; align-items: center; flex: none; }
+  .w { padding-inline: .32em; font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2.6rem, 1rem + 6vw, 7.5rem); letter-spacing: -.035em;
+    line-height: 1; white-space: nowrap; color: transparent; -webkit-text-stroke: 1.2px color-mix(in srgb, var(--ink) 55%, transparent);
+    display: inline-block; transform: skewX(var(--skew, 0deg)); }
+  .w.solid { color: var(--ink); -webkit-text-stroke: 0; }
+  .star { font-size: clamp(1.2rem, .6rem + 2vw, 2.6rem); color: var(--accent); padding-inline: .2em; }
+</style>
+
+<script>
+  import { calm } from '../lib/motion';
+  import { lenis } from '../lib/scroll';
+  document.querySelectorAll<HTMLElement>('[data-mq]').forEach((box) => {
+    if (calm()) return;
+    const track = box.querySelector<HTMLElement>('[data-mq-track]')!;
+    let x = 0, dir = -1, boost = 0, lastY = scrollY, lastT = performance.now(), raf = 0, on = false;
+    const BASE = 40;   // px per second at rest
+    const tick = (now: number) => {
+      const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
+      // scroll speed in px/s (Lenis knows it when it drives the page; otherwise measure it)
+      const v = lenis ? lenis.velocity * 60 : (scrollY - lastY) / Math.max(dt, 0.001);
+      lastY = scrollY;
+      if (Math.abs(v) > 20) dir = v > 0 ? -1 : 1;
+      boost += (Math.min(1400, Math.abs(v)) - boost) * 0.08;   // eased, so it surges and settles rather than jumps
+      x += dir * (BASE + boost * 0.9) * dt;
+      const half = track.scrollWidth / 2;
+      if (x <= -half) x += half; else if (x > 0) x -= half;
+      track.style.transform = `translate3d(${x.toFixed(2)}px, 0, 0)`;
+      track.style.setProperty('--skew', `${(-dir * Math.min(10, boost / 90)).toFixed(2)}deg`);
+      raf = on ? requestAnimationFrame(tick) : 0;
+    };
+    new IntersectionObserver(([e]) => {
+      on = e.isIntersecting;
+      if (on && !raf) { lastT = performance.now(); raf = requestAnimationFrame(tick); }
+    }).observe(box);
+  });
+</script>

@@ -11,6 +11,8 @@ import Motivation from '../components/Motivation.astro';
 import Music from '../components/Music.astro';
 import Lanyard from '../components/Lanyard.astro';
 import Road from '../components/Road.astro';
+import ProjectsReveal from '../components/ProjectsReveal.astro';
+import Marquee from '../components/Marquee.astro';
 import Aurora from '../components/Aurora.astro';
 import { site } from '../site';
 
@@ -60,15 +62,20 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
         </div>
     </div>
     <span class="kana" lang="ja" aria-hidden="true">ジャイナム・カパディア</span>
-    <div class="hero-bar meta"><span><span class="dot" aria-hidden="true"></span>{site.status}</span></div>
+    <div class="hero-bar meta">
+      <span><span class="dot" aria-hidden="true"></span>{site.status}</span>
+      <span class="local">India <time data-clock aria-label="Local time in India">--:--</time> IST</span>
+    </div>
   </section>
 
-  <!-- A neon tube lights up over the title, then every project on a spinning ring: point to focus, click to bring
-       forward, click again to open -->
+  <!-- why I do this, then the way into the projects: "My projects" rises in and opens up as the carousel arrives -->
+  <Motivation />
+  <ProjectsReveal id="featured-h" next="work" />
   <section class="featured" id="work" aria-labelledby="featured-h">
-    <div class="wrap sec-head"><h2 id="featured-h" class="head" data-reveal>My Projects</h2></div>
     <FlexCarousel />
   </section>
+
+  <Marquee words={['UI/UX design', 'HMI', 'Graphic design', 'Service design', 'Sketching', 'Prototyping']} />
 
 
   <SideWork categories={side} />
@@ -91,9 +98,6 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
     </div>
   </section>
 
-  <Motivation />
-
-
   <section class="section clock" aria-labelledby="clock-h">
     <Road>
       <div class="clock-copy">
@@ -108,11 +112,19 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
 
 <script>
   import { addStops } from '../lib/scroll';
+  // the local time where I am, to the minute; the colon blinks gently
+  const clock = document.querySelector<HTMLElement>('[data-clock]');
+  if (clock) {
+    const fmt = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Kolkata' });
+    const set = () => { const [h, m] = fmt.format(new Date()).split(':'); clock.innerHTML = `${h}<span class="colon">:</span>${m}`; };
+    set();
+    setTimeout(() => { set(); setInterval(set, 60000); }, 60000 - (Date.now() % 60000));
+  }
   // the home page's sections click into place when a scroll comes to rest near the start of one
   addStops('proximity', () => {
     const top = (el: Element) => el.getBoundingClientRect().top + scrollY;
     const stops = [0];
-    document.querySelectorAll('#work, .side, .why').forEach((el) => stops.push(top(el) - 24));
+    document.querySelectorAll('#work, .side').forEach((el) => stops.push(top(el) - 24));
     stops.push(document.documentElement.scrollHeight - innerHeight);
     return stops;
   });
@@ -138,11 +150,17 @@ const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-
   .hero-bar { display: flex; justify-content: space-between; gap: 16px; padding: 10px var(--pad) 18px; }
   .hero-bar > span { display: inline-flex; align-items: center; gap: 10px; }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .local time { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .local time :global(.colon) { animation: blink 2s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: .25; } }
+  :global(:root[data-motion="calm"]) .local time :global(.colon) { animation: none; }
   :global(:root[data-motion="calm"]) .hint { display: none; }
 
   .sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px 24px; flex-wrap: wrap; margin-bottom: 48px; }
   .sec-head p { max-width: 44ch; }
-  .featured { padding-top: 0; }
+  /* the carousel rides up over the last stretch of the "My projects" pin, so the words leave as the cards arrive */
+  .featured { position: relative; padding-top: 0; margin-top: -55svh; }
+  :global(:root[data-motion="calm"]) .featured { margin-top: 0; }
   /* the line from the primary action down to the neon tube; scripts below place it and draw it with the scroll */
   :global(#main) { position: relative; }
 
