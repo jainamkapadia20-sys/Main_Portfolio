@@ -2,9 +2,11 @@
 // beside it on a lit billboard, alternating sides. The car eases off at each billboard; as you reach one its lamps
 // flicker on, its face brightens and the driver glances at it. Street lamps throw pools of light on the asphalt,
 // headlights light the road ahead, the oncoming traffic and the cars ahead keep moving on their own, and a city sits
-// on the horizon under the stars. Click a billboard to open its project.
+// on the horizon under the stars. In the light theme the same drive happens on a pale, hazy morning instead.
+// Click a billboard to open its project.
 // mountRoadTrip(stage, items, hooks) builds it in a canvas inside `stage` and returns { setProgress, dispose }.
 import * as THREE from 'three';
+import { onTheme } from '../lib/theme';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
@@ -43,6 +45,15 @@ function beamTexture() {
   const h = g.createLinearGradient(0, 0, 256, 0);
   h.addColorStop(0, 'rgba(0,0,0,0)'); h.addColorStop(0.5, 'rgba(0,0,0,1)'); h.addColorStop(1, 'rgba(0,0,0,0)');
   g.fillStyle = h; g.fillRect(0, 0, 256, 512);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+
+/** The morning haze over the horizon, for the light theme. */
+function daySkyTexture() {
+  const c = document.createElement('canvas'); c.width = 4; c.height = 256;
+  const g = c.getContext('2d')!, v = g.createLinearGradient(0, 0, 0, 256);
+  v.addColorStop(0, 'rgba(255,255,255,0)'); v.addColorStop(0.6, 'rgba(255,255,255,.75)'); v.addColorStop(0.82, 'rgba(255,252,246,.95)'); v.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = v; g.fillRect(0, 0, 4, 256);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 
@@ -127,7 +138,7 @@ export function mountRoadTrip(stage: HTMLElement, items: TripItem[], hooks: Hook
   scene.fog = new THREE.FogExp2(PAPER, 0.011);
   const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 900);
   camera.rotation.order = 'YXZ';   // turn, then look up: a driver's head
-  scene.add(new THREE.HemisphereLight(0x9aa0b4, 0x050506, 0.35));
+  const hemi = new THREE.HemisphereLight(0x9aa0b4, 0x050506, 0.35); scene.add(hemi);
   const moon = new THREE.DirectionalLight(0xcfd6ff, 0.35); moon.position.set(-30, 40, -60); scene.add(moon);
 
   const glow = glowTexture();
@@ -148,9 +159,11 @@ export function mountRoadTrip(stage: HTMLElement, items: TripItem[], hooks: Hook
 
   // ROAD: asphalt, edge lines and centre dashes
   const roadLen = -END + 80;
-  const road = new THREE.Mesh(keep(new THREE.PlaneGeometry(ROAD_W, roadLen)), keep(new THREE.MeshStandardMaterial({ color: 0x0e0e11, roughness: 0.92, metalness: 0 })));
+  const roadMat = keep(new THREE.MeshStandardMaterial({ color: 0x0e0e11, roughness: 0.92, metalness: 0 }));
+  const road = new THREE.Mesh(keep(new THREE.PlaneGeometry(ROAD_W, roadLen)), roadMat);
   road.rotation.x = -Math.PI / 2; road.position.z = 40 - roadLen / 2; scene.add(road);
-  const ground = new THREE.Mesh(keep(new THREE.PlaneGeometry(1400, roadLen + 600)), keep(new THREE.MeshStandardMaterial({ color: 0x08080a, roughness: 1 })));
+  const groundMat = keep(new THREE.MeshStandardMaterial({ color: 0x08080a, roughness: 1 }));
+  const ground = new THREE.Mesh(keep(new THREE.PlaneGeometry(1400, roadLen + 600)), groundMat);
   ground.rotation.x = -Math.PI / 2; ground.position.set(0, -0.02, road.position.z); scene.add(ground);
   const lineMat = keep(new THREE.MeshBasicMaterial({ color: 0x8c8c96 }));
   for (const x of [-ROAD_W / 2 + 0.3, ROAD_W / 2 - 0.3]) {
@@ -159,7 +172,8 @@ export function mountRoadTrip(stage: HTMLElement, items: TripItem[], hooks: Hook
   }
   const dashGeo = keep(new THREE.PlaneGeometry(0.14, 2.6));
   const dashCount = Math.ceil(roadLen / 7);
-  const dashes = new THREE.InstancedMesh(dashGeo, keep(new THREE.MeshBasicMaterial({ color: 0xd8d8de })), dashCount);
+  const dashMat = keep(new THREE.MeshBasicMaterial({ color: 0xd8d8de }));
+  const dashes = new THREE.InstancedMesh(dashGeo, dashMat, dashCount);
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0)), one = new THREE.Vector3(1, 1, 1);
   for (let k = 0; k < dashCount; k++) dashes.setMatrixAt(k, m4.compose(new THREE.Vector3(0, 0.012, 40 - k * 7), q, one));
   scene.add(dashes);
@@ -191,7 +205,8 @@ export function mountRoadTrip(stage: HTMLElement, items: TripItem[], hooks: Hook
   // THE CITY on the horizon: dark blocks with a few lit windows, the sky glowing behind them, and stars
   const city = new THREE.Group(); scene.add(city);
   const blockGeo = keep(new THREE.BoxGeometry(1, 1, 1));
-  const blocks = new THREE.InstancedMesh(blockGeo, keep(new THREE.MeshStandardMaterial({ color: 0x111116, roughness: 0.9 })), 160);
+  const blockMat = keep(new THREE.MeshStandardMaterial({ color: 0x111116, roughness: 0.9 }));
+  const blocks = new THREE.InstancedMesh(blockGeo, blockMat, 160);
   const windows: number[] = [];
   for (let k = 0; k < 160; k++) {
     const side = k % 2 ? 1 : -1, x = side * rnd(28, 140), z = rnd(END + 60, -120), w = rnd(6, 16), h = rnd(8, 46), d = rnd(6, 16);
@@ -200,13 +215,17 @@ export function mountRoadTrip(stage: HTMLElement, items: TripItem[], hooks: Hook
   }
   city.add(blocks);
   const winGeo = keep(new THREE.BufferGeometry()); winGeo.setAttribute('position', new THREE.Float32BufferAttribute(windows, 3));
-  city.add(new THREE.Points(winGeo, keep(new THREE.PointsMaterial({ color: 0xffe4b8, size: 0.35, transparent: true, opacity: 0.75 }))));
+  const winMat = keep(new THREE.PointsMaterial({ color: 0xffe4b8, size: 0.35, transparent: true, opacity: 0.75 }));
+  city.add(new THREE.Points(winGeo, winMat));
   const stars: number[] = [];
   for (let k = 0; k < 900; k++) { const a = rnd(0, Math.PI * 2), e = rnd(0.12, 1.3), r = 600; stars.push(Math.cos(a) * Math.cos(e) * r, Math.sin(e) * r, Math.sin(a) * Math.cos(e) * r); }
   const starGeo = keep(new THREE.BufferGeometry()); starGeo.setAttribute('position', new THREE.Float32BufferAttribute(stars, 3));
   const sky = new THREE.Group(); scene.add(sky);   // stars and the horizon glow travel with the car, so they stay put
-  sky.add(new THREE.Points(starGeo, keep(new THREE.PointsMaterial({ color: 0xffffff, size: 1.3, sizeAttenuation: false, transparent: true, opacity: 0.7, fog: false }))));
-  const horizon = new THREE.Mesh(keep(new THREE.PlaneGeometry(1600, 180)), keep(new THREE.MeshBasicMaterial({ map: keep(skyTexture()), transparent: true, depthWrite: false, fog: false })));
+  const starMat = keep(new THREE.PointsMaterial({ color: 0xffffff, size: 1.3, sizeAttenuation: false, transparent: true, opacity: 0.7, fog: false }));
+  sky.add(new THREE.Points(starGeo, starMat));
+  const nightSky = keep(skyTexture()), daySky = keep(daySkyTexture());
+  const horizonMat = keep(new THREE.MeshBasicMaterial({ map: nightSky, transparent: true, depthWrite: false, fog: false }));
+  const horizon = new THREE.Mesh(keep(new THREE.PlaneGeometry(1600, 180)), horizonMat);
   horizon.position.set(0, 40, -560); sky.add(horizon);
 
   // TRAFFIC: oncoming headlights in the left lane, taillights pulling away in the right
@@ -230,7 +249,8 @@ export function mountRoadTrip(stage: HTMLElement, items: TripItem[], hooks: Hook
   const ahead: Car[] = Array.from({ length: 3 }, (_, k) => ({ mesh: carPair(red, 0xff3b48, ROAD_W / 4), z: -40 - k * 55, v: rnd(4, 8) }));
 
   // HEADLIGHTS: the beam on the road ahead rides with the car
-  const beam = new THREE.Mesh(keep(new THREE.PlaneGeometry(9, 34)), additive(keep(beamTexture()), 0xffffff, 0.42));
+  const beamMat = additive(keep(beamTexture()), 0xffffff, 0.42);
+  const beam = new THREE.Mesh(keep(new THREE.PlaneGeometry(9, 34)), beamMat);
   beam.rotation.x = -Math.PI / 2; scene.add(beam);
 
   // BILLBOARDS
@@ -301,7 +321,7 @@ export function mountRoadTrip(stage: HTMLElement, items: TripItem[], hooks: Hook
     if (w >= 700 && !composer) {
       composer = new EffectComposer(renderer);
       composer.addPass(new RenderPass(scene, camera));
-      bloom = new UnrealBloomPass(new THREE.Vector2(w, h), 0.85, 0.55, 0.82);
+      bloom = new UnrealBloomPass(new THREE.Vector2(w, h), day ? 0.12 : 0.85, 0.55, 0.82);
       composer.addPass(bloom);
       composer.addPass(new OutputPass());
     }
@@ -342,16 +362,18 @@ export function mountRoadTrip(stage: HTMLElement, items: TripItem[], hooks: Hook
       b.lit += (want - b.lit) * 0.12;
       b.flick = Math.max(0, b.flick - dt);
       const flicker = b.flick > 0 ? (Math.sin(time * 90) > 0.2 ? 1 : 0.35) : 1;
-      const k = Math.min(0.97, (0.3 + 0.67 * b.lit) * flicker * (hover === i ? 1.06 : 1));
+      const base = day ? 0.72 : 0.3;
+      const k = Math.min(0.97, (base + (0.97 - base) * b.lit) * flicker * (hover === i ? 1.06 : 1));
       b.faceMat.color.setRGB(k, k * (0.97 + 0.03 * (1 - b.lit)), k * (0.9 + 0.1 * (1 - b.lit)));
-      (b.halo.material as THREE.MeshBasicMaterial).opacity = 0.32 * b.lit * flicker;
-      b.cones.forEach((c) => ((c.material as THREE.MeshBasicMaterial).opacity = 0.42 * b.lit * flicker));
+      (b.halo.material as THREE.MeshBasicMaterial).opacity = (day ? 0 : 0.32) * b.lit * flicker;
+      b.cones.forEach((c) => ((c.material as THREE.MeshBasicMaterial).opacity = (day ? 0.08 : 0.42) * b.lit * flicker));
     });
     if (near !== focus && reach > 0.5) { focus = near; hooks.onFocus?.(focus); }
 
     // traffic keeps moving whatever the reader does; cars that pass the camera go round again far ahead
-    oncoming.forEach((c) => { c.z += c.v * dt; if (c.z > z + 6) c.z = z - rnd(180, 300); c.mesh.position.z = c.z; });
-    ahead.forEach((c) => { c.z -= c.v * dt; if (c.z > z - 8) c.z = z - rnd(60, 220); if (c.z < z - 320) c.z = z - rnd(30, 80); c.mesh.position.z = c.z; });
+    // cars go round again before they come close: up close a simple car shape looks like a box
+    oncoming.forEach((c) => { c.z += c.v * dt; if (c.z > z - 24) c.z = z - rnd(180, 300); c.mesh.position.z = c.z; });
+    ahead.forEach((c) => { c.z -= c.v * dt; if (c.z > z - 24) c.z = z - rnd(80, 220); if (c.z < z - 320) c.z = z - rnd(40, 90); c.mesh.position.z = c.z; });
     lampGlows.forEach((g) => g.lookAt(camera.position));
 
     if (composer) composer.render(); else renderer.render(scene, camera);
@@ -387,6 +409,28 @@ export function mountRoadTrip(stage: HTMLElement, items: TripItem[], hooks: Hook
     return new DOMRect(Math.min(...xs), Math.min(...ys), Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
   };
 
+  // NIGHT (dark theme) or a hazy MORNING (light theme): the same road, relit. Follows the theme switch live.
+  let day = false;
+  const look = (light: boolean) => {
+    day = light;
+    const sky = light ? 0xe8e8e4 : PAPER;
+    renderer.setClearColor(sky, 1);
+    (scene.fog as THREE.FogExp2).color.setHex(sky); (scene.fog as THREE.FogExp2).density = light ? 0.0085 : 0.011;
+    hemi.color.setHex(light ? 0xffffff : 0x9aa0b4); hemi.groundColor.setHex(light ? 0x8e8e8a : 0x050506); hemi.intensity = light ? 1.5 : 0.35;
+    moon.color.setHex(light ? 0xfff4e2 : 0xcfd6ff); moon.intensity = light ? 1.3 : 0.35;
+    roadMat.color.setHex(light ? 0x5e5e63 : 0x0e0e11); groundMat.color.setHex(light ? 0xc9c9c4 : 0x08080a);
+    lineMat.color.setHex(light ? 0xf4f4f2 : 0x8c8c96); dashMat.color.setHex(light ? 0xf8f8f6 : 0xd8d8de);
+    blockMat.color.setHex(light ? 0xb4b4ba : 0x111116);
+    bodyMat.color.setHex(light ? 0xa4a4ab : 0x15151a); bodyMat.metalness = light ? 0.15 : 0.7;   // silver cars by day (matte enough to catch the light); dark ones at night
+    winMat.opacity = light ? 0 : 0.75; starMat.opacity = light ? 0 : 0.7;
+    horizonMat.map = light ? daySky : nightSky; horizonMat.needsUpdate = true;
+    lampGlowMat.opacity = light ? 0.22 : 0.9; poolMat.opacity = light ? 0.03 : 0.16; streakMat.opacity = light ? 0.05 : 0.22;
+    beamMat.opacity = light ? 0.06 : 0.42;
+    if (bloom) bloom.strength = light ? 0.12 : 0.85;
+    kick();
+  };
+  const stopTheme = onTheme((t) => look(t === 'light'));
+
   const ro = new ResizeObserver(resize); ro.observe(stage);
   const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) { last = 0; kick(); } });
   io.observe(stage);
@@ -400,7 +444,7 @@ export function mountRoadTrip(stage: HTMLElement, items: TripItem[], hooks: Hook
     progressOf(i: number) { return (i + LEAD) / (n - 1 + LEAD * 2); },
     rectOf,
     dispose() {
-      alive = false; cancelAnimationFrame(raf); ro.disconnect(); io.disconnect();
+      alive = false; cancelAnimationFrame(raf); ro.disconnect(); io.disconnect(); stopTheme();
       canvas.removeEventListener('pointermove', onMove); canvas.removeEventListener('click', onClick); canvas.removeEventListener('pointerleave', onLeave);
       disposables.forEach((d) => d.dispose()); boards.forEach((b) => b.faceMat.map?.dispose()); composer?.dispose(); bloom?.dispose(); renderer.dispose(); canvas.remove();
     },

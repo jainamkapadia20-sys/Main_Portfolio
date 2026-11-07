@@ -19,5 +19,12 @@
   .layer::after { content: ''; position: absolute; inset: 0; background-image: var(--dark), var(--sheen); background-size: 200%, 100%; background-attachment: fixed;
     mix-blend-mode: difference; animation: aurora 60s linear infinite; }
   @keyframes aurora { from { background-position: 50% 50%, 50% 50%; } to { background-position: 350% 50%, 350% 50%; } }
+  /* light: the same drifting bands on the page's paper, the sheen in soft silvers, multiplied in rather than inverted */
+  :global(:root[data-theme="light"]) .aurora { background: #F4F4F2; }
+  :global(:root[data-theme="light"]) .layer {
+    --dark: repeating-linear-gradient(100deg, #F4F4F2 0%, #F4F4F2 7%, transparent 10%, transparent 12%, #F4F4F2 16%);
+    --sheen: repeating-linear-gradient(100deg, #e4e4e0 10%, #b9b9b6 15%, #dadad6 20%, #9f9fa4 25%, #d0d0cc 30%);
+    opacity: .7; }
+  :global(:root[data-theme="light"]) .layer::after { mix-blend-mode: multiply; }
   :global(:root[data-motion="calm"]) .layer::after { animation: none; }
 </style>

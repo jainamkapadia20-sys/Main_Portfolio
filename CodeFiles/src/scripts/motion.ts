@@ -39,7 +39,7 @@ themeBtn?.addEventListener('click', () => {
   // inside a time-jump era, the switch first brings you home to the base theme
   if (root.dataset.era) { delete root.dataset.era; try { sessionStorage.removeItem('era'); } catch {} return; }
   root.dataset.theme = root.dataset.theme === 'light' ? 'dark' : 'light';
-  try { localStorage.setItem('theme', root.dataset.theme); } catch {}
+  try { sessionStorage.setItem('theme', root.dataset.theme); } catch {}   // for this visit only: the next one opens in light again
   document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')!.content = root.dataset.theme === 'light' ? '#F4F4F2' : '#0B0708';
   themeLabel();
 });

@@ -106,6 +106,20 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .pic img { width: 100%; height: 100%; object-fit: cover; }
   .ph { place-self: center; }
   .grid .t { font-size: 1.15rem; font-weight: 600; }
+  /* light theme: the drive is a hazy morning, so the overlay reads dark on light */
+  :global(:root[data-theme="light"]) .stage { background: #e8e8e4; }
+  :global(:root[data-theme="light"]) .stage::after { background: radial-gradient(ellipse 80% 70% at 50% 45%, transparent 60%, rgba(0,0,0,.16)); opacity: 1; mix-blend-mode: normal; }
+  :global(:root[data-theme="light"]) .hud { color: #0E0E0E; background: linear-gradient(to top, rgba(244,244,242,.92) 20%, transparent); }
+  :global(:root[data-theme="light"]) .count, :global(:root[data-theme="light"]) .sub, :global(:root[data-theme="light"]) .hint { color: rgba(14,14,14,.6); }
+  :global(:root[data-theme="light"]) .count span { color: #0E0E0E; }
+  :global(:root[data-theme="light"]) .round { color: #0E0E0E; background: rgba(255,255,255,.6); box-shadow: inset 0 0 0 1px rgba(0,0,0,.14); }
+  :global(:root[data-theme="light"]) .round:hover { background: #fff; }
+  :global(:root[data-theme="light"]) .open { background: #0E0E0E; color: #F4F4F2; }
+  :global(:root[data-theme="light"]) .open:hover { background: #000; }
+  :global(:root[data-theme="light"]) :is(.round, .open):focus-visible { outline-color: #0E0E0E; }
+  :global(:root[data-theme="light"]) .route { background: rgba(0,0,0,.12); }
+  :global(:root[data-theme="light"]) .route i { background: rgba(0,0,0,.35); }
+  :global(:root[data-theme="light"]) .route b { background: #0E0E0E; }
   :global(:root[data-motion="calm"]) .wheel::after { animation: none; }
 </style>
 
