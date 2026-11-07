@@ -1,10 +1,12 @@
 ---
-// The Adaptive Dashboard case study, written for someone who has never heard of the project. It opens by saying, in
-// plain words, what an instrument cluster is and what changed. The result follows (the home screen, part by part),
-// then the problem is told as a short scenario in words, an attention gauge fills into the red, and five chapters walk
-// through it: the brief, research, prototyping, the cluster, the debrief. Everything moves with the scroll. On the left a road runs down the page:
-// a car drives down it as you scroll, and the signposts beside it jump to each chapter. Shared behaviour (count-up
-// numbers, the next-project link) lives in src/pages/work/[slug].astro.
+// The Adaptive Dashboard case study, told along the double diamond: Discover and Define open up and then narrow the
+// problem, Develop and Deliver open up and then narrow the solution, and an Outcome closes it. The project is about
+// driving, so the diamond is drawn as a road that widens and narrows: it heads each phase with that phase's stretch
+// drawn in as you arrive, and a small route strip at the bottom of the screen drives a car along it as you read.
+// Inside the phases: the evening scenario and the attention gauge (Discover), the brief with its struck-out word and
+// the findings that became decisions (Define), the storyboards, toy-car tests, sketches and a before/after slider of
+// what got cut (Develop), and the finished screens with a danger-level picker and the cluster player (Deliver).
+// Shared behaviour (count-up numbers, the next-project link) lives in src/pages/work/[slug].astro.
 import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
 import ClusterPlayer from '../ClusterPlayer.astro';
@@ -20,10 +22,13 @@ import autopark from '../../assets/hmi/10-park-auto.png';
 import reversing from '../../assets/hmi/11-parking-manual.png';
 import braking from '../../assets/hmi/12-crash-alert.png';
 import flows from '../../assets/hmi/flows.jpg';
+import board from '../../assets/hmi/research.jpg';
+import sketches from '../../assets/hmi/sketches.jpg';
 import sbBlind from '../../assets/hmi/sb-blindspot.jpg';
 import sbExit from '../../assets/hmi/sb-exit.jpg';
 import sbPed from '../../assets/hmi/sb-pedestrian.jpg';
 import sbPark from '../../assets/hmi/sb-parking.jpg';
+import sbFatigue from '../../assets/hmi/sb-fatigue.jpg';
 import toyLane from '../../assets/hmi/toy-lane.jpg';
 import toyChange from '../../assets/hmi/toy-change.jpg';
 import toyKeep from '../../assets/hmi/toy-keep.jpg';
@@ -34,27 +39,26 @@ interface Props { project: P; next?: P }
 const { project, next } = Astro.props;
 const p = project.data;
 const cluster = p.blocks.find((b) => b.type === 'cluster') as Extract<typeof p.blocks[number], { type: 'cluster' }> | undefined;
+const pad = (n: number) => String(n).padStart(2, '0');
 
-const route = [
-  { id: 'start', t: 'Overview' }, { id: 'result', t: 'The result' }, { id: 'problem', t: 'The problem' }, { id: 'brief', t: 'The brief' }, { id: 'notes', t: 'Research' },
-  { id: 'proto', t: 'Prototyping' }, { id: 'cluster', t: 'The cluster' }, { id: 'debrief', t: 'Debrief' },
+// the four stretches of road: diverge on the problem, converge on a brief, diverge on ideas, converge on the screens
+const phases = [
+  { id: 'discover', name: 'Discover', way: 'Diverge', ask: 'What goes wrong behind the wheel?', gist: 'Opening up the problem: a real evening drive, an attention budget and four research questions.' },
+  { id: 'define', name: 'Define', way: 'Converge', ask: 'What should the screen do?', gist: 'Narrowing it to one brief, four findings that became decisions and the rules every screen follows.' },
+  { id: 'develop', name: 'Develop', way: 'Diverge', ask: 'How could it work?', gist: 'Trying it many ways: storyboards, toy cars on a paper road, sketches, logic, and what got cut.' },
+  { id: 'deliver', name: 'Deliver', way: 'Converge', ask: 'What does the driver see?', gist: 'Landing on the screens: the home screen, four situations, one ring with four levels, and the full set.' },
 ];
-// the finished home screen, labelled: marker positions are percentages of the 1400 × 700 screenshot
-const parts = [
-  { x: 7, y: 27, t: 'Speed', d: "How fast you're going. The ring around it changes colour with the danger level." },
-  { x: 93, y: 27, t: 'Revs', d: 'Engine revs, shown on the open road and hidden in traffic.' },
-  { x: 39, y: 16, t: 'Road signs', d: "The speed limit and road rules, read by the car's camera." },
-  { x: 59, y: 60, t: 'Your car', d: 'Your car and the road ahead, with the cars around it.' },
-  { x: 59, y: 84, t: 'Cruise control', d: 'Adaptive cruise is on, holding 100 km/h.' },
-  { x: 60, y: 96, t: 'Status bar', d: 'Fuel, drive mode and engine temperature.' },
-];
-const how = [
-  { t: 'The car senses', d: 'Speed, map position, cameras and radar.' },
-  { t: 'It picks a mode', d: 'Open road or traffic, from speed and surroundings.' },
-  { t: 'It ranks the danger', d: 'Clear, aware, caution or act, shown by the ring.' },
-  { t: 'It speaks up only when needed', d: 'A critical event takes over the whole screen.' },
-];
-// the problem, told as a short scenario; each beat's words light up as you scroll through it
+// the road: two diamonds side by side; each phase is one quarter of it (viewBox 1200 × 240)
+const roadPaths = '<path d="M0 120 L300 22 L600 120 L900 22 L1200 120" /><path d="M0 120 L300 218 L600 120 L900 218 L1200 120" /><path class="lane" d="M0 120 H1200" />';
+const road = (id: string, q: number, cls = '') => `<svg class="road ${cls}" viewBox="0 0 1200 240" preserveAspectRatio="none" aria-hidden="true">
+  <defs><clipPath id="${id}-done"><rect x="0" y="0" width="${Math.max(0, q) * 300}" height="240" /></clipPath>
+  <clipPath id="${id}-now"><rect class="grow" x="${Math.max(0, q) * 300}" y="0" width="300" height="240" /></clipPath></defs>
+  <g class="base">${roadPaths}</g>
+  ${q >= 0 ? `<g class="done" clip-path="url(#${id}-done)">${roadPaths}</g><g class="now" clip-path="url(#${id}-now)">${roadPaths}</g>` : ''}
+</svg>`;
+const car = '<svg class="car" viewBox="0 0 40 24" aria-hidden="true"><rect class="body" x="2" y="3" width="36" height="18" rx="6" /><rect class="glass" x="25" y="6" width="7" height="12" rx="2" /><rect class="glass" x="8" y="6" width="4" height="12" rx="1.5" /><rect class="lamp" x="36" y="5" width="2" height="4" rx="1" /><rect class="lamp" x="36" y="15" width="2" height="4" rx="1" /></svg>';
+
+// DISCOVER: the evening, told a beat at a time; each beat's words light up as you scroll through it
 const beats = [
   { k: '9:04 pm', t: "You're driving home. It's raining, and traffic has slowed to a crawl." },
   { k: '9:05 pm', t: 'Brake lights flash ahead. A scooter squeezes past on your left.' },
@@ -63,132 +67,85 @@ const beats = [
   { k: 'The problem', t: 'For two seconds, nobody is watching the road.' },
 ];
 const load = ['Speed', 'Revs', 'Media', 'Maps', 'Calls', 'Alerts', 'Climate', 'Range'];
-// the research board's key sticky notes, grouped under the question they answer (from the project's Miro board)
-const board = [
-  { q: 'What matters most while driving?', c: 'y', notes: ['Speed visibility', 'Navigation directions', 'Blind spot warnings', 'Fuel or battery range'] },
-  { q: 'How does that change with the situation?', c: 'g', notes: ['Navigation in unfamiliar areas', 'Parking cameras in tight spaces', 'ADAS alerts at night', 'A simpler screen in rain'] },
-  { q: 'What distracts the most?', c: 'p', notes: ['Touchscreen climate controls', 'Typing a destination', 'Deep menus', 'Switching between screens'] },
-  { q: 'What would reduce the effort?', c: 'b', notes: ['Larger icons and buttons', 'Information that fits the moment', 'Physical controls for essentials', 'Fewer things on screen while moving'] },
+// the research board's key sticky notes, under the question they answer (from the project's Miro board)
+const notes = [
+  { q: 'What matters most while driving?', c: 'y', n: ['Speed visibility', 'Navigation directions', 'Blind spot warnings', 'Fuel or battery range'] },
+  { q: 'How does that change with the situation?', c: 'g', n: ['Navigation in unfamiliar areas', 'Parking cameras in tight spaces', 'ADAS alerts at night', 'A simpler screen in rain'] },
+  { q: 'What distracts the most?', c: 'p', n: ['Touchscreen climate controls', 'Typing a destination', 'Deep menus', 'Switching between screens'] },
+  { q: 'What would reduce the effort?', c: 'b', n: ['Larger icons and buttons', 'Information that fits the moment', 'Physical controls for essentials', 'Fewer things on screen while moving'] },
 ];
-const spec = [
+// DEFINE: what the research found, and the decision each finding forced
+const findings = [
+  { f: 'Speed gets checked every few seconds.', d: 'Speed stays the biggest thing on every screen.', src: cruise, alt: 'Highway screen with the speed large on the left' },
+  { f: 'What matters changes with the road.', d: 'The screen changes too: highway, traffic, parking.', src: traffic, alt: 'Traffic mode with the map and the cars around you' },
+  { f: 'Urgent and trivial look the same.', d: 'Danger gets its own signal: the colour of one ring.', src: cutin, alt: 'Red ring and a warning sign for a car cutting in' },
+  { f: 'Touch costs attention.', d: 'The screen asks for one tap at most, never a menu.', src: autopark, alt: 'Auto park asks for one tap to confirm' },
+];
+const rules = [
   ['Show', 'Only what this road needs, right now'],
   ['Rank', 'Safety first, everything else after'],
-  ['Read', 'Whole state in one glance'],
+  ['Read', 'The whole state in one glance'],
   ['Touch', 'As little as possible, never in menus'],
 ];
-const scale = [
-  { src: traffic, c: '#3FD07A', t: 'Clear', d: 'Nothing near' },
-  { src: alongside, c: '#E8D53A', t: 'Aware', d: 'Car alongside' },
-  { src: closing, c: '#F08A2C', t: 'Caution', d: 'Gap closing' },
-  { src: cutin, c: '#E8343C', t: 'Act', d: 'Cut-in' },
+const limits = p.challenge?.constraints.filter((c) => !/porsche/i.test(c)) ?? [];
+// DEVELOP
+const boards = [
+  { src: sbBlind, cap: 'Blind spot on the highway' }, { src: sbExit, cap: 'Taking an exit' }, { src: sbPed, cap: 'A pedestrian in traffic' },
+  { src: sbPark, cap: 'Parking in town' }, { src: sbFatigue, cap: 'A tired driver' },
+];
+const toys = [
+  { src: toyLane, cap: 'Drifting out of the lane' }, { src: toyChange, cap: 'Changing lanes when clear' },
+  { src: toyKeep, cap: 'Holding the lane' }, { src: toyPark, cap: 'Too close while parking' },
+];
+// DELIVER: the home screen, part by part (marker positions are percentages of the 1400 × 700 screenshot)
+const parts = [
+  { x: 7, y: 27, t: 'Speed', d: "How fast you're going. The ring around it changes colour with the danger level." },
+  { x: 93, y: 27, t: 'Revs', d: 'Engine revs, shown on the open road and hidden in traffic.' },
+  { x: 39, y: 16, t: 'Road signs', d: "The speed limit and road rules, read by the car's camera." },
+  { x: 59, y: 60, t: 'Your car', d: 'Your car and the road ahead, with the cars around it.' },
+  { x: 59, y: 84, t: 'Cruise control', d: 'Adaptive cruise is on, holding 100 km/h.' },
+  { x: 60, y: 96, t: 'Status bar', d: 'Fuel, drive mode and engine temperature.' },
+];
+const modes = [
+  { src: cruise, k: 'Open road', t: 'Highway', d: 'Speed, revs, the limit, cruise control and the next exit.' },
+  { src: traffic, k: 'City', t: 'Traffic', d: 'The rev counter goes. The map and the cars around you take its place.' },
+  { src: autopark, k: 'Tight spaces', t: 'Parking', d: 'It finds a space and asks once. Reversing turns it into the rear camera.' },
+  { src: braking, k: 'Danger', t: 'Takeover', d: 'Something critical fills the screen in red. One message, nothing else.' },
+];
+const levels = [
+  { src: traffic, c: '#3FD07A', t: 'Clear', d: 'Nothing near. The ring stays green and the screen stays calm.' },
+  { src: alongside, c: '#E8D53A', t: 'Aware', d: 'A car alongside. The ring turns yellow on that side; nothing else moves.' },
+  { src: closing, c: '#F08A2C', t: 'Caution', d: 'The gap is closing. Orange, and the car ahead is outlined.' },
+  { src: cutin, c: '#E8343C', t: 'Act', d: 'A car cuts in. Red, with one warning sign: brake now.' },
+];
+const flow = [
+  { t: 'The car senses', d: 'Speed, map position, cameras and radar.' },
+  { t: 'It picks a mode', d: 'Open road or traffic, from speed and surroundings.' },
+  { t: 'It ranks the danger', d: 'Clear, aware, caution or act, shown by the ring.' },
+  { t: 'It speaks up only when needed', d: 'A critical event takes over the whole screen.' },
 ];
 const pressure = [
-  { t: 'Someone steps out', d: 'A red cone points at the person, so the warning says where, not just what.' },
-  { t: 'Backing in', d: 'The cluster becomes the rear camera, with arcs that tighten as you get close.' },
-  { t: 'Key on', d: 'Every warning light checks itself once, then clears before you move.' },
+  { src: pedestrian, t: 'Someone steps out', d: 'A red cone points at the person, so the warning says where, not just what.' },
+  { src: reversing, t: 'Backing in', d: 'The cluster becomes the rear camera, with arcs that tighten as you get close.' },
+  { src: startup, t: 'Key on', d: 'Every warning light checks itself once, then clears before you move.' },
 ];
-// Scrolly chapters: the pictures stay put on one side while the steps scroll past on the other. Each step names the
-// picture it shows (p) and, for the labelled screen, the part it points at (m). A picture is one screen, a grid of
-// up to four, or two side by side.
-type Pic = { kind: 'one'; src: ImageMetadata; alt: string } | { kind: 'marked' }
-  | { kind: 'grid' | 'vs'; items: { src: ImageMetadata; alt: string; cap: string; c?: string }[] };
-type Step = { k: string; t: string; d: string; p: number; m?: number };
-const resultPics: Pic[] = [{ kind: 'marked' }];
-const resultSteps: Step[] = [
-  { k: 'The home screen', t: 'On the open road', d: 'Six things, and nothing else. Scroll to see each one.', p: 0 },
-  ...parts.map((pt, i) => ({ k: String(i + 1).padStart(2, '0'), t: pt.t, d: pt.d, p: 0, m: i })),
-];
-const modePics: Pic[] = [
-  { kind: 'one', src: cruise, alt: 'Highway mode: speed, revs, the limit and cruise control' },
-  { kind: 'one', src: traffic, alt: 'Traffic mode: speed ring, map and the cars around you' },
-  { kind: 'one', src: autopark, alt: 'Auto park: a free space highlighted, one tap to confirm' },
-  { kind: 'one', src: braking, alt: 'Emergency braking: the whole screen turns red' },
-];
-const modeSteps: Step[] = [
-  { k: 'Open road', t: 'Highway mode', d: 'Speed, revs, the limit, cruise control and the next exit.', p: 0 },
-  { k: 'City', t: 'Traffic mode', d: 'The rev counter goes. The map and the cars around you take its place.', p: 1 },
-  { k: 'Tight spaces', t: 'Parking', d: 'It finds a space and asks once. Reversing turns it into the rear camera.', p: 2 },
-  { k: 'Danger', t: 'Alerts take over', d: 'Something critical fills the screen in red. One message, nothing else.', p: 3 },
-];
-const patternPics: Pic[] = [
-  { kind: 'one', src: cruise, alt: 'Highway screen with the speed large on the left' },
-  { kind: 'one', src: traffic, alt: 'Traffic mode with map and proximity view' },
-  { kind: 'one', src: cutin, alt: 'Red ring and warning sign for a cut-in' },
-  { kind: 'one', src: autopark, alt: 'Auto park asks for one tap to confirm' },
-];
-const patternSteps: Step[] = [
-  { k: 'Pattern 01', t: 'Speed gets checked every few seconds', d: 'So speed stays the biggest thing on every screen.', p: 0 },
-  { k: 'Pattern 02', t: 'What matters changes with the road', d: 'So the screen changes too: highway, traffic, parking.', p: 1 },
-  { k: 'Pattern 03', t: 'Urgent and trivial look the same', d: 'So danger gets its own signal: the colour of the ring.', p: 2 },
-  { k: 'Pattern 04', t: 'Touch costs attention', d: 'So the screen asks for one tap at most, never a menu.', p: 3 },
-];
-const protoPics: Pic[] = [
-  { kind: 'grid', items: [
-    { src: sbBlind, alt: 'Storyboard: blind spot on the highway', cap: 'Blind spot' }, { src: sbExit, alt: 'Storyboard: taking an exit', cap: 'Exit' },
-    { src: sbPed, alt: 'Storyboard: pedestrian in traffic', cap: 'Pedestrian' }, { src: sbPark, alt: 'Storyboard: parking in town', cap: 'Parking' }] },
-  { kind: 'grid', items: [
-    { src: toyLane, alt: 'Model car drifting out of its lane', cap: 'Drifting' }, { src: toyChange, alt: 'Model car changing lanes when clear', cap: 'Changing lanes' },
-    { src: toyKeep, alt: 'Model car holding its lane', cap: 'Holding the lane' }, { src: toyPark, alt: 'Model car too close while parking', cap: 'Parking' }] },
-  { kind: 'one', src: flows, alt: 'User and system flowcharts for lane change, speed breaker and traffic mode' },
-  { kind: 'vs', items: [
-    { src: cruise, alt: 'Highway screen with speed and rpm gauges', cap: 'Highway: revs kept' },
-    { src: traffic, alt: 'Traffic screen with the rpm gauge removed', cap: 'Traffic: revs dropped' }] },
-];
-const protoSteps: Step[] = [
-  { k: 'A · Storyboards', t: 'Seven moments, six frames each', d: 'Each situation drawn from calm to safe before any screen existed.', p: 0 },
-  { k: 'B · Bench test', t: 'Model cars on a paper road', d: 'Every scenario acted out, with warnings drawn where the screen would show them.', p: 1 },
-  { k: 'C · Logic', t: 'Sensor in, screen out', d: 'Each scenario mapped, including the moment a warning becomes an alert.', p: 2 },
-  { k: 'D · What got cut', t: 'The rev counter, in traffic', d: 'At walking pace revs say nothing, so the space went to the map and the cars around you.', p: 3 },
-];
-const rulePics: Pic[] = [
-  { kind: 'one', src: cruise, alt: 'The cluster reading the road: speed, signs and cruise control' },
-  { kind: 'vs', items: [
-    { src: cruise, alt: 'Highway mode', cap: 'Open road' }, { src: traffic, alt: 'Traffic mode', cap: 'Traffic' }] },
-  { kind: 'grid', items: scale.map((r) => ({ src: r.src, alt: `${r.t}: ${r.d}`, cap: `${r.t} · ${r.d}`, c: r.c })) },
-  { kind: 'one', src: braking, alt: 'Emergency braking: the whole screen turns red' },
-  { kind: 'one', src: pedestrian, alt: 'Pedestrian Detected warning with a red cone ahead of the car' },
-  { kind: 'one', src: reversing, alt: 'Rear camera view beside a top-down car with sensor arcs' },
-  { kind: 'one', src: startup, alt: 'Startup screen with gauges at zero and all warning lights on' },
-];
-const ruleSteps: Step[] = [
-  ...how.map((h, i) => ({ k: `Rule ${String(i + 1).padStart(2, '0')}`, t: h.t, d: h.d, p: i })),
-  ...pressure.map((e, i) => ({ k: 'Under pressure', t: e.t, d: e.d, p: 4 + i })),
-];
+const made = [...(p.deliverables ?? []), 'A 20-second film'];
 const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="t-learn-arm t-learn-arm-top" d="M6 4L10 8" /><path class="t-learn-arm t-learn-arm-bot" d="M10 8L6 12" /></svg>';
-const pad = (n: number) => String(n).padStart(2, '0');
+const right = '<svg class="to" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" /></svg>';
 ---
-<article class="trip" aria-labelledby="case-h" data-trip>
-  <!-- the route rail: follows the reader; each stop jumps to its chapter -->
-  <nav class="rail" aria-label="Chapters" data-rail>
-    <span class="road" aria-hidden="true" data-road><span class="driven" data-fill></span>
-      <svg class="car" data-car viewBox="0 0 24 40"><path class="beam" d="M5 38 L-4 70 H28 L19 38 Z" /><rect class="body" x="3" y="2" width="18" height="36" rx="6" /><rect class="glass" x="6" y="9" width="12" height="7" rx="2" /><rect class="glass" x="6" y="27" width="12" height="4" rx="1.5" /><rect class="tail" x="5" y="2" width="4" height="2" rx="1" /><rect class="tail" x="15" y="2" width="4" height="2" rx="1" /></svg>
-    </span>
-    <ol>{route.map((r) => <li><a href={`#${r.id}`} data-stop={r.id}><span class="sign" aria-hidden="true"></span><span class="lbl">{r.t}</span></a></li>)}</ol>
-  </nav>
-  <span class="topbar" aria-hidden="true"><span></span><svg class="mini" viewBox="0 0 40 24"><rect x="2" y="3" width="36" height="18" rx="6" /><rect x="26" y="6" width="7" height="12" rx="2" class="glass" /></svg></span>
+<article class="case" aria-labelledby="case-h">
 
-  <!-- OVERVIEW: what it is, the problem and the idea, in plain words -->
-  <section id="start" class="sec wrap intro" data-ch>
-    <header class="ident">
-      <p class="mono acc">HMI · instrument cluster concept</p>
-      <h1 id="case-h">{p.title}</h1>
-      <p class="line">A redesign of the screen behind the steering wheel, so it shows less as driving gets harder.</p>
-    </header>
-    <ol class="plain">
-      <li data-scrub><p class="mono acc">The screen</p><p>An instrument cluster is the display behind the wheel. It shows your speed, fuel and warnings.</p></li>
-      <li data-scrub style="--d:.12"><p class="mono acc">The problem</p><p>Today it shows everything, all the time. Warnings get lost, and drivers look away from the road to find things.</p></li>
-      <li data-scrub style="--d:.24"><p class="mono acc">The idea</p><p>Let it change with the road: calm on the highway, focused in traffic, loud only when something is dangerous.</p></li>
-    </ol>
-    <dl class="meta-row">
-      <div><dt class="mono">Role</dt><dd>{p.role.join(', ')}</dd></div>
-      <div><dt class="mono">Length</dt><dd>{p.duration}</dd></div>
-      <div><dt class="mono">Made with</dt><dd>{p.tools.join(', ')}</dd></div>
+  <!-- THE COVER: what it is, the facts, and the film -->
+  <section class="sec wrap cover" id="start">
+    <p class="kick">HMI · Instrument cluster concept · {p.year}</p>
+    <h1 id="case-h">{p.title}</h1>
+    <p class="line">A redesign of the screen behind the steering wheel, so it shows less as driving gets harder.</p>
+    <dl class="facts">
+      <div><dt>Role</dt><dd>{p.role.join(', ')}</dd></div>
+      <div><dt>Project</dt><dd>{p.duration}</dd></div>
+      <div><dt>Made with</dt><dd>{p.tools.join(', ')}</dd></div>
+      <div><dt>Outcome</dt><dd>12 cluster screens, 2 modes, 4 warning levels</dd></div>
     </dl>
-  </section>
-
-  <!-- THE FILM: the whole project in 20 seconds; plays muted once it is mostly on screen, pauses when it leaves -->
-  <section class="sec wrap film" aria-labelledby="film-h">
-    <p class="chap mono"><span>&#9654;</span><span id="film-h">The project in 20 seconds</span></p>
     <figure class="reel" data-scrub="pop" data-film>
       <video src={withBase('/media/hmi-film.mp4')} poster={withBase('/media/hmi-film.jpg')} muted loop playsinline preload="metadata" width="1280" height="720"
         aria-label="A 20-second film: a cluster buried in alerts, the research and sketches, then the adaptive screens in highway, traffic and emergency braking"></video>
@@ -199,548 +156,654 @@ const pad = (n: number) => String(n).padStart(2, '0');
       <button class="play" type="button" aria-label="Pause the film" data-play>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path class="pz" d="M8 5h3v14H8zM13 5h3v14h-3z" /><path class="pl" d="M8 5l11 7-11 7z" /></svg>
       </button>
+      <figcaption class="cap">The project in 20 seconds.</figcaption>
     </figure>
   </section>
 
-  <!-- THE RESULT: the home screen, one part at a time -->
-  <section id="result" class="sec wrap" data-ch aria-labelledby="rs-h">
-    <p class="chap mono"><span>&#9679;</span>The result</p>
-    <h2 id="rs-h" class="display" data-scrub>A screen that shows what the moment needs</h2>
-    <p class="tldr" data-scrub><span class="mono acc">In short</span>The home screen on the open road. Each step lights up one part.</p>
-    <div class="scrolly" data-scrolly>
-      <div class="pics">
-        {resultPics.map((pic, i) => (
-          <figure class:list={['pic', pic.kind, { on: i === 0 }]} data-pic={i}>
-            {pic.kind === 'marked' ? (
-              <div class="shot">
-                <Image src={cruise} alt="The finished cluster's home screen on the open road" widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
-                {parts.map((pt, j) => <span class="mark" data-mark={j} style={`left:${pt.x}%; top:${pt.y}%`} aria-hidden="true">{j + 1}</span>)}
-              </div>
-            ) : pic.kind === 'one' ? (
-              <Image src={pic.src} alt={pic.alt} widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
-            ) : pic.items.map((it) => (
-              <div class="cell" style={it.c ? `--c:${it.c}` : undefined}><Image src={it.src} alt={it.alt} widths={[400, 800]} sizes="(min-width: 1100px) 380px, 50vw" /><span class="mono">{it.cap}</span></div>
-            ))}
-          </figure>
-        ))}
-      </div>
-      <ol class="steps">
-        {resultSteps.map((st, i) => <li data-step={i} data-p={st.p} data-m={st.m ?? -1} class:list={{ on: i === 0 }}><span class="mono acc">{st.k}</span><p class="st-t">{st.t}</p><p class="muted">{st.d}</p></li>)}
+  <!-- THE ROUTE: the whole process as one road; each stretch links to its phase -->
+  <section class="sec wrap route-sec" aria-labelledby="route-h">
+    <p class="kick">How it was made</p>
+    <h2 id="route-h" class="big" data-scrub>Two diamonds of road: one for the problem, one for the answer.</h2>
+    <div class="route" data-scrub>
+      <Fragment set:html={road('rt', -1)} />
+      <ol class="stops">
+        {phases.map((ph, i) => <li><a href={`#${ph.id}`}><span class="n">{pad(i + 1)}</span><b>{ph.name}</b><span class="way">{ph.way}</span><span class="gist">{ph.ask}</span></a></li>)}
       </ol>
     </div>
   </section>
 
-  <!-- THE PROBLEM: a scenario in words only, one beat at a time -->
-  <section id="problem" class="pin story" data-ch data-pin="story" style={`--n:${beats.length}`} aria-labelledby="pb-h">
-    <div class="stage">
-      <h2 id="pb-h" class="mono acc scene-k">The problem, as a scenario</h2>
-      <ol class="beats">
-        {beats.map((b, i) => {
-          const words = b.t.split(' ');
-          return <li data-beat={i} class:list={{ last: i === beats.length - 1 }} style={`--wc:${words.length}`}>
-            <span class="mono when">{b.k}</span>
-            <p class="beat">{words.map((w, j) => <span style={`--w:${j}`}>{w} </span>)}</p>
-          </li>;
-        })}
-      </ol>
-      <span class="ticks" aria-hidden="true">{beats.map((_, i) => <i data-tick={i}></i>)}</span>
-    </div>
-  </section>
-
-  <!-- the attention gauge fills as the screen asks for more -->
-  <section class="pin gauge" data-pin="gauge" aria-labelledby="g-h">
-    <div class="stage">
-      <p class="mono acc">Attention budget</p>
-      <h2 id="g-h" class="h2">Everything asks for a look</h2>
-      <svg class="dial" viewBox="0 0 240 150" aria-hidden="true">
-        <path class="arc" d="M30 130 A90 90 0 0 1 210 130" pathLength="1" />
-        <path class="arc red" d="M30 130 A90 90 0 0 1 210 130" pathLength="1" />
-        <g class="needle" data-needle><line x1="120" y1="130" x2="120" y2="54" /><circle cx="120" cy="130" r="7" /></g>
-      </svg>
-      <p class="verdict mono" data-verdict>Within budget</p>
-      <ul class="asks">{load.map((l) => <li data-ask>{l}</li>)}</ul>
-    </div>
-  </section>
-
-  <!-- 01 THE BRIEF -->
-  <section id="brief" class="sec wrap" data-ch>
-    <p class="chap mono"><span>01</span>The brief</p>
-    <p class="question" data-scrub>Can a cluster show <em>less</em> and still make sure nothing important is missed?</p>
-    <p class="tldr" data-scrub><span class="mono acc">In short</span>Not a quieter screen: a screen that knows which road it is on.</p>
-    <div class="scrolly" data-scrolly>
-      <div class="pics">
-        {modePics.map((pic, i) => (
-          <figure class:list={['pic', pic.kind, { on: i === 0 }]} data-pic={i}>
-            {pic.kind === 'marked' ? (
-              <div class="shot">
-                <Image src={cruise} alt="The finished cluster's home screen on the open road" widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
-                {parts.map((pt, j) => <span class="mark" data-mark={j} style={`left:${pt.x}%; top:${pt.y}%`} aria-hidden="true">{j + 1}</span>)}
-              </div>
-            ) : pic.kind === 'one' ? (
-              <Image src={pic.src} alt={pic.alt} widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
-            ) : pic.items.map((it) => (
-              <div class="cell" style={it.c ? `--c:${it.c}` : undefined}><Image src={it.src} alt={it.alt} widths={[400, 800]} sizes="(min-width: 1100px) 380px, 50vw" /><span class="mono">{it.cap}</span></div>
-            ))}
-          </figure>
-        ))}
-      </div>
-      <ol class="steps">
-        {modeSteps.map((st, i) => <li data-step={i} data-p={st.p} data-m={st.m ?? -1} class:list={{ on: i === 0 }}><span class="mono acc">{st.k}</span><p class="st-t">{st.t}</p><p class="muted">{st.d}</p></li>)}
-      </ol>
-    </div>
-    <dl class="spec" data-scrub>
-      {spec.map(([k, v]) => <div><dt class="mono acc">{k}</dt><dd>{v}</dd></div>)}
-    </dl>
-    <p class="mono muted aud" data-scrub>Designed for drivers aged 25 to 35</p>
-    {cluster && (
-      <div class="screens">
-        <h3 class="h3" data-scrub>Every screen, by type</h3>
-        <p class="muted lede-s" data-scrub>Highway, traffic and parking. Pick a type, then a moment, to see what the cluster shows and why.</p>
-        <ClusterPlayer block={cluster} />
-      </div>
-    )}
-  </section>
-
-  <!-- 02 RESEARCH -->
-  <section id="notes" class="sec wrap" data-ch>
-    <p class="chap mono"><span>02</span>Research</p>
-    <h2 class="display" data-scrub>What shaped it</h2>
-    <p class="tldr" data-scrub><span class="mono acc">In short</span>Four questions showed speed, route and warnings matter most, and that touch distracts.</p>
-    <div class="readouts" data-scrub>
-      <p><b class="num" data-count="4">4</b><span class="mono">questions asked</span></p>
-      <p><b class="num" data-count="2">2</b><span class="mono">road contexts</span></p>
-      <p><b class="num" data-count="9">9</b><span class="mono">pain points</span></p>
-      <p><b class="num" data-count="7">7</b><span class="mono">scenarios</span></p>
-    </div>
-    <h3 class="h3 sub" data-scrub>From the research board</h3>
-    <div class="board">
-      {board.map((col, i) => (
-        <div class="col" data-scrub style={`--d:${i * 0.08}`}>
-          <p class="q">{col.q}</p>
-          <ul>{col.notes.map((n, j) => <li class:list={['sticky', col.c]} style={`--r:${((i + j) % 3 - 1) * 1.4}deg`}>{n}</li>)}</ul>
+  {phases.map((ph, i) => (
+    <Fragment>
+      <!-- PHASE OPENER: its number, name and question, and its stretch of road drawing in -->
+      <header class="sec wrap opener" id={ph.id} data-phase={i}>
+        <p class="kick"><span class="n">{pad(i + 1)} / 04</span>{ph.way}</p>
+        <h2 class="phase" data-scrub>{ph.name}</h2>
+        <div class="route big-route" data-draw style={`--q:${i}`}>
+          <Fragment set:html={road(`op${i}`, i)} />
+          <span class="marker" aria-hidden="true" set:html={car} />
         </div>
-      ))}
-    </div>
-    <h3 class="h3 sub" data-scrub>What it meant for the design</h3>
-    <div class="scrolly" data-scrolly>
-      <div class="pics">
-        {patternPics.map((pic, i) => (
-          <figure class:list={['pic', pic.kind, { on: i === 0 }]} data-pic={i}>
-            {pic.kind === 'marked' ? (
-              <div class="shot">
-                <Image src={cruise} alt="The finished cluster's home screen on the open road" widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
-                {parts.map((pt, j) => <span class="mark" data-mark={j} style={`left:${pt.x}%; top:${pt.y}%`} aria-hidden="true">{j + 1}</span>)}
-              </div>
-            ) : pic.kind === 'one' ? (
-              <Image src={pic.src} alt={pic.alt} widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
-            ) : pic.items.map((it) => (
-              <div class="cell" style={it.c ? `--c:${it.c}` : undefined}><Image src={it.src} alt={it.alt} widths={[400, 800]} sizes="(min-width: 1100px) 380px, 50vw" /><span class="mono">{it.cap}</span></div>
-            ))}
-          </figure>
-        ))}
-      </div>
-      <ol class="steps">
-        {patternSteps.map((st, i) => <li data-step={i} data-p={st.p} data-m={st.m ?? -1} class:list={{ on: i === 0 }}><span class="mono acc">{st.k}</span><p class="st-t">{st.t}</p><p class="muted">{st.d}</p></li>)}
-      </ol>
-    </div>
-  </section>
+        <div class="ask-row">
+          <p class="ask" data-scrub>{ph.ask}</p>
+          <p class="gist" data-scrub>{ph.gist}</p>
+        </div>
+      </header>
 
-  <!-- 03 PROTOTYPING -->
-  <section id="proto" class="sec wrap" data-ch>
-    <p class="chap mono"><span>03</span>Prototyping</p>
-    <h2 class="display" data-scrub>From storyboard to bench test</h2>
-    <p class="tldr" data-scrub><span class="mono acc">In short</span>Seven situations were storyboarded, acted out with toy cars and mapped from sensor to screen.</p>
-    <div class="scrolly" data-scrolly>
-      <div class="pics">
-        {protoPics.map((pic, i) => (
-          <figure class:list={['pic', pic.kind, { on: i === 0 }]} data-pic={i}>
-            {pic.kind === 'marked' ? (
-              <div class="shot">
-                <Image src={cruise} alt="The finished cluster's home screen on the open road" widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
-                {parts.map((pt, j) => <span class="mark" data-mark={j} style={`left:${pt.x}%; top:${pt.y}%`} aria-hidden="true">{j + 1}</span>)}
-              </div>
-            ) : pic.kind === 'one' ? (
-              <Image src={pic.src} alt={pic.alt} widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
-            ) : pic.items.map((it) => (
-              <div class="cell" style={it.c ? `--c:${it.c}` : undefined}><Image src={it.src} alt={it.alt} widths={[400, 800]} sizes="(min-width: 1100px) 380px, 50vw" /><span class="mono">{it.cap}</span></div>
-            ))}
-          </figure>
-        ))}
-      </div>
-      <ol class="steps">
-        {protoSteps.map((st, i) => <li data-step={i} data-p={st.p} data-m={st.m ?? -1} class:list={{ on: i === 0 }}><span class="mono acc">{st.k}</span><p class="st-t">{st.t}</p><p class="muted">{st.d}</p></li>)}
-      </ol>
-    </div>
-  </section>
+      {i === 0 && (
+        <Fragment>
+          <!-- the evening drive, one beat at a time -->
+          <section class="pin story" data-pin="story" style={`--n:${beats.length}`} aria-label="The problem, as a scenario">
+            <div class="stage">
+              <p class="kick scene-k">The problem, as a scenario</p>
+              <ol class="beats">
+                {beats.map((b, j) => {
+                  const words = b.t.split(' ');
+                  return <li data-beat={j} class:list={{ last: j === beats.length - 1 }} style={`--wc:${words.length}`}>
+                    <span class="when">{b.k}</span>
+                    <p class="beat">{words.map((w, k) => <span style={`--w:${k}`}>{w} </span>)}</p>
+                  </li>;
+                })}
+              </ol>
+              <span class="ticks" aria-hidden="true">{beats.map((_, j) => <i data-tick={j}></i>)}</span>
+            </div>
+          </section>
 
-  <!-- 04 THE CLUSTER -->
-  <section id="cluster" class="sec wrap" data-ch>
-    <p class="chap mono"><span>04</span>The cluster</p>
-    <h2 class="display" data-scrub>How it decides</h2>
-    <p class="tldr" data-scrub><span class="mono acc">In short</span>One ring around the speed shows four levels of danger, and only a critical moment takes over the screen.</p>
-    <div class="scrolly" data-scrolly>
-      <div class="pics">
-        {rulePics.map((pic, i) => (
-          <figure class:list={['pic', pic.kind, { on: i === 0 }]} data-pic={i}>
-            {pic.kind === 'marked' ? (
-              <div class="shot">
-                <Image src={cruise} alt="The finished cluster's home screen on the open road" widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
-                {parts.map((pt, j) => <span class="mark" data-mark={j} style={`left:${pt.x}%; top:${pt.y}%`} aria-hidden="true">{j + 1}</span>)}
-              </div>
-            ) : pic.kind === 'one' ? (
-              <Image src={pic.src} alt={pic.alt} widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
-            ) : pic.items.map((it) => (
-              <div class="cell" style={it.c ? `--c:${it.c}` : undefined}><Image src={it.src} alt={it.alt} widths={[400, 800]} sizes="(min-width: 1100px) 380px, 50vw" /><span class="mono">{it.cap}</span></div>
-            ))}
-          </figure>
-        ))}
-      </div>
-      <ol class="steps">
-        {ruleSteps.map((st, i) => <li data-step={i} data-p={st.p} data-m={st.m ?? -1} class:list={{ on: i === 0 }}><span class="mono acc">{st.k}</span><p class="st-t">{st.t}</p><p class="muted">{st.d}</p></li>)}
-      </ol>
-    </div>
-  </section>
+          <!-- the attention gauge fills as the screen asks for more -->
+          <section class="pin gauge" data-pin="gauge" aria-labelledby="g-h">
+            <div class="stage">
+              <p class="kick">Attention budget</p>
+              <h3 id="g-h" class="big">Everything asks for a look</h3>
+              <svg class="dial" viewBox="0 0 240 150" aria-hidden="true">
+                <path class="arc" d="M30 130 A90 90 0 0 1 210 130" pathLength="1" />
+                <path class="arc red" d="M30 130 A90 90 0 0 1 210 130" pathLength="1" />
+                <g class="needle" data-needle><line x1="120" y1="130" x2="120" y2="54" /><circle cx="120" cy="130" r="7" /></g>
+              </svg>
+              <p class="verdict" data-verdict>Within budget</p>
+              <ul class="asks">{load.map((l) => <li data-ask>{l}</li>)}</ul>
+            </div>
+          </section>
 
-  <!-- 05 DEBRIEF: the same evening, now with the new screen -->
-  <section id="debrief" class="sec wrap" data-ch>
-    <p class="chap mono"><span>05</span>Debrief</p>
-    <p class="tldr" data-scrub><span class="mono acc">In short</span>What worked, what fell short, and what comes next.</p>
-    <p class="echo" data-scrub>Back to 9:04 pm. Same rain, same traffic.</p>
-    <p class="echo acc" data-scrub style="--d:.1">Now the screen shows only what the moment needs. Your eyes stay on the road.</p>
+          <!-- the research -->
+          <section class="sec wrap" aria-labelledby="rs-h">
+            <p class="kick">Research</p>
+            <h3 id="rs-h" class="big" data-scrub>Four questions about how people drive.</h3>
+            <div class="nums" data-scrub>
+              <p><b data-count="4">4</b><span>questions asked</span></p>
+              <p><b data-count="2">2</b><span>road contexts</span></p>
+              <p><b data-count="9">9</b><span>pain points</span></p>
+              <p><b data-count="7">7</b><span>scenarios</span></p>
+            </div>
+            <div class="notes">
+              {notes.map((col, j) => (
+                <div class="col" data-scrub style={`--d:${j * 0.08}`}>
+                  <p class="q">{col.q}</p>
+                  <ul>{col.n.map((n, k) => <li class:list={['sticky', col.c]} style={`--r:${((j + k) % 3 - 1) * 1.4}deg`}>{n}</li>)}</ul>
+                </div>
+              ))}
+            </div>
+            <figure class="shot-f slim" data-scrub>
+              <Image src={board} alt="The Miro board: research questions with sticky notes, highway and traffic findings, the design brief and the user scenarios" widths={[572]} sizes="(min-width: 700px) 572px, 100vw" />
+              <figcaption class="cap">The real board, from questions to brief.</figcaption>
+            </figure>
+          </section>
+        </Fragment>
+      )}
+
+      {i === 1 && (
+        <Fragment>
+          <!-- the brief, with the first idea struck out -->
+          <section class="sec wrap" aria-labelledby="brief-h">
+            <p class="kick">The brief</p>
+            <h3 id="brief-h" class="brief" data-draw>
+              Can a cluster show <span class="struck"><s>everything</s><svg viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true"><path d="M4 26 C 50 14, 120 30, 196 12" pathLength="1" /></svg></span> <em>less</em>, and still make sure nothing important is missed?
+            </h3>
+            <p class="note" data-scrub>Not a quieter screen: a screen that knows which road it is on. Designed for drivers aged 25 to 35.</p>
+          </section>
+
+          <!-- the findings, each with the decision it forced -->
+          <section class="sec wrap" aria-labelledby="fd-h">
+            <p class="kick">Findings into decisions</p>
+            <h3 id="fd-h" class="big" data-scrub>What the research said, and what it changed.</h3>
+            <ol class="rows">
+              {findings.map((r, j) => (
+                <li data-scrub>
+                  <span class="n">{pad(j + 1)}</span>
+                  <p class="f">{r.f}</p>
+                  <Fragment set:html={right} />
+                  <p class="d">{r.d}</p>
+                  <Image class="th" src={r.src} alt={r.alt} widths={[400]} sizes="200px" loading="lazy" />
+                </li>
+              ))}
+            </ol>
+          </section>
+
+          <!-- the rules every screen follows, and the limits it works within -->
+          <section class="sec wrap" aria-labelledby="ru-h">
+            <p class="kick">Ground rules</p>
+            <h3 id="ru-h" class="big" data-scrub>Four rules every screen had to pass.</h3>
+            <dl class="rules">
+              {rules.map(([k, v], j) => <div data-scrub style={`--d:${j * 0.06}`}><dt>{k}</dt><dd>{v}</dd></div>)}
+            </dl>
+            {limits.length > 0 && (
+              <div class="limits" data-scrub>
+                <p class="kick">Working within</p>
+                <ul>{limits.map((l) => <li>{l}</li>)}</ul>
+              </div>
+            )}
+          </section>
+        </Fragment>
+      )}
+
+      {i === 2 && (
+        <Fragment>
+          <section class="sec wrap" aria-labelledby="sb-h">
+            <p class="kick">A · Storyboards</p>
+            <h3 id="sb-h" class="big" data-scrub>Seven moments, drawn before any screen existed.</h3>
+            <p class="note" data-scrub>Each situation from calm to safe, six frames at a time.</p>
+            <div class="boards">
+              {boards.map((b, j) => (
+                <figure class:list={['tile', { wide: j === 0 }]} data-scrub style={`--d:${(j % 3) * 0.06}`}>
+                  <Image src={b.src} alt={`Storyboard: ${b.cap.toLowerCase()}`} widths={[600, 1100]} sizes="(min-width: 900px) 45vw, 100vw" loading="lazy" />
+                  <figcaption class="cap">{b.cap}</figcaption>
+                </figure>
+              ))}
+            </div>
+          </section>
+
+          <section class="sec wrap split" aria-labelledby="toy-h">
+            <div class="txt">
+              <p class="kick">B · Bench test</p>
+              <h3 id="toy-h" class="big" data-scrub>Model cars on a paper road.</h3>
+              <p class="note" data-scrub>Every scenario acted out by hand, with the warnings drawn where the screen would show them.</p>
+            </div>
+            <div class="toys">
+              {toys.map((t, j) => (
+                <figure class="tile" data-scrub style={`--d:${j * 0.06}`}>
+                  <Image src={t.src} alt={`Toy-car test: ${t.cap.toLowerCase()}`} widths={[440]} sizes="(min-width: 900px) 25vw, 50vw" loading="lazy" />
+                  <figcaption class="cap">{t.cap}</figcaption>
+                </figure>
+              ))}
+            </div>
+          </section>
+
+          <section class="sec wrap" aria-labelledby="sk-h">
+            <p class="kick">C · Sketches and logic</p>
+            <h3 id="sk-h" class="big" data-scrub>Four layouts on paper, then sensor in, screen out.</h3>
+            <div class="pair">
+              <figure class="shot-f" data-scrub>
+                <Image src={sketches} alt="Four hand-drawn cluster layouts: speed and revs on either side, the road in the middle, and a status bar below" widths={[700, 1078]} sizes="(min-width: 900px) 55vw, 100vw" loading="lazy" />
+                <figcaption class="cap">Four layouts, sketched before Figma.</figcaption>
+              </figure>
+              <figure class="shot-f light" data-scrub style="--d:.08">
+                <Image src={flows} alt="User and system flowcharts for lane change, speed breaker and traffic mode" widths={[760, 1516]} sizes="(min-width: 900px) 40vw, 100vw" loading="lazy" />
+                <figcaption class="cap">Each scenario mapped, including the moment a warning becomes an alert.</figcaption>
+              </figure>
+            </div>
+          </section>
+
+          <!-- what got cut, as a slider between the two screens -->
+          <section class="sec wrap" aria-labelledby="cut-h">
+            <p class="kick">D · What got cut</p>
+            <h3 id="cut-h" class="big" data-scrub>The rev counter, in traffic.</h3>
+            <p class="note" data-scrub>At walking pace revs say nothing, so their space went to the map and the cars around you. Drag to compare.</p>
+            <div class="vs" data-vs style="--x:50%">
+              <Image class="vs-b" src={traffic} alt="Traffic mode: the rev counter is gone; the map and nearby cars fill the right" widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 1000px, 100vw" loading="lazy" />
+              <div class="vs-a"><Image src={cruise} alt="Highway mode: speed on the left and the rev counter on the right" widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 1000px, 100vw" loading="lazy" /></div>
+              <span class="vs-line" aria-hidden="true"><i></i></span>
+              <span class="vs-tag l">Highway: revs kept</span><span class="vs-tag r">Traffic: revs dropped</span>
+              <input type="range" min="0" max="100" value="50" aria-label="Compare the highway and traffic screens" data-vs-in />
+            </div>
+          </section>
+        </Fragment>
+      )}
+
+      {i === 3 && (
+        <Fragment>
+          <!-- the home screen, one part at a time -->
+          <section class="sec wrap" aria-labelledby="hs-h">
+            <p class="kick">The home screen</p>
+            <h3 id="hs-h" class="big" data-scrub>Six things on the open road, and nothing else.</h3>
+            <div class="scrolly" data-scrolly>
+              <div class="pics">
+                <div class="shot" data-shot>
+                  <Image src={cruise} alt="The finished cluster's home screen on the open road" widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" />
+                  {parts.map((pt, j) => <span class="mark" data-mark={j} style={`left:${pt.x}%; top:${pt.y}%`} aria-hidden="true">{j + 1}</span>)}
+                </div>
+              </div>
+              <ol class="steps">
+                <li data-step="0" data-m="-1" class="on"><span class="kick">Scroll to see each part</span><p class="st-t">On the open road</p><p class="st-d">Speed, revs, the limit, cruise control and the next exit.</p></li>
+                {parts.map((pt, j) => <li data-step={j + 1} data-m={j}><span class="kick">{pad(j + 1)}</span><p class="st-t">{pt.t}</p><p class="st-d">{pt.d}</p></li>)}
+              </ol>
+            </div>
+          </section>
+
+          <section class="sec wrap" aria-labelledby="md-h">
+            <p class="kick">Four situations</p>
+            <h3 id="md-h" class="big" data-scrub>One cluster that changes with the road.</h3>
+            <div class="modes">
+              {modes.map((m, j) => (
+                <figure class="mode" data-scrub style={`--d:${j * 0.06}`}>
+                  <Image src={m.src} alt={`${m.t} mode`} widths={[500, 900]} sizes="(min-width: 1100px) 300px, (min-width: 700px) 45vw, 100vw" loading="lazy" />
+                  <figcaption><span class="kick">{m.k}</span><b>{m.t}</b><span class="st-d">{m.d}</span></figcaption>
+                </figure>
+              ))}
+            </div>
+          </section>
+
+          <!-- the danger levels: pick one and the ring changes -->
+          <section class="sec wrap" aria-labelledby="lv-h">
+            <p class="kick">One ring, four levels</p>
+            <h3 id="lv-h" class="big" data-scrub>It ranks the danger, so you don't have to read.</h3>
+            <div class="levels" data-levels>
+              <div class="lv-screen">
+                {levels.map((l, j) => <Image class:list={['lv-shot', { on: j === 0 }]} src={l.src} alt={`${l.t}: ${l.d}`} widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 760px, 100vw" loading="lazy" data-lv-shot={j} />)}
+              </div>
+              <div class="lv-side">
+                <div class="lv-btns" role="group" aria-label="Danger level">
+                  {levels.map((l, j) => <button type="button" style={`--c:${l.c}`} aria-pressed={j === 0 ? 'true' : 'false'} data-lv={j}><i></i>{l.t}</button>)}
+                </div>
+                <p class="lv-d" aria-live="polite" data-lv-d>{levels[0].d}</p>
+                <span class="lv-bar" aria-hidden="true">{levels.map((l) => <i style={`--c:${l.c}`}></i>)}</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="sec wrap" aria-labelledby="fl-h">
+            <p class="kick">How it decides</p>
+            <h3 id="fl-h" class="big" data-scrub>Four steps, every moment of the drive.</h3>
+            <ol class="flow">
+              {flow.map((f, j) => <li data-scrub style={`--d:${j * 0.06}`}><span class="n">{pad(j + 1)}</span><b>{f.t}</b><span class="st-d">{f.d}</span></li>)}
+            </ol>
+            <div class="trio">
+              {pressure.map((e, j) => (
+                <figure class="tile" data-scrub style={`--d:${j * 0.06}`}>
+                  <Image src={e.src} alt={e.t} widths={[500, 900]} sizes="(min-width: 900px) 30vw, 100vw" loading="lazy" />
+                  <figcaption><b>{e.t}</b><span class="st-d">{e.d}</span></figcaption>
+                </figure>
+              ))}
+            </div>
+          </section>
+
+          {cluster && (
+            <section class="sec screens" aria-labelledby="cp-h">
+              <div class="wrap">
+                <p class="kick">Every screen</p>
+                <h3 id="cp-h" class="big" data-scrub>Drive through all twelve.</h3>
+                <p class="note" data-scrub>Pick a mode, then a moment, to see what the cluster shows and why.</p>
+              </div>
+              <ClusterPlayer block={cluster} />
+            </section>
+          )}
+
+          <section class="sec wrap" aria-labelledby="mk-h">
+            <p class="kick" id="mk-h">What I handed over</p>
+            <ul class="made">{made.map((m, j) => <li data-scrub style={`--d:${j * 0.05}`}><span class="n">{pad(j + 1)}</span>{m}</li>)}</ul>
+          </section>
+        </Fragment>
+      )}
+    </Fragment>
+  ))}
+
+  <!-- OUTCOME: past the second diamond; the same evening, with the new screen -->
+  <section class="sec wrap outcome" id="outcome" aria-labelledby="oc-h">
+    <p class="kick">Outcome</p>
+    <h2 id="oc-h" class="echo" data-scrub>Back to 9:04 pm. Same rain, same traffic.</h2>
+    <p class="echo dim" data-scrub style="--d:.1">Now the screen shows only what the moment needs. Your eyes stay on the road.</p>
     <figure class="replay" data-scrub="pop">
-      <Image src={cruise} alt="The home screen: speed, revs, road signs and cruise control" widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 900px, 100vw" />
+      <Image src={cruise} alt="The home screen: speed, revs, road signs and cruise control" widths={[700, 1100, 1600]} sizes="(min-width: 1100px) 1000px, 100vw" />
     </figure>
+    <ul class="wins">{(p.results ?? []).map((r, j) => <li data-scrub style={`--d:${j * 0.08}`}>{r}</li>)}</ul>
     <div class="cols">
       {[
         { k: 'Worked', v: ['Every screen traces back to a research question', 'One ring carries four threat levels', 'Bench tests made each scenario concrete'] },
         { k: 'Fell short', v: ['Speed and range never change between screens', 'Three storyboarded scenarios have no final screen'] },
         { k: 'Next', v: ['Screens for fatigue, speed breakers and motorcycles', 'A sound and a vibration for each ring level', 'Glance tests with drivers in a simulator'] },
-      ].map((c, i) => <div data-scrub style={`--d:${i * 0.1}`}><p class="mono acc">{c.k}</p><ul>{c.v.map((x) => <li>{x}</li>)}</ul></div>)}
+      ].map((c, j) => <div data-scrub style={`--d:${j * 0.1}`}><p class="kick">{c.k}</p><ul>{c.v.map((x) => <li>{x}</li>)}</ul></div>)}
     </div>
-    <p class="mono muted small">Concept work, not affiliated with Porsche.</p>
+    <p class="fine">Concept work, not affiliated with Porsche.</p>
   </section>
 
   <section class="sec wrap next" aria-labelledby="next-h">
-    <p class="mono acc">{next ? 'Next project' : 'More work'}</p>
+    <p class="kick">{next ? 'Next project' : 'More work'}</p>
     <a class="next-link" href={next ? `/work/${next.id}` : '/work'} id="next-h">{next?.data.title ?? 'All projects'} <span class="t-learn-chevron" set:html={arrow} /></a>
   </section>
+
+  <!-- THE ROUTE STRIP: a car drives the double diamond as you read; each stretch jumps to its phase -->
+  <nav class="strip" aria-label="Project phases" data-route>
+    <div class="strip-road">
+      <Fragment set:html={road('st', 0, 'thin')} />
+      <span class="marker" aria-hidden="true" set:html={car} />
+    </div>
+    <ol>{phases.map((ph, i) => <li><a href={`#${ph.id}`} data-route-stop={i}>{ph.name}</a></li>)}</ol>
+  </nav>
 </article>
 
 <style>
-  .trip { position: relative; overflow-x: clip; }
-  .mono { font-family: var(--font-mono); font-size: var(--t-label); font-weight: 500; letter-spacing: .12em; text-transform: uppercase; }
-  .acc { color: var(--accent); }
-  .muted { color: var(--graphite); }
-  .small { font-size: 11px; }
+  .case { position: relative; overflow-x: clip; --hmi: #FF3B5C; --line: color-mix(in srgb, var(--ink) 14%, transparent); }
+  :global(:root[data-theme="light"]) .case { --hmi: #D9183B; }
   p, li { text-wrap: pretty; }
-  .sec { position: relative; max-width: 1300px; margin-inline: auto; padding-top: clamp(120px, 14vw, 220px); scroll-margin-top: 16px; }
-  .h2 { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2rem, 1rem + 3vw, 3.8rem); letter-spacing: -.03em; line-height: 1.02; text-wrap: balance; }
-  .h3 { font-size: clamp(1.3rem, 1rem + .8vw, 1.8rem); font-weight: 600; letter-spacing: -.015em; line-height: 1.2; }
-  .sub { margin-top: clamp(80px, 9vw, 130px); }
-  .display { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2.6rem, 1rem + 5vw, 6.4rem); letter-spacing: -.04em; line-height: .95;
-    margin-top: var(--s-5); max-width: 16ch; text-wrap: balance; }
-  .chap { display: flex; align-items: center; gap: 14px; color: var(--graphite); }
-  .chap span { color: var(--accent); font-size: 1.1rem; letter-spacing: 0; }
-  .chap::after { content: ''; flex: 1; height: 1px; background: color-mix(in srgb, var(--ink) 14%, transparent); }
+  .sec { position: relative; max-width: 1240px; margin-inline: auto; padding-top: clamp(96px, 11vw, 168px); scroll-margin-top: 24px; }
+  .kick { display: flex; align-items: center; gap: 12px; font-family: var(--font-mono); font-size: var(--t-label); font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--graphite); }
+  .kick .n { color: var(--ink); }
+  .big { margin-top: var(--s-4); max-width: 22ch; font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(1.9rem, 1rem + 2.6vw, 3.4rem);
+    letter-spacing: -.03em; line-height: 1.04; text-wrap: balance; }
+  .note { margin-top: var(--s-4); max-width: 56ch; font-size: 1.1rem; line-height: 1.5; color: var(--graphite); }
+  .cap { margin-top: 10px; font-size: var(--t-small); color: var(--graphite); }
+  .st-d { color: var(--graphite); line-height: 1.5; }
+  /* scroll-scrubbed motion: --e runs 0 to 1 as an element rises into view (set by the script; 1 without it) */
+  [data-scrub] { opacity: calc(.25 + .75 * var(--e, 1)); translate: 0 calc((1 - var(--e, 1)) * 40px); }
+  [data-scrub='pop'] { translate: 0 calc((1 - var(--e, 1)) * 32px); scale: calc(.92 + .08 * var(--e, 1)); }
 
-  /* the road: fixed at the left; its lane markings scroll past and the car drives down it as you read */
-  .rail { position: fixed; z-index: 30; left: clamp(14px, 1.6vw, 28px); top: 50%; translate: 0 -50%; height: min(66vh, 560px); display: flex; opacity: 0;
-    transition: opacity 400ms var(--ease-smooth-out); pointer-events: none; }
-  .rail.show { opacity: 1; pointer-events: auto; }
-  .road { position: absolute; left: 0; top: -16px; bottom: -16px; width: 30px; border-radius: 8px; background-color: #17110f;
-    box-shadow: inset 2px 0 0 hsl(0 0% 100% / .35), inset -2px 0 0 hsl(0 0% 100% / .35), 0 8px 24px hsl(0 0% 0% / .4);
-    background-image: linear-gradient(hsl(48 90% 70% / .85) 50%, transparent 50%); background-size: 2px 22px; background-repeat: repeat-y;
-    background-position: 50% var(--off, 0px); }
-  .driven { position: absolute; inset: 0 0 auto; height: calc(16px + var(--y, 0px)); border-radius: 8px 8px 0 0;
-    background: linear-gradient(to bottom, color-mix(in srgb, var(--accent) 8%, transparent), color-mix(in srgb, var(--accent) 30%, transparent)); }
-  .car { position: absolute; left: 50%; top: 16px; width: 18px; height: 30px; margin: -15px 0 0 -9px; overflow: visible;
-    translate: 0 var(--y, 0px); rotate: var(--sway, 0deg); transition: rotate 300ms var(--ease-smooth-out); filter: drop-shadow(0 3px 6px hsl(0 0% 0% / .6)); }
-  .car .body { fill: var(--accent); }
-  .car .glass { fill: hsl(220 30% 12%); }
-  .car .tail { fill: #ff4d4d; }
-  .car .beam { fill: hsl(50 100% 85% / .16); }
-  .rail ol { position: relative; height: 100%; margin-left: 30px; }
-  .rail li { position: absolute; left: 0; top: var(--at, 0%); translate: 0 -50%; }
-  .rail a { display: flex; align-items: center; gap: 10px; min-height: 28px; padding-left: 8px; color: var(--graphite); }
-  /* a signpost on the verge: a short post with a plate, lit once the car has passed it */
-  .sign { position: relative; width: 12px; height: 10px; border-radius: 2px; background: color-mix(in srgb, var(--ink) 25%, transparent);
-    transition: background-color var(--duration-fast) var(--ease-smooth-out); }
-  .sign::before { content: ''; position: absolute; right: 100%; top: 4px; width: 8px; height: 2px; background: inherit; }
-  .rail a.passed .sign { background: var(--accent); }
-  .lbl { font-size: 12px; font-weight: 500; white-space: nowrap; padding: 3px 8px; border-radius: 6px; background: var(--surface); opacity: 0; translate: -6px 0; transition: opacity 250ms var(--ease-smooth-out), translate 250ms var(--ease-smooth-out); }
-  /* names show on hover or focus only, so they never sit on top of the story; the car marks where you are */
-  .rail:hover .lbl, .rail a:focus-visible .lbl { opacity: 1; translate: 0 0; }
-  .rail a[aria-current='true'] { color: var(--ink); }
-  .rail a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
-  .topbar { position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; height: 22px;   /* the bottom edge: the nav pill owns the top */ display: none; pointer-events: none;
-    background: linear-gradient(90deg, hsl(48 90% 70% / .7) 50%, transparent 50%) 0 50% / 18px 2px repeat-x, #17110f; transition: opacity 300ms var(--ease-smooth-out); }
-  .topbar.off { opacity: 0; }
-  .topbar span { position: absolute; inset: 0 auto 0 0; width: 100%; background: color-mix(in srgb, var(--accent) 30%, transparent); transform-origin: 0 50%; scale: var(--p, 0) 1; }
-  .mini { position: absolute; top: 2px; left: 0; width: 30px; height: 18px; translate: calc(var(--p, 0) * (100vw - 34px)) 0; }
-  .mini rect { fill: var(--accent); }
-  .mini .glass { fill: hsl(220 30% 12%); }
-
-  /* WHAT IT IS */
-  .intro { padding-top: clamp(40px, 6vw, 80px); }
-  .ident { display: grid; gap: var(--s-4); }
-  .ident h1 { font-family: var(--font-display); font-weight: var(--display-weight); font-size: min(var(--t-display), 11vw); letter-spacing: -.035em; line-height: .92; overflow-wrap: anywhere; }
-  .line { font-size: var(--t-lead); max-width: 40ch; line-height: 1.3; }
-  .plain { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-5); margin-top: clamp(40px, 5vw, 64px); }
-  .plain li { display: grid; gap: var(--s-2); align-content: start; padding-top: var(--s-3); border-top: 2px solid color-mix(in srgb, var(--ink) 16%, transparent); line-height: 1.45; }
-  .shot { position: relative; border-radius: 16px; overflow: hidden; box-shadow: 0 30px 80px hsl(0 0% 0% / .45); }
-  .shot :global(img) { width: 100%; height: auto; display: block; }
-  /* scroll-scrubbed motion: --e runs 0 to 1 as an element rises into view (set every frame by the script, 1 without it) */
-  [data-scrub] { opacity: calc(.25 + .75 * var(--e, 1)); translate: 0 calc((1 - var(--e, 1)) * 48px); }
-  [data-scrub='pop'] { translate: 0 calc((1 - var(--e, 1)) * 36px); scale: calc(.9 + .1 * var(--e, 1)); }
-  [data-scrub='left'] { translate: calc((1 - var(--e, 1)) * -64px) 0; }
-  [data-scrub='right'] { translate: calc((1 - var(--e, 1)) * 64px) 0; }
-  .aud { margin-top: var(--s-5); }
-  /* SCROLLY: pictures fixed on the left, steps scrolling on the right; the step being read lights up and picks the picture */
-  .scrolly { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(32px, 5vw, 80px); margin-top: clamp(40px, 5vw, 72px); }
-  .pics { position: sticky; top: max(96px, calc(50svh - 18vw)); align-self: start; display: grid; }
-  .pic { grid-area: 1 / 1; margin: 0; opacity: 0; scale: .97; transition: opacity 500ms var(--ease-smooth-out), scale 700ms var(--ease-out-expo); pointer-events: none; }
-  .pic.on { opacity: 1; scale: 1; pointer-events: auto; }
-  .pic :global(img) { width: 100%; height: auto; display: block; border-radius: 14px; }
-  .pic.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .pic.vs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: start; }
-  .cell { display: grid; gap: 6px; }
-  .cell :global(img) { border-radius: 10px; box-shadow: 0 0 0 2px var(--c, transparent); }
-  .cell .mono { color: var(--c, var(--graphite)); }
-  .shot { position: relative; border-radius: 14px; overflow: hidden; }
-  .mark { position: absolute; display: grid; place-items: center; width: 28px; height: 28px; translate: -50% -50%; border-radius: 50%; background: var(--accent); color: var(--on-accent);
-    font-weight: 700; font-size: 13px; box-shadow: 0 0 0 4px hsl(0 0% 0% / .35); transition: scale 400ms var(--ease-bounce), opacity 300ms var(--ease-smooth-out), box-shadow 400ms var(--ease-smooth-out); }
-  .shot.focus .mark { opacity: .35; }
-  .shot.focus .mark.hot { opacity: 1; scale: 1.35; box-shadow: 0 0 0 4px hsl(0 0% 0% / .35), 0 0 0 12px color-mix(in srgb, var(--accent) 35%, transparent); }
-  .steps li { min-height: 62svh; display: grid; gap: var(--s-2); align-content: center; opacity: .3; transition: opacity 400ms var(--ease-smooth-out); }
-  .steps li:first-child { min-height: 40svh; align-content: start; }
-  .steps li:last-child { min-height: 50svh; }
-  .steps li.on { opacity: 1; }
-  .st-t { font-size: clamp(1.4rem, 1rem + 1.1vw, 2.1rem); font-weight: 600; letter-spacing: -.02em; line-height: 1.15; }
-  .steps .muted { font-size: 1.05rem; line-height: 1.5; max-width: 40ch; }
-  /* the chapter in one line: a tag, then the sentence, set apart so it reads first */
-  .tldr { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-top: var(--s-5); max-width: 60ch; padding: 14px 18px; border-radius: 12px;
-    font-size: 1.1rem; line-height: 1.45; background: var(--surface); border-left: 3px solid var(--accent); }
-  /* the research board: a column per question, its notes in Miro's colours, set slightly askew like the real board */
-  .board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-5); margin-top: var(--s-5); }
-  .col { display: grid; gap: var(--s-4); align-content: start; }
-  .q { font-weight: 600; line-height: 1.3; padding-bottom: var(--s-3); border-bottom: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); min-height: 3.6em; }
-  .col ul { display: grid; gap: 12px; }
-  .sticky { padding: 18px 16px; min-height: 92px; display: flex; align-items: flex-end; border-radius: 4px 4px 14px 4px; color: #1b1416; font-weight: 600; line-height: 1.3;
-    rotate: var(--r); box-shadow: 0 1px 0 hsl(0 0% 100% / .4) inset, 0 12px 22px -10px hsl(0 0% 0% / .7); transition: rotate 300ms var(--ease-smooth-out), translate 300ms var(--ease-smooth-out); }
-  .sticky:hover { rotate: 0deg; translate: 0 -3px; }
-  .sticky.y { background: #F7D774; } .sticky.g { background: #B9E4B1; } .sticky.p { background: #F3B6CF; } .sticky.b { background: #AFCFF5; }
-  .meta-row { display: flex; flex-wrap: wrap; gap: var(--s-6); margin-top: clamp(40px, 5vw, 64px); padding-top: var(--s-4); border-top: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); }
-  .meta-row dt { color: var(--graphite); margin-bottom: 4px; }
-  .meta-row dd { margin: 0; font-weight: 500; }
-
-  /* pinned scenes: a sticky stage, driven by how far the section has scrolled */
-  .pin { position: relative; }
-  .pin .stage { position: sticky; top: 0; height: 100svh; overflow: hidden; }
-  .story { height: calc(var(--n) * 90svh + 100svh); }
-  .story .stage { display: grid; place-content: center; padding-inline: max(var(--inset), 8vw); }
-  .scene-k { position: absolute; top: max(88px, 9svh);   /* clear of the nav pill */ left: max(var(--inset), 8vw); }
-  .beats { display: grid; max-width: 1100px; }
-  .beats li { grid-area: 1 / 1; display: grid; gap: var(--s-4); align-content: center; opacity: var(--o, 0); translate: 0 var(--ty, 30px); }
-  .when { color: var(--graphite); }
-  .beat { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2rem, 1rem + 3.6vw, 4.8rem); letter-spacing: -.03em; line-height: 1.06; text-wrap: balance; }
-  /* each word brightens as the beat is read: --l runs 0 to 1 across the beat, --w is the word's place */
-  .beat span { opacity: clamp(.12, calc(var(--l, 0) * 1.5 * var(--wc) - var(--w)), 1); }
-  .beats li.last .beat { color: var(--accent); }
-  .ticks { position: absolute; bottom: clamp(28px, 6svh, 64px); left: 50%; translate: -50% 0; display: flex; gap: 8px; }
-  .ticks i { width: 28px; height: 3px; border-radius: 3px; background: color-mix(in srgb, var(--ink) 18%, transparent); transition: background-color 300ms var(--ease-smooth-out); }
-  .ticks i.on { background: var(--accent); }
-  .gauge { height: 220svh; }
-  .gauge .stage { display: grid; place-content: center; justify-items: center; gap: var(--s-4); text-align: center; padding-inline: var(--inset); }
-  .dial { width: min(420px, 80vw); margin-top: var(--s-4); overflow: visible; }
-  .arc { fill: none; stroke: color-mix(in srgb, var(--ink) 14%, transparent); stroke-width: 14; stroke-linecap: round; }
-  .arc.red { stroke: var(--accent); stroke-dasharray: .3 1; stroke-dashoffset: -.7; }
-  .needle { transform-box: view-box; transform-origin: 120px 130px; rotate: calc(-90deg + var(--k, 0) * 180deg); }
-  .needle line { stroke: var(--ink); stroke-width: 4; stroke-linecap: round; }
-  .needle circle { fill: var(--ink); }
-  .verdict { font-size: .85rem; transition: color 300ms var(--ease-smooth-out); }
-  .verdict.over { color: var(--accent); }
-  .asks { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 560px; }
-  .asks li { padding: 8px 14px; border-radius: 8px; font-size: var(--t-small); font-weight: 500; color: var(--graphite); background: var(--surface);
-    border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent); transition: color 300ms var(--ease-smooth-out), border-color 300ms var(--ease-smooth-out), background-color 300ms var(--ease-smooth-out); }
-  .asks li.lit { color: var(--ink); border-color: color-mix(in srgb, var(--accent) 60%, transparent); background: color-mix(in srgb, var(--accent) 30%, var(--surface)); }
-
-  /* 01 */
-  .readouts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-5); margin-top: clamp(48px, 6vw, 80px); }
-  .readouts p { display: grid; gap: var(--s-2); padding-top: var(--s-3); border-top: 2px solid color-mix(in srgb, var(--ink) 16%, transparent); }
-  .num { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(3rem, 1rem + 5vw, 6rem); letter-spacing: -.04em; line-height: .9; color: var(--ink); font-variant-numeric: tabular-nums; }
-  /* 02 */
-  .question { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2.2rem, 1rem + 3.8vw, 5rem); letter-spacing: -.035em; line-height: 1.02;
-    margin-top: var(--s-5); max-width: 20ch; text-wrap: balance; }
-  .question em { font-style: normal; color: var(--accent); }
-  .screens { margin: clamp(80px, 9vw, 130px) calc(var(--inset) * -1) 0; }
-  .screens > .h3, .screens > p { padding-inline: var(--inset); }
-  .lede-s { margin-top: var(--s-2); max-width: 52ch; line-height: 1.45; }
-  .screens :global(.cp) { margin-top: var(--s-5); }
-  .spec { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-5); margin-top: clamp(40px, 5vw, 72px); }
-  .spec div { display: grid; gap: var(--s-2); padding-top: var(--s-3); border-top: 2px solid var(--accent); }
-  .spec dd { margin: 0; font-size: 1.05rem; line-height: 1.4; }
-
-  /* 03 */
-  /* 04 */
-  /* 05 */
-  .echo { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(1.8rem, 1rem + 2.6vw, 3.6rem); letter-spacing: -.03em; line-height: 1.08; max-width: 24ch; margin-top: var(--s-5); text-wrap: balance; }
-  .replay { position: relative; margin-top: clamp(48px, 6vw, 80px); max-width: 900px; border-radius: 18px; overflow: hidden; }
-  .replay :global(img) { width: 100%; height: auto; display: block; }
-  .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-5); margin: clamp(64px, 8vw, 110px) 0 var(--s-5); }
-  .cols > div { display: grid; gap: var(--s-3); align-content: start; padding-top: var(--s-3); border-top: 2px solid color-mix(in srgb, var(--ink) 16%, transparent); }
-  .cols ul { display: grid; gap: var(--s-3); }
-  .cols li { line-height: 1.45; }
-
-  /* the film: framed, never wider than a comfortable reading width, so it never takes over the screen */
-  .film { padding-top: clamp(96px, 10vw, 160px); }
-  .film .chap span + span { color: inherit; font-size: inherit; letter-spacing: inherit; }
-  .reel { position: relative; margin: clamp(28px, 3vw, 44px) auto 0; max-width: min(960px, 100%, calc((100svh - 220px) * 16 / 9)); border-radius: 18px; overflow: hidden;
-    background: #000; box-shadow: 0 30px 80px hsl(0 0% 0% / .5), 0 0 0 1px color-mix(in srgb, var(--ink) 10%, transparent); }
-  .reel video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
-  .snd, .play { position: absolute; bottom: 14px; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px 0 12px; border-radius: 999px;
+  /* COVER */
+  .cover { padding-top: clamp(40px, 6vw, 80px); }
+  .cover h1 { margin-top: var(--s-4); font-family: var(--font-display); font-weight: var(--display-weight); font-size: min(var(--t-display), 12vw); letter-spacing: -.04em; line-height: .92; overflow-wrap: anywhere; }
+  .line { margin-top: var(--s-5); max-width: 36ch; font-size: var(--t-lead); line-height: 1.3; }
+  .facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-5); margin-top: clamp(40px, 5vw, 64px); padding-top: var(--s-4); border-top: 1px solid var(--line); }
+  .facts dt { font-family: var(--font-mono); font-size: var(--t-label); letter-spacing: .14em; text-transform: uppercase; color: var(--graphite); }
+  .facts dd { margin: 6px 0 0; font-weight: 500; line-height: 1.35; }
+  .reel { position: relative; margin: clamp(40px, 5vw, 64px) auto 0; max-width: min(1000px, 100%, calc((100svh - 200px) * 16 / 9)); }
+  .reel video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 18px; background: #000;
+    box-shadow: 0 30px 80px hsl(0 0% 0% / .45), 0 0 0 1px var(--line); }
+  .snd, .play { position: absolute; bottom: calc(14px + 2.2em); display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px 0 12px; border-radius: 999px;
     color: #fff; font-size: 13px; font-weight: 500; background: hsl(0 0% 0% / .55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     box-shadow: inset 0 0 0 1px hsl(0 0% 100% / .14); transition: background-color var(--duration-fast) var(--ease-smooth-out), scale var(--duration-quick) var(--ease-smooth-out); }
   .snd { right: 14px; }
   .play { left: 14px; width: 44px; padding: 0; justify-content: center; }
   .snd:hover, .play:hover { background: hsl(0 0% 0% / .75); }
   .snd:active, .play:active { scale: .96; }
-  .snd:focus-visible, .play:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .snd:focus-visible, .play:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
   .snd svg, .play svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
   .snd .spk, .play path { fill: currentColor; stroke: none; }
   .snd .on, .snd.live .off { display: none; }
   .snd.live .on { display: inline; }
   .play .pl, .play.paused .pz { display: none; }
   .play.paused .pl { display: inline; }
-  /* on a phone the film is small: icon-only controls, tucked into the corners (the label stays for screen readers) */
+
+  /* THE ROAD: two diamonds; done stretches in ink, the current one drawn in the project's red as it arrives */
+  .route { position: relative; }
+  /* the road SVG is injected as markup (set:html), so its rules are global, kept inside the case study */
+  .case :global(.road) { display: block; width: 100%; height: clamp(90px, 14vw, 200px); overflow: visible; }
+  .case :global(.road path) { fill: none; stroke: var(--line); stroke-width: 2; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+  .case :global(.road .lane) { stroke-dasharray: 10 12; }
+  .case :global(.road .done path) { stroke: color-mix(in srgb, var(--ink) 55%, transparent); }
+  .case :global(.road .now path) { stroke: var(--hmi); stroke-width: 3; }
+  .case :global(.road .now .lane) { stroke-width: 2; }
+  .case :global(.road .grow) { transform-box: fill-box; transform-origin: 0 50%; scale: var(--e, 1) 1; }
+  .route-sec :global(.road path) { stroke: color-mix(in srgb, var(--ink) 40%, transparent); }
+  .stops { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: var(--s-5); }
+  .stops a { display: grid; gap: 4px; padding: var(--s-4) var(--s-4) var(--s-4) 0; border-top: 1px solid var(--line); transition: border-color var(--duration-fast) var(--ease-smooth-out); }
+  .stops a:hover, .stops a:focus-visible { border-top-color: var(--hmi); }
+  .stops a:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+  .stops .n, .stops .way { font-family: var(--font-mono); font-size: var(--t-label); letter-spacing: .14em; text-transform: uppercase; color: var(--graphite); }
+  .stops b { font-size: 1.4rem; font-weight: 600; letter-spacing: -.02em; }
+  .stops .gist { margin-top: 6px; color: var(--graphite); line-height: 1.45; }
+  .marker { position: absolute; top: 50%; left: calc((var(--q, 0) + var(--e, 1)) * 25%); width: 34px; translate: -50% -50%; pointer-events: none; }
+  :global(.car) { display: block; width: 100%; height: auto; filter: drop-shadow(0 3px 6px hsl(0 0% 0% / .5)); }
+  :global(.car .body) { fill: var(--hmi); }
+  :global(.car .glass) { fill: hsl(220 30% 12%); }
+  :global(.car .lamp) { fill: #FFF3B0; }
+
+  /* PHASE OPENER */
+  .opener { padding-top: clamp(140px, 16vw, 240px); }
+  .opener .kick .n { color: var(--hmi); }
+  .phase { margin-top: var(--s-3); font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(3.4rem, 1rem + 9vw, 9.5rem); letter-spacing: -.045em; line-height: .9; }
+  .big-route { margin-top: clamp(24px, 3vw, 40px); }
+  .ask-row { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: var(--s-6); align-items: end; margin-top: clamp(24px, 3vw, 40px); }
+  .ask { font-size: clamp(1.5rem, 1rem + 1.6vw, 2.4rem); font-weight: 600; letter-spacing: -.025em; line-height: 1.12; }
+  .ask-row .gist { color: var(--graphite); font-size: 1.05rem; line-height: 1.5; max-width: 44ch; }
+
+  /* DISCOVER: pinned scenes driven by how far the section has scrolled */
+  .pin { position: relative; }
+  .pin .stage { position: sticky; top: 0; height: 100svh; overflow: hidden; }
+  .story { height: calc(var(--n) * 90svh + 100svh); }
+  .story .stage { display: grid; place-content: center; padding-inline: max(var(--inset), 8vw); }
+  .scene-k { position: absolute; top: max(96px, 10svh); left: max(var(--inset), 8vw); }
+  .beats { display: grid; max-width: 1100px; }
+  .beats li { grid-area: 1 / 1; display: grid; gap: var(--s-4); align-content: center; opacity: var(--o, 0); translate: 0 var(--ty, 30px); }
+  .when { font-family: var(--font-mono); font-size: var(--t-label); letter-spacing: .14em; text-transform: uppercase; color: var(--graphite); }
+  .beat { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2rem, 1rem + 3.6vw, 4.8rem); letter-spacing: -.03em; line-height: 1.06; text-wrap: balance; }
+  .beat span { opacity: clamp(.12, calc(var(--l, 0) * 1.5 * var(--wc) - var(--w)), 1); }
+  .beats li.last .beat { color: var(--hmi); }
+  .ticks { position: absolute; bottom: clamp(96px, 14svh, 140px); left: 50%; translate: -50% 0; display: flex; gap: 8px; }
+  .ticks i { width: 28px; height: 3px; border-radius: 3px; background: var(--line); transition: background-color 300ms var(--ease-smooth-out); }
+  .ticks i.on { background: var(--hmi); }
+  .gauge { height: 220svh; }
+  .gauge .stage { display: grid; place-content: center; justify-items: center; gap: var(--s-4); text-align: center; padding-inline: var(--inset); }
+  .gauge .big { margin-top: 0; }
+  .dial { width: min(420px, 80vw); margin-top: var(--s-4); overflow: visible; }
+  .arc { fill: none; stroke: var(--line); stroke-width: 14; stroke-linecap: round; }
+  .arc.red { stroke: var(--hmi); stroke-dasharray: .3 1; stroke-dashoffset: -.7; }
+  .needle { transform-box: view-box; transform-origin: 120px 130px; rotate: calc(-90deg + var(--k, 0) * 180deg); }
+  .needle line { stroke: var(--ink); stroke-width: 4; stroke-linecap: round; }
+  .needle circle { fill: var(--ink); }
+  .verdict { font-family: var(--font-mono); font-size: .85rem; letter-spacing: .14em; text-transform: uppercase; transition: color 300ms var(--ease-smooth-out); }
+  .verdict.over { color: var(--hmi); }
+  .asks { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 560px; }
+  .asks li { padding: 8px 14px; border-radius: 8px; font-size: var(--t-small); font-weight: 500; color: var(--graphite); background: var(--surface); border: 1px solid var(--line);
+    transition: color 300ms var(--ease-smooth-out), border-color 300ms var(--ease-smooth-out), background-color 300ms var(--ease-smooth-out); }
+  .asks li.lit { color: var(--ink); border-color: color-mix(in srgb, var(--hmi) 60%, transparent); background: color-mix(in srgb, var(--hmi) 22%, var(--surface)); }
+  .nums { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-5); margin-top: clamp(40px, 5vw, 64px); }
+  .nums p { display: grid; gap: var(--s-2); padding-top: var(--s-3); border-top: 2px solid var(--line); }
+  .nums b { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(3rem, 1rem + 5vw, 6rem); letter-spacing: -.04em; line-height: .9; font-variant-numeric: tabular-nums; }
+  .nums span { font-family: var(--font-mono); font-size: var(--t-label); letter-spacing: .14em; text-transform: uppercase; color: var(--graphite); }
+  .notes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-5); margin-top: clamp(56px, 7vw, 96px); }
+  .col { display: grid; gap: var(--s-4); align-content: start; }
+  .q { font-weight: 600; line-height: 1.3; padding-bottom: var(--s-3); border-bottom: 1px solid var(--line); min-height: 3.6em; }
+  .col ul { display: grid; gap: 12px; }
+  .sticky { padding: 18px 16px; min-height: 92px; display: flex; align-items: flex-end; border-radius: 4px 4px 14px 4px; color: #1b1416; font-weight: 600; line-height: 1.3;
+    rotate: var(--r); box-shadow: 0 1px 0 hsl(0 0% 100% / .4) inset, 0 12px 22px -10px hsl(0 0% 0% / .7); transition: rotate 300ms var(--ease-smooth-out), translate 300ms var(--ease-smooth-out); }
+  .sticky:hover { rotate: 0deg; translate: 0 -3px; }
+  .sticky.y { background: #F7D774; } .sticky.g { background: #B9E4B1; } .sticky.p { background: #F3B6CF; } .sticky.b { background: #AFCFF5; }
+  .shot-f { margin: clamp(48px, 6vw, 80px) 0 0; }
+  .shot-f :global(img) { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .shot-f.slim { max-width: 572px; }
+  .shot-f.light :global(img) { background: #fff; padding: 12px; }
+
+  /* DEFINE */
+  .brief { margin-top: var(--s-4); max-width: 20ch; font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2.3rem, 1rem + 4.4vw, 5.6rem);
+    letter-spacing: -.035em; line-height: 1.02; text-wrap: balance; }
+  .brief em { font-style: normal; color: var(--hmi); }
+  .struck { position: relative; display: inline-block; color: var(--graphite); }
+  .struck s { text-decoration: none; }
+  .struck svg { position: absolute; left: -4%; top: 30%; width: 108%; height: 50%; overflow: visible; }
+  .struck path { fill: none; stroke: var(--hmi); stroke-width: 6; stroke-linecap: round; vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--e, 1)); }
+  .rows { margin-top: clamp(32px, 4vw, 56px); border-top: 1px solid var(--line); }
+  .rows li { display: grid; grid-template-columns: 56px minmax(0, 1fr) 24px minmax(0, 1fr) 160px; gap: var(--s-5); align-items: center; padding-block: var(--s-5); border-bottom: 1px solid var(--line); }
+  .rows .n { font-family: var(--font-display); font-weight: var(--display-weight); font-size: 2rem; color: var(--hmi); letter-spacing: -.03em; }
+  .rows .f { font-size: 1.2rem; font-weight: 600; letter-spacing: -.015em; line-height: 1.3; }
+  .rows .d { color: var(--graphite); font-size: 1.05rem; line-height: 1.45; }
+  .rows :global(.to) { width: 22px; height: 22px; fill: none; stroke: var(--graphite); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  .rows :global(.th) { width: 160px; height: auto; border-radius: 8px; opacity: .55; filter: grayscale(.6); transition: opacity 300ms var(--ease-smooth-out), filter 300ms var(--ease-smooth-out), scale 400ms var(--ease-out-expo); }
+  .rows li:hover :global(.th) { opacity: 1; filter: none; scale: 1.06; }
+  .rules { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-4); margin-top: clamp(32px, 4vw, 56px); }
+  .rules div { display: grid; gap: var(--s-3); align-content: space-between; min-height: 200px; padding: var(--s-5); border-radius: 16px; background: var(--surface); border: 1px solid var(--line); }
+  .rules dt { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(1.8rem, 1rem + 1.6vw, 2.6rem); letter-spacing: -.03em; }
+  .rules dd { margin: 0; font-size: 1.05rem; line-height: 1.4; color: var(--graphite); }
+  .limits { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: var(--s-5); margin-top: var(--s-7); padding-top: var(--s-4); border-top: 1px solid var(--line); }
+  .limits ul { display: flex; flex-wrap: wrap; gap: 8px 10px; }
+  .limits li { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); font-size: var(--t-small); }
+
+  /* DEVELOP */
+  .boards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); margin-top: clamp(32px, 4vw, 56px); }
+  .tile { margin: 0; }
+  .tile :global(img) { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .boards .wide { grid-column: span 2; }
+  .split { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 6fr); gap: clamp(32px, 5vw, 80px); align-items: start; }
+  .split .txt { position: sticky; top: 120px; }
+  .toys { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); }
+  .pair { display: grid; grid-template-columns: minmax(0, 11fr) minmax(0, 9fr); gap: var(--s-5); align-items: start; }
+  .pair .shot-f { margin-top: clamp(32px, 4vw, 56px); }
+  .vs { position: relative; margin-top: clamp(32px, 4vw, 56px); max-width: 1000px; border-radius: 16px; overflow: hidden; touch-action: pan-y; }
+  .vs :global(img) { display: block; width: 100%; height: auto; }
+  .vs-a { position: absolute; inset: 0; clip-path: inset(0 calc(100% - var(--x)) 0 0); }
+  .vs-line { position: absolute; top: 0; bottom: 0; left: var(--x); width: 2px; translate: -1px 0; background: #fff; pointer-events: none; }
+  .vs-line i { position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; translate: -50% -50%; border-radius: 50%; background: #fff; box-shadow: 0 4px 16px hsl(0 0% 0% / .4); }
+  .vs-line i::before, .vs-line i::after { content: ''; position: absolute; top: 50%; width: 8px; height: 8px; border: solid #111; border-width: 0 0 2px 2px; }
+  .vs-line i::before { left: 11px; translate: 0 -50%; rotate: 45deg; }
+  .vs-line i::after { right: 11px; translate: 0 -50%; rotate: -135deg; }
+  .vs-tag { position: absolute; top: 12px; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #fff; background: hsl(0 0% 0% / .55); pointer-events: none; }
+  .vs-tag.l { left: 12px; } .vs-tag.r { right: 12px; }
+  .vs input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; }
+  .vs:has(input:focus-visible) { outline: 2px solid var(--ink); outline-offset: 4px; }
+
+  /* DELIVER */
+  .scrolly { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(32px, 5vw, 80px); margin-top: clamp(32px, 4vw, 56px); }
+  .pics { position: sticky; top: max(96px, calc(50svh - 18vw)); align-self: start; }
+  .shot { position: relative; border-radius: 14px; overflow: hidden; box-shadow: 0 30px 80px hsl(0 0% 0% / .45); }
+  .shot :global(img) { display: block; width: 100%; height: auto; }
+  .mark { position: absolute; display: grid; place-items: center; width: 28px; height: 28px; translate: -50% -50%; border-radius: 50%; background: var(--hmi); color: #fff;
+    font-weight: 700; font-size: 13px; box-shadow: 0 0 0 4px hsl(0 0% 0% / .35); transition: scale 400ms var(--ease-bounce), opacity 300ms var(--ease-smooth-out), box-shadow 400ms var(--ease-smooth-out); }
+  .shot.focus .mark { opacity: .35; }
+  .shot.focus .mark.hot { opacity: 1; scale: 1.35; box-shadow: 0 0 0 4px hsl(0 0% 0% / .35), 0 0 0 12px color-mix(in srgb, var(--hmi) 35%, transparent); }
+  .steps li { min-height: 56svh; display: grid; gap: var(--s-2); align-content: center; opacity: .3; transition: opacity 400ms var(--ease-smooth-out); }
+  .steps li:first-child { min-height: 36svh; align-content: start; }
+  .steps li:last-child { min-height: 46svh; }
+  .steps li.on { opacity: 1; }
+  .st-t { font-size: clamp(1.4rem, 1rem + 1.1vw, 2.1rem); font-weight: 600; letter-spacing: -.02em; line-height: 1.15; }
+  .steps .st-d { font-size: 1.05rem; max-width: 40ch; }
+  .modes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-4); margin-top: clamp(32px, 4vw, 56px); }
+  .mode { margin: 0; display: grid; gap: var(--s-3); align-content: start; }
+  .mode :global(img) { display: block; width: 100%; height: auto; border-radius: 10px; }
+  .mode figcaption, .tile figcaption { display: grid; gap: 4px; }
+  .mode b, .tile b { font-size: 1.15rem; font-weight: 600; letter-spacing: -.01em; }
+  .trio figcaption { margin-top: var(--s-3); }
+  .levels { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: clamp(24px, 4vw, 56px); align-items: center; margin-top: clamp(32px, 4vw, 56px); }
+  .lv-screen { display: grid; border-radius: 14px; overflow: hidden; }
+  .lv-screen :global(.lv-shot) { grid-area: 1 / 1; display: block; width: 100%; height: auto; opacity: 0; transition: opacity 400ms var(--ease-smooth-out); }
+  .lv-screen :global(.lv-shot.on) { opacity: 1; }
+  .lv-btns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .lv-btns button { display: inline-flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 16px; border-radius: 12px; font-weight: 600; text-align: left;
+    background: var(--surface); border: 1px solid var(--line); transition: border-color var(--duration-fast) var(--ease-smooth-out), background-color var(--duration-fast) var(--ease-smooth-out); }
+  .lv-btns button i { width: 12px; height: 12px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 25%, transparent); }
+  .lv-btns button:hover { border-color: color-mix(in srgb, var(--c) 60%, transparent); }
+  .lv-btns button[aria-pressed='true'] { border-color: var(--c); background: color-mix(in srgb, var(--c) 14%, var(--surface)); }
+  .lv-btns button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .lv-d { margin-top: var(--s-5); min-height: 3em; font-size: 1.1rem; line-height: 1.45; }
+  .lv-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: var(--s-4); }
+  .lv-bar i { height: 6px; border-radius: 3px; background: var(--c); }
+  .flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-4); margin-top: clamp(32px, 4vw, 56px); }
+  .flow li { position: relative; display: grid; gap: 6px; align-content: start; padding: var(--s-5) var(--s-5) var(--s-5) 0; border-top: 2px solid var(--hmi); }
+  .flow .n { font-family: var(--font-mono); font-size: var(--t-label); color: var(--hmi); letter-spacing: .14em; }
+  .flow b { font-size: 1.2rem; font-weight: 600; letter-spacing: -.015em; line-height: 1.25; }
+  .trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-5); margin-top: clamp(48px, 6vw, 80px); }
+  .screens { max-width: none; }
+  .screens > .wrap { max-width: 1240px; margin-inline: auto; }
+  .screens :global(.cp) { margin-top: var(--s-6); }
+  .made { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin-top: var(--s-4); }
+  .made li { display: flex; align-items: baseline; gap: 12px; padding: var(--s-4); border-radius: 12px; background: var(--surface); border: 1px solid var(--line); font-weight: 500; }
+  .made .n { font-family: var(--font-mono); font-size: var(--t-label); color: var(--hmi); }
+
+  /* OUTCOME */
+  .echo { margin-top: var(--s-4); max-width: 24ch; font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(1.9rem, 1rem + 2.8vw, 3.8rem); letter-spacing: -.03em; line-height: 1.06; text-wrap: balance; }
+  .echo.dim { color: var(--graphite); }
+  .replay { margin: clamp(40px, 5vw, 64px) 0 0; max-width: 1000px; border-radius: 18px; overflow: hidden; }
+  .replay :global(img) { display: block; width: 100%; height: auto; }
+  .wins { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-5); margin-top: clamp(48px, 6vw, 80px); }
+  .wins li { padding-top: var(--s-4); border-top: 2px solid var(--hmi); font-size: 1.15rem; font-weight: 600; letter-spacing: -.01em; line-height: 1.35; }
+  .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-5); margin-top: clamp(56px, 7vw, 96px); }
+  .cols > div { display: grid; gap: var(--s-3); align-content: start; padding-top: var(--s-3); border-top: 1px solid var(--line); }
+  .cols ul { display: grid; gap: var(--s-3); }
+  .cols li { line-height: 1.45; }
+  .fine { margin-top: var(--s-6); font-size: 12px; color: var(--graphite); }
+  .next { display: grid; gap: 8px; padding-bottom: 140px; }
+  .next-link { display: inline-flex; align-items: center; gap: 16px; font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2.4rem, 1rem + 5vw, 6rem);
+    letter-spacing: -.04em; line-height: 1; transition: color var(--duration-fast) var(--ease-smooth-out); }
+  .next-link:hover { color: var(--hmi); }
+  .next-link :global(svg) { width: .5em; height: .5em; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
+
+  /* THE ROUTE STRIP: a small cluster at the foot of the screen while the phases are on */
+  .strip { position: fixed; z-index: 40; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); width: min(560px, calc(100vw - 24px)); translate: -50% 12px; padding: 10px 16px 8px;
+    border-radius: 18px; background: color-mix(in srgb, var(--paper) 78%, transparent); -webkit-backdrop-filter: blur(14px) saturate(1.3); backdrop-filter: blur(14px) saturate(1.3);
+    box-shadow: inset 0 0 0 1px var(--line), 0 12px 32px hsl(0 0% 0% / .35); opacity: 0; pointer-events: none;
+    transition: opacity 300ms var(--ease-smooth-out), translate 400ms var(--ease-out-expo); }
+  .strip.show { opacity: 1; translate: -50% 0; pointer-events: auto; }
+  .strip-road { position: relative; }
+  .strip :global(.road.thin) { height: 26px; }
+  .strip :global(.road .now) { display: none; }
+  .strip :global(.road .done path) { stroke: var(--hmi); stroke-width: 2; }
+  .strip .marker { width: 24px; left: calc(var(--p, 0) * 100%); }
+  .strip ol { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 4px; }
+  .strip a { display: grid; place-items: center; min-height: 32px; border-radius: 8px; font-size: 12px; font-weight: 500; color: var(--graphite); transition: color var(--duration-fast) var(--ease-smooth-out); }
+  .strip a:hover { color: var(--ink); }
+  .strip a[aria-current='step'] { color: var(--ink); }
+  .strip a:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+
+  @media (max-width: 900px) {
+    .facts, .stops, .nums, .rules, .modes, .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ask-row, .split, .pair, .levels { grid-template-columns: 1fr; }
+    .split .txt { position: static; }
+    .notes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .rows li { grid-template-columns: 40px minmax(0, 1fr); row-gap: 6px; }
+    .rows :global(.to) { display: none; }
+    .rows .d { grid-column: 2; }
+    .rows :global(.th) { grid-column: 2; width: 100%; max-width: 320px; opacity: 1; filter: none; }
+    .limits { grid-template-columns: 1fr; }
+    .scrolly { grid-template-columns: 1fr; gap: var(--s-4); }
+    .pics { top: 64px; z-index: 2; padding-block: 8px; background: var(--paper); }
+    .steps li { min-height: 44svh; }
+    .trio, .wins, .cols { grid-template-columns: 1fr; }
+  }
   @media (max-width: 560px) {
-    .reel { border-radius: 12px; }
-    .snd, .play { bottom: 6px; }
+    .notes, .boards, .stops { grid-template-columns: 1fr; }
+    .boards .wide { grid-column: auto; }
+    .mark { width: 22px; height: 22px; font-size: 11px; }
+    .snd, .play { bottom: calc(6px + 2.2em); }
     .snd { right: 6px; width: 44px; padding: 0; justify-content: center; }
     .play { left: 6px; }
     .snd span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .rules div { min-height: 150px; }
   }
-
-  .next { display: grid; gap: 8px; padding-bottom: 120px; }
-  .next-link { display: inline-flex; align-items: center; gap: 16px; font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2.4rem, 1rem + 5vw, 6rem);
-    letter-spacing: -.04em; line-height: 1; transition: color var(--duration-fast) var(--ease-smooth-out); }
-  .next-link:hover { color: var(--accent); }
-  .next-link :global(svg) { width: .5em; height: .5em; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
-
-  @media (max-width: 1100px) { .rail { display: none; } .topbar { display: block; } }
-  @media (max-width: 900px) {
-    .scrolly { grid-template-columns: 1fr; gap: var(--s-4); }
-    .pics { top: 56px; z-index: 2; padding-block: 8px; background: var(--paper); }
-    .steps li { min-height: 48svh; }
-    .readouts, .spec { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .cols { grid-template-columns: 1fr; }
-    .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .scale ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  }
-  @media (max-width: 560px) { .board, .plain { grid-template-columns: 1fr; } .mark { width: 22px; height: 22px; font-size: 11px; } }
-  /* calm: the clip does not pin; its captions read as a short list */
+  /* calm: nothing pins; the scenario reads as a short list */
   :global(:root[data-motion="calm"]) .story { height: auto; }
   :global(:root[data-motion="calm"]) .story .stage { position: relative; height: auto; padding-block: 16svh; }
   :global(:root[data-motion="calm"]) .beats { gap: var(--s-7); }
   :global(:root[data-motion="calm"]) .beats li { grid-area: auto; --o: 1; --ty: 0px; --l: 1; }
-  :global(:root[data-motion="calm"]) .car { transition: none; }
+  :global(:root[data-motion="calm"]) .strip { transition: none; }
 </style>
 
 <script>
   import { calm } from '../../lib/motion';
   const still = calm();
+  const clamp = (v: number) => Math.min(1, Math.max(0, v));
 
   // how far through a pinned section the page is: 0 as it pins, 1 as it lets go
-  const through = (el: HTMLElement) => { const r = el.getBoundingClientRect(); return Math.min(1, Math.max(0, -r.top / Math.max(1, r.height - innerHeight))); };
+  const through = (el: HTMLElement) => { const r = el.getBoundingClientRect(); return clamp(-r.top / Math.max(1, r.height - innerHeight)); };
   const story = document.querySelector<HTMLElement>('[data-pin="story"]');
   const beats = story ? [...story.querySelectorAll<HTMLElement>('[data-beat]')] : [];
   const ticks = story ? [...story.querySelectorAll<HTMLElement>('[data-tick]')] : [];
-  const scrubs = [...document.querySelectorAll<HTMLElement>('[data-scrub]')];
-  const scrollies = [...document.querySelectorAll<HTMLElement>('[data-scrolly]')].map((el) => ({
-    steps: [...el.querySelectorAll<HTMLElement>('[data-step]')],
-    pics: [...el.querySelectorAll<HTMLElement>('[data-pic]')],
-    shot: el.querySelector<HTMLElement>('.shot'),
-    marks: [...el.querySelectorAll<HTMLElement>('[data-mark]')],
-    cur: -1,
-  }));
-  const delays = scrubs.map((el) => Number(el.style.getPropertyValue('--d') || 0));
   const gauge = document.querySelector<HTMLElement>('[data-pin="gauge"]');
   const needle = document.querySelector<SVGGElement>('[data-needle]');
   const verdict = document.querySelector<HTMLElement>('[data-verdict]');
   const asks = [...document.querySelectorAll<HTMLElement>('[data-ask]')];
+  // scroll-scrubbed elements: [data-scrub] fade and rise, [data-draw] draw their road or strike-through
+  const scrubs = [...document.querySelectorAll<HTMLElement>('[data-scrub], [data-draw]')];
+  const delays = scrubs.map((el) => Number(el.style.getPropertyValue('--d') || 0));
+  const scrolly = document.querySelector<HTMLElement>('[data-scrolly]');
+  const steps = scrolly ? [...scrolly.querySelectorAll<HTMLElement>('[data-step]')] : [];
+  const shot = scrolly?.querySelector<HTMLElement>('[data-shot]');
+  const marks = scrolly ? [...scrolly.querySelectorAll<HTMLElement>('[data-mark]')] : [];
+  let curStep = 0;
+  // the route strip: progress through the four phases, from the first opener to the outcome
+  const strip = document.querySelector<HTMLElement>('[data-route]');
+  const stripRoad = strip?.querySelector<HTMLElement>('.strip-road');
+  const stops = strip ? [...strip.querySelectorAll<HTMLAnchorElement>('[data-route-stop]')] : [];
+  const ends = ['discover', 'define', 'develop', 'deliver', 'outcome'].map((id) => document.getElementById(id)!);
+  const doneRect = strip?.querySelector<SVGRectElement>('clipPath[id$="-done"] rect');
 
-  // the road: signposts sit where their chapter starts along the page; the car drives down it with the scroll
-  const trip = document.querySelector<HTMLElement>('[data-trip]')!;
-  const rail = document.querySelector<HTMLElement>('[data-rail]');
-  const fill = document.querySelector<HTMLElement>('[data-fill]');
-  const car = document.querySelector<HTMLElement>('[data-car]');
-  const topbar = document.querySelector<HTMLElement>('.topbar');
-  const road = document.querySelector<HTMLElement>('[data-road]');
-  let lastY = scrollY;
-  const stops = [...document.querySelectorAll<HTMLAnchorElement>('[data-stop]')];
-  const chapters = stops.map((a) => document.getElementById(a.dataset.stop!)!);
-  let starts: number[] = [];
-  const place = () => {
-    const top = trip.offsetTop, span = Math.max(1, trip.offsetHeight - innerHeight);
-    starts = chapters.map((c) => Math.min(1, Math.max(0, (c.getBoundingClientRect().top + scrollY - top) / span)));
-    stops.forEach((a, i) => a.parentElement!.style.setProperty('--at', `${starts[i] * 100}%`));
-  };
-
-  let raf = 0, settle = 0;
+  let raf = 0;
   const frame = () => {
     raf = 0;
-    const span = Math.max(1, trip.offsetHeight - innerHeight);
-    const p = Math.min(1, Math.max(0, (scrollY - trip.offsetTop) / span));
-    const past = trip.getBoundingClientRect().bottom < innerHeight * 0.6;   // the story has gone by: the footer is coming in
-    topbar?.classList.toggle('off', past);
-    if (rail && fill && car && road) {
-      rail.classList.toggle('show', scrollY > innerHeight * 0.35 && !past);
-      const y = `${(p * rail.offsetHeight).toFixed(1)}px`;
-      car.style.setProperty('--y', y);
-      fill.style.setProperty('--y', y);
-      // lane markings stream past faster than the car moves, so it reads as driving; it leans into quick scrolls
-      road.style.setProperty('--off', `${(-scrollY * 0.35).toFixed(1)}px`);
-      const sway = Math.max(-10, Math.min(10, (scrollY - lastY) * 0.25));
-      car.style.setProperty('--sway', `${sway.toFixed(2)}deg`);
-      clearTimeout(settle);
-      settle = window.setTimeout(() => car.style.setProperty('--sway', '0deg'), 120);
-      let cur = 0;
-      starts.forEach((s, i) => { if (p + 0.002 >= s) cur = i; });
-      stops.forEach((a, i) => { a.classList.toggle('passed', i <= cur); a.setAttribute('aria-current', String(i === cur)); });
-    }
-    topbar?.style.setProperty('--p', p.toFixed(4));
-    lastY = scrollY;
+    const H = innerHeight;
     if (story && beats.length && !still) {
       // each beat owns an equal slice of the scroll: it rises in, its words light up, then it lifts away for the next
       const t = through(story) * beats.length;
       beats.forEach((b, i) => {
         const l = t - i, last = i === beats.length - 1;
-        const inn = Math.min(1, Math.max(0, (l + 0.15) / 0.3)), out = last ? 0 : Math.min(1, Math.max(0, (l - 0.8) / 0.2));
-        b.style.setProperty('--l', Math.min(1, Math.max(0, l / 0.75)).toFixed(3));
+        const inn = clamp((l + 0.15) / 0.3), out = last ? 0 : clamp((l - 0.8) / 0.2);
+        b.style.setProperty('--l', clamp(l / 0.75).toFixed(3));
         b.style.setProperty('--o', (inn * (1 - out)).toFixed(3));
         b.style.setProperty('--ty', `${((1 - inn) * 30 - out * 40).toFixed(1)}px`);
       });
       ticks.forEach((k, i) => k.classList.toggle('on', i <= Math.floor(Math.min(t, beats.length - 0.001))));
-    }
-    // scrolly: the step being read is the last one whose middle has risen past 60% down the screen
-    for (const sc of scrollies) {
-      const line = innerHeight * 0.6;
-      let on = 0;
-      sc.steps.forEach((st, i) => { const r = st.getBoundingClientRect(); if (r.top + r.height / 2 < line) on = i; });
-      if (on === sc.cur) continue;
-      sc.cur = on;
-      const step = sc.steps[on], p = Number(step.dataset.p), m = Number(step.dataset.m);
-      sc.steps.forEach((st, i) => st.classList.toggle('on', i === on));
-      sc.pics.forEach((pic, i) => pic.classList.toggle('on', i === p));
-      sc.shot?.classList.toggle('focus', m >= 0);
-      sc.marks.forEach((mk, i) => mk.classList.toggle('hot', i === m));
-    }
-    if (!still) {
-      // measure every element first, then move them all: one layout pass per frame, not one per element
-      const tops = scrubs.map((el) => el.getBoundingClientRect().top);
-      scrubs.forEach((el, i) => {
-        const e = Math.min(1, Math.max(0, (innerHeight - tops[i]) / (innerHeight * 0.25) - delays[i]));
-        el.style.setProperty('--e', (e * (2 - e)).toFixed(3));   // eased out, so it settles gently
-      });
     }
     if (gauge && needle && verdict) {
       const k = Math.min(1, through(gauge) * 1.15);
@@ -750,7 +813,45 @@ const pad = (n: number) => String(n).padStart(2, '0');
       verdict.classList.toggle('over', over);
       verdict.textContent = over ? 'Over budget' : 'Within budget';
     }
+    if (scrolly && steps.length) {
+      // the step being read is the last one whose middle has risen past 60% down the screen
+      let on = 0;
+      steps.forEach((st, i) => { const r = st.getBoundingClientRect(); if (r.top + r.height / 2 < H * 0.6) on = i; });
+      if (on !== curStep) {
+        curStep = on;
+        const m = Number(steps[on].dataset.m);
+        steps.forEach((st, i) => st.classList.toggle('on', i === on));
+        shot?.classList.toggle('focus', m >= 0);
+        marks.forEach((mk, i) => mk.classList.toggle('hot', i === m));
+      }
+    }
+    if (!still) {
+      // measure every element first, then move them all: one layout pass per frame
+      const tops = scrubs.map((el) => el.getBoundingClientRect().top);
+      scrubs.forEach((el, i) => {
+        const e = clamp((H - tops[i]) / (H * 0.3) - delays[i]);
+        el.style.setProperty('--e', (e * (2 - e)).toFixed(3));
+      });
+    }
+    if (strip && stripRoad && doneRect && ends.every(Boolean)) {
+      // where the middle of the screen is along the four phases: phase i runs from its opener to the next one
+      const mid = H * 0.5, tops = ends.map((el) => el.getBoundingClientRect().top);
+      let pos = 0;
+      for (let i = 0; i < 4; i++) if (tops[i] < mid) pos = i + clamp((mid - tops[i]) / Math.max(1, tops[i + 1] - tops[i]));
+      const p = pos / 4;
+      stripRoad.style.setProperty('--p', p.toFixed(4));
+      doneRect.setAttribute('width', String(Math.round(p * 1200)));
+      strip.classList.toggle('show', tops[0] < H * 0.7 && tops[4] > H * 0.5);
+      const cur = Math.min(3, Math.floor(pos));
+      stops.forEach((a, i) => { if (i === cur && tops[0] < mid) a.setAttribute('aria-current', 'step'); else a.removeAttribute('aria-current'); });
+    }
   };
+  const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
+  addEventListener('scroll', kick, { passive: true });
+  addEventListener('resize', kick);
+  addEventListener('load', kick);
+  frame();
+
   // the film plays (muted) once at least half of it is on screen and pauses when it leaves; the reader can pause it
   // or turn the sound on. Calm motion never starts it by itself.
   const film = document.querySelector<HTMLElement>('[data-film]');
@@ -773,11 +874,21 @@ const pad = (n: number) => String(n).padStart(2, '0');
     });
   }
 
-  const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
-  place();
-  addEventListener('resize', () => { place(); kick(); });
-  addEventListener('load', () => { place(); kick(); });
-  addEventListener('scroll', kick, { passive: true });
-  frame();
+  // what got cut: the slider uncovers the highway screen over the traffic one
+  document.querySelectorAll<HTMLElement>('[data-vs]').forEach((vs) => {
+    const input = vs.querySelector<HTMLInputElement>('[data-vs-in]')!;
+    input.addEventListener('input', () => vs.style.setProperty('--x', `${input.value}%`));
+  });
 
+  // the danger levels: one button per level swaps the screen and the line under it
+  document.querySelectorAll<HTMLElement>('[data-levels]').forEach((box) => {
+    const btns = [...box.querySelectorAll<HTMLButtonElement>('[data-lv]')];
+    const shots = [...box.querySelectorAll<HTMLElement>('[data-lv-shot]')];
+    const line = box.querySelector<HTMLElement>('[data-lv-d]')!;
+    btns.forEach((b, i) => b.addEventListener('click', () => {
+      btns.forEach((o, j) => o.setAttribute('aria-pressed', String(i === j)));
+      shots.forEach((s, j) => s.classList.toggle('on', i === j));
+      line.textContent = (shots[i].getAttribute('alt') ?? '').replace(/^[^:]+:\s*/, '');
+    }));
+  });
 </script>
