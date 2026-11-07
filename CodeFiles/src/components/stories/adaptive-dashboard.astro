@@ -1,11 +1,10 @@
 ---
-// The Adaptive Dashboard case study, told along the double diamond: Discover and Define open up and then narrow the
-// problem, Develop and Deliver open up and then narrow the solution, and an Outcome closes it. The project is about
-// driving, so the diamond is drawn as a road that widens and narrows: it heads each phase with that phase's stretch
-// drawn in as you arrive, and a small route strip at the bottom of the screen drives a car along it as you read.
-// Inside the phases: the evening scenario and the attention gauge (Discover), the brief with its struck-out word and
-// the findings that became decisions (Define), the storyboards, toy-car tests, sketches and a before/after slider of
-// what got cut (Develop), and the finished screens with a danger-level picker and the cluster player (Deliver).
+// The Adaptive Dashboard case study in four chapters and a close: the problem, the brief, the process, the screens,
+// then the outcome. The project is about driving, so the chapters sit on a road that widens and narrows: each chapter
+// opens with its stretch drawn in, and a small route strip at the bottom of the screen drives a car along it as you read.
+// Inside: the evening scenario and the attention gauge, the brief with its struck-out word and the findings that became
+// decisions, the storyboards, toy-car tests, sketches and a before/after slider of what got cut, and the finished
+// screens with a danger-level picker and the cluster player. Elements fade up once as they arrive (no scroll-scrubbing).
 // Shared behaviour (count-up numbers, the next-project link) lives in src/pages/work/[slug].astro.
 import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
@@ -41,14 +40,14 @@ const p = project.data;
 const cluster = p.blocks.find((b) => b.type === 'cluster') as Extract<typeof p.blocks[number], { type: 'cluster' }> | undefined;
 const pad = (n: number) => String(n).padStart(2, '0');
 
-// the four stretches of road: diverge on the problem, converge on a brief, diverge on ideas, converge on the screens
+// the four chapters, one stretch of road each
 const phases = [
-  { id: 'discover', name: 'Discover', way: 'Diverge', ask: 'What goes wrong behind the wheel?', gist: 'Opening up the problem: a real evening drive, an attention budget and four research questions.' },
-  { id: 'define', name: 'Define', way: 'Converge', ask: 'What should the screen do?', gist: 'Narrowing it to one brief, four findings that became decisions and the rules every screen follows.' },
-  { id: 'develop', name: 'Develop', way: 'Diverge', ask: 'How could it work?', gist: 'Trying it many ways: storyboards, toy cars on a paper road, sketches, logic, and what got cut.' },
-  { id: 'deliver', name: 'Deliver', way: 'Converge', ask: 'What does the driver see?', gist: 'Landing on the screens: the home screen, four situations, one ring with four levels, and the full set.' },
+  { id: 'problem', name: 'The problem', short: 'Problem', ask: 'What goes wrong behind the wheel?', gist: 'A real evening drive, an attention budget and four research questions.' },
+  { id: 'brief', name: 'The brief', short: 'Brief', ask: 'What should the screen do?', gist: 'One question, four findings that became decisions, and the rules every screen follows.' },
+  { id: 'process', name: 'The process', short: 'Process', ask: 'How could it work?', gist: 'Storyboards, toy cars on a paper road, sketches, logic, and what got cut.' },
+  { id: 'screens', name: 'The screens', short: 'Screens', ask: 'What does the driver see?', gist: 'The home screen, four situations, one ring with four levels, and the full set.' },
 ];
-// the road: two diamonds side by side; each phase is one quarter of it (viewBox 1200 × 240)
+// the road widens and narrows twice; each chapter is one quarter of it (viewBox 1200 × 240)
 const roadPaths = '<path d="M0 120 L300 22 L600 120 L900 22 L1200 120" /><path d="M0 120 L300 218 L600 120 L900 218 L1200 120" /><path class="lane" d="M0 120 H1200" />';
 const road = (id: string, q: number, cls = '') => `<svg class="road ${cls}" viewBox="0 0 1200 240" preserveAspectRatio="none" aria-hidden="true">
   <defs><clipPath id="${id}-done"><rect x="0" y="0" width="${Math.max(0, q) * 300}" height="240" /></clipPath>
@@ -58,7 +57,7 @@ const road = (id: string, q: number, cls = '') => `<svg class="road ${cls}" view
 </svg>`;
 const car = '<svg class="car" viewBox="0 0 40 24" aria-hidden="true"><rect class="body" x="2" y="3" width="36" height="18" rx="6" /><rect class="glass" x="25" y="6" width="7" height="12" rx="2" /><rect class="glass" x="8" y="6" width="4" height="12" rx="1.5" /><rect class="lamp" x="36" y="5" width="2" height="4" rx="1" /><rect class="lamp" x="36" y="15" width="2" height="4" rx="1" /></svg>';
 
-// DISCOVER: the evening, told a beat at a time; each beat's words light up as you scroll through it
+// THE PROBLEM: the evening, told a beat at a time; each beat's words light up as you scroll through it
 const beats = [
   { k: '9:04 pm', t: "You're driving home. It's raining, and traffic has slowed to a crawl." },
   { k: '9:05 pm', t: 'Brake lights flash ahead. A scooter squeezes past on your left.' },
@@ -74,7 +73,7 @@ const notes = [
   { q: 'What distracts the most?', c: 'p', n: ['Touchscreen climate controls', 'Typing a destination', 'Deep menus', 'Switching between screens'] },
   { q: 'What would reduce the effort?', c: 'b', n: ['Larger icons and buttons', 'Information that fits the moment', 'Physical controls for essentials', 'Fewer things on screen while moving'] },
 ];
-// DEFINE: what the research found, and the decision each finding forced
+// THE BRIEF: what the research found, and the decision each finding forced
 const findings = [
   { f: 'Speed gets checked every few seconds.', d: 'Speed stays the biggest thing on every screen.', src: cruise, alt: 'Highway screen with the speed large on the left' },
   { f: 'What matters changes with the road.', d: 'The screen changes too: highway, traffic, parking.', src: traffic, alt: 'Traffic mode with the map and the cars around you' },
@@ -88,7 +87,7 @@ const rules = [
   ['Touch', 'As little as possible, never in menus'],
 ];
 const limits = p.challenge?.constraints.filter((c) => !/porsche/i.test(c)) ?? [];
-// DEVELOP
+// THE PROCESS
 const boards = [
   { src: sbBlind, cap: 'Blind spot on the highway' }, { src: sbExit, cap: 'Taking an exit' }, { src: sbPed, cap: 'A pedestrian in traffic' },
   { src: sbPark, cap: 'Parking in town' }, { src: sbFatigue, cap: 'A tired driver' },
@@ -97,7 +96,7 @@ const toys = [
   { src: toyLane, cap: 'Drifting out of the lane' }, { src: toyChange, cap: 'Changing lanes when clear' },
   { src: toyKeep, cap: 'Holding the lane' }, { src: toyPark, cap: 'Too close while parking' },
 ];
-// DELIVER: the home screen, part by part (marker positions are percentages of the 1400 × 700 screenshot)
+// THE SCREENS: the home screen, part by part (marker positions are percentages of the 1400 × 700 screenshot)
 const parts = [
   { x: 7, y: 27, t: 'Speed', d: "How fast you're going. The ring around it changes colour with the danger level." },
   { x: 93, y: 27, t: 'Revs', d: 'Engine revs, shown on the open road and hidden in traffic.' },
@@ -160,27 +159,27 @@ const right = '<svg class="to" viewBox="0 0 16 16" aria-hidden="true"><path d="M
     </figure>
   </section>
 
-  <!-- THE ROUTE: the whole process as one road; each stretch links to its phase -->
+  <!-- THE ROUTE: the four chapters as one road; each stretch links to its chapter -->
   <section class="sec wrap route-sec" aria-labelledby="route-h">
-    <p class="kick">How it was made</p>
-    <h2 id="route-h" class="big" data-scrub>Two diamonds of road: one for the problem, one for the answer.</h2>
+    <p class="kick">In this case study</p>
+    <h2 id="route-h" class="big" data-scrub>From a rainy drive home to the screen that fixes it.</h2>
     <div class="route" data-scrub>
       <Fragment set:html={road('rt', -1)} />
       <ol class="stops">
-        {phases.map((ph, i) => <li><a href={`#${ph.id}`}><span class="n">{pad(i + 1)}</span><b>{ph.name}</b><span class="way">{ph.way}</span><span class="gist">{ph.ask}</span></a></li>)}
+        {phases.map((ph, i) => <li><a href={`#${ph.id}`}><span class="n">{pad(i + 1)}</span><b>{ph.name}</b><span class="gist">{ph.ask}</span></a></li>)}
       </ol>
     </div>
   </section>
 
   {phases.map((ph, i) => (
     <Fragment>
-      <!-- PHASE OPENER: its number, name and question, and its stretch of road drawing in -->
-      <header class="sec wrap opener" id={ph.id} data-phase={i}>
-        <p class="kick"><span class="n">{pad(i + 1)} / 04</span>{ph.way}</p>
+      <!-- CHAPTER OPENER: its number, title and question, and its stretch of road drawing in -->
+      <header class="sec wrap opener" id={ph.id}>
+        <p class="kick"><span class="n">{pad(i + 1)} / 04</span></p>
         <h2 class="phase" data-scrub>{ph.name}</h2>
         <div class="route big-route" data-draw style={`--q:${i}`}>
           <Fragment set:html={road(`op${i}`, i)} />
-          <span class="marker" aria-hidden="true" set:html={car} />
+          <span class="track" aria-hidden="true"><span class="marker" set:html={car} /></span>
         </div>
         <div class="ask-row">
           <p class="ask" data-scrub>{ph.ask}</p>
@@ -252,9 +251,9 @@ const right = '<svg class="to" viewBox="0 0 16 16" aria-hidden="true"><path d="M
         <Fragment>
           <!-- the brief, with the first idea struck out -->
           <section class="sec wrap" aria-labelledby="brief-h">
-            <p class="kick">The brief</p>
+            <p class="kick">The question</p>
             <h3 id="brief-h" class="brief" data-draw>
-              Can a cluster show <span class="struck"><s>everything</s><svg viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true"><path d="M4 26 C 50 14, 120 30, 196 12" pathLength="1" /></svg></span> <em>less</em>, and still make sure nothing important is missed?
+              Can a cluster show <s class="struck">everything</s> <em>less</em>, and still make sure nothing important is missed?
             </h3>
             <p class="note" data-scrub>Not a quieter screen: a screen that knows which road it is on. Designed for drivers aged 25 to 35.</p>
           </section>
@@ -443,7 +442,7 @@ const right = '<svg class="to" viewBox="0 0 16 16" aria-hidden="true"><path d="M
     </Fragment>
   ))}
 
-  <!-- OUTCOME: past the second diamond; the same evening, with the new screen -->
+  <!-- OUTCOME: the same evening, with the new screen -->
   <section class="sec wrap outcome" id="outcome" aria-labelledby="oc-h">
     <p class="kick">Outcome</p>
     <h2 id="oc-h" class="echo" data-scrub>Back to 9:04 pm. Same rain, same traffic.</h2>
@@ -467,13 +466,14 @@ const right = '<svg class="to" viewBox="0 0 16 16" aria-hidden="true"><path d="M
     <a class="next-link" href={next ? `/work/${next.id}` : '/work'} id="next-h">{next?.data.title ?? 'All projects'} <span class="t-learn-chevron" set:html={arrow} /></a>
   </section>
 
-  <!-- THE ROUTE STRIP: a car drives the double diamond as you read; each stretch jumps to its phase -->
-  <nav class="strip" aria-label="Project phases" data-route>
+  <!-- THE ROUTE STRIP: a car drives the road as you read; each stretch jumps to its chapter -->
+  <nav class="strip" aria-label="Chapters" data-route>
     <div class="strip-road">
-      <Fragment set:html={road('st', 0, 'thin')} />
-      <span class="marker" aria-hidden="true" set:html={car} />
+      <Fragment set:html={road('st', -1, 'thin')} />
+      <span class="lit" data-route-lit><Fragment set:html={road('sl', -1, 'thin')} /></span>
+      <span class="track" aria-hidden="true" data-route-car><span class="marker" set:html={car} /></span>
     </div>
-    <ol>{phases.map((ph, i) => <li><a href={`#${ph.id}`} data-route-stop={i}>{ph.name}</a></li>)}</ol>
+    <ol>{phases.map((ph, i) => <li><a href={`#${ph.id}`} data-route-stop={i}>{ph.short}</a></li>)}</ol>
   </nav>
 </article>
 
@@ -489,9 +489,12 @@ const right = '<svg class="to" viewBox="0 0 16 16" aria-hidden="true"><path d="M
   .note { margin-top: var(--s-4); max-width: 56ch; font-size: 1.1rem; line-height: 1.5; color: var(--graphite); }
   .cap { margin-top: 10px; font-size: var(--t-small); color: var(--graphite); }
   .st-d { color: var(--graphite); line-height: 1.5; }
-  /* scroll-scrubbed motion: --e runs 0 to 1 as an element rises into view (set by the script; 1 without it) */
-  [data-scrub] { opacity: calc(.25 + .75 * var(--e, 1)); translate: 0 calc((1 - var(--e, 1)) * 40px); }
-  [data-scrub='pop'] { translate: 0 calc((1 - var(--e, 1)) * 32px); scale: calc(.92 + .08 * var(--e, 1)); }
+  /* arrivals: each element fades up once as it comes into view (the script adds .in); --d staggers it, in seconds.
+     Hidden only while the script runs, so the page reads fine without it and with reduced motion. */
+  [data-scrub] { transition: opacity 700ms var(--ease-smooth-out), translate 900ms var(--ease-out-expo), scale 900ms var(--ease-out-expo);
+    transition-delay: calc(var(--d, 0) * 1s); }
+  :global(html.js[data-motion="full"]:not(.reveal-all)) [data-scrub]:not(.in) { opacity: 0; translate: 0 28px; }
+  :global(html.js[data-motion="full"]:not(.reveal-all)) [data-scrub='pop']:not(.in) { translate: 0 20px; scale: .97; }
 
   /* COVER */
   .cover { padding-top: clamp(40px, 6vw, 80px); }
@@ -518,7 +521,7 @@ const right = '<svg class="to" viewBox="0 0 16 16" aria-hidden="true"><path d="M
   .play .pl, .play.paused .pz { display: none; }
   .play.paused .pl { display: inline; }
 
-  /* THE ROAD: two diamonds; done stretches in ink, the current one drawn in the project's red as it arrives */
+  /* THE ROAD: it widens and narrows twice; done stretches in ink, the current one drawn in the project's red as it arrives */
   .route { position: relative; }
   /* the road SVG is injected as markup (set:html), so its rules are global, kept inside the case study */
   .case :global(.road) { display: block; width: 100%; height: clamp(90px, 14vw, 200px); overflow: visible; }
@@ -527,22 +530,25 @@ const right = '<svg class="to" viewBox="0 0 16 16" aria-hidden="true"><path d="M
   .case :global(.road .done path) { stroke: color-mix(in srgb, var(--ink) 55%, transparent); }
   .case :global(.road .now path) { stroke: var(--hmi); stroke-width: 3; }
   .case :global(.road .now .lane) { stroke-width: 2; }
-  .case :global(.road .grow) { transform-box: fill-box; transform-origin: 0 50%; scale: var(--e, 1) 1; }
+  .case :global(.road .grow) { transform-box: fill-box; transform-origin: 0 50%; transition: scale 1400ms cubic-bezier(.65, 0, .35, 1) 150ms; }
+  :global(html.js[data-motion="full"]:not(.reveal-all)) [data-draw]:not(.in) :global(.road .grow) { scale: 0 1; }
   .route-sec :global(.road path) { stroke: color-mix(in srgb, var(--ink) 40%, transparent); }
   .stops { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: var(--s-5); }
   .stops a { display: grid; gap: 4px; padding: var(--s-4) var(--s-4) var(--s-4) 0; border-top: 1px solid var(--line); transition: border-color var(--duration-fast) var(--ease-smooth-out); }
   .stops a:hover, .stops a:focus-visible { border-top-color: var(--hmi); }
   .stops a:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
-  .stops .n, .stops .way { font-family: var(--font-mono); font-size: var(--t-label); letter-spacing: .14em; text-transform: uppercase; color: var(--graphite); }
+  .stops .n { font-family: var(--font-mono); font-size: var(--t-label); letter-spacing: .14em; text-transform: uppercase; color: var(--graphite); }
   .stops b { font-size: 1.4rem; font-weight: 600; letter-spacing: -.02em; }
   .stops .gist { margin-top: 6px; color: var(--graphite); line-height: 1.45; }
-  .marker { position: absolute; top: 50%; left: calc((var(--q, 0) + var(--e, 1)) * 25%); width: 34px; translate: -50% -50%; pointer-events: none; }
+  .track { position: absolute; inset: 0; pointer-events: none; translate: calc((var(--q, 0) + 1) * 25%) 0; transition: translate 1400ms cubic-bezier(.65, 0, .35, 1) 150ms; }
+  :global(html.js[data-motion="full"]:not(.reveal-all)) [data-draw]:not(.in) .track { translate: calc(var(--q, 0) * 25%) 0; }
+  .marker { position: absolute; top: 50%; left: 0; width: 34px; translate: -50% -50%; }
   :global(.car) { display: block; width: 100%; height: auto; filter: drop-shadow(0 3px 6px hsl(0 0% 0% / .5)); }
   :global(.car .body) { fill: var(--hmi); }
   :global(.car .glass) { fill: hsl(220 30% 12%); }
   :global(.car .lamp) { fill: #FFF3B0; }
 
-  /* PHASE OPENER */
+  /* CHAPTER OPENER */
   .opener { padding-top: clamp(140px, 16vw, 240px); }
   .opener .kick .n { color: var(--hmi); }
   .phase { margin-top: var(--s-3); font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(3.4rem, 1rem + 9vw, 9.5rem); letter-spacing: -.045em; line-height: .9; }
@@ -551,7 +557,7 @@ const right = '<svg class="to" viewBox="0 0 16 16" aria-hidden="true"><path d="M
   .ask { font-size: clamp(1.5rem, 1rem + 1.6vw, 2.4rem); font-weight: 600; letter-spacing: -.025em; line-height: 1.12; }
   .ask-row .gist { color: var(--graphite); font-size: 1.05rem; line-height: 1.5; max-width: 44ch; }
 
-  /* DISCOVER: pinned scenes driven by how far the section has scrolled */
+  /* THE PROBLEM: pinned scenes driven by how far the section has scrolled */
   .pin { position: relative; }
   .pin .stage { position: sticky; top: 0; height: 100svh; overflow: hidden; }
   .story { height: calc(var(--n) * 90svh + 100svh); }
@@ -598,14 +604,15 @@ const right = '<svg class="to" viewBox="0 0 16 16" aria-hidden="true"><path d="M
   .shot-f.slim { max-width: 572px; }
   .shot-f.light :global(img) { background: #fff; padding: 12px; }
 
-  /* DEFINE */
+  /* THE BRIEF */
   .brief { margin-top: var(--s-4); max-width: 20ch; font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(2.3rem, 1rem + 4.4vw, 5.6rem);
     letter-spacing: -.035em; line-height: 1.02; text-wrap: balance; }
   .brief em { font-style: normal; color: var(--hmi); }
-  .struck { position: relative; display: inline-block; color: var(--graphite); }
-  .struck s { text-decoration: none; }
-  .struck svg { position: absolute; left: -4%; top: 30%; width: 108%; height: 50%; overflow: visible; }
-  .struck path { fill: none; stroke: var(--hmi); stroke-width: 6; stroke-linecap: round; vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--e, 1)); }
+  /* the struck word: a red stroke runs across all of it, a little past each end, slightly tilted like a pen line */
+  .struck { position: relative; display: inline-block; color: var(--graphite); text-decoration: none; }
+  .struck::after { content: ''; position: absolute; left: -2%; right: -4%; top: 54%; height: .085em; min-height: 4px; border-radius: 99px; background: var(--hmi);
+    rotate: -2.5deg; transform-origin: 0 50%; transition: scale 650ms cubic-bezier(.65, 0, .35, 1) 450ms; }
+  :global(html.js[data-motion="full"]:not(.reveal-all)) [data-draw]:not(.in) .struck::after { scale: 0 1; }
   .rows { margin-top: clamp(32px, 4vw, 56px); border-top: 1px solid var(--line); }
   .rows li { display: grid; grid-template-columns: 56px minmax(0, 1fr) 24px minmax(0, 1fr) 160px; gap: var(--s-5); align-items: center; padding-block: var(--s-5); border-bottom: 1px solid var(--line); }
   .rows .n { font-family: var(--font-display); font-weight: var(--display-weight); font-size: 2rem; color: var(--hmi); letter-spacing: -.03em; }
@@ -622,7 +629,7 @@ const right = '<svg class="to" viewBox="0 0 16 16" aria-hidden="true"><path d="M
   .limits ul { display: flex; flex-wrap: wrap; gap: 8px 10px; }
   .limits li { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); font-size: var(--t-small); }
 
-  /* DEVELOP */
+  /* THE PROCESS */
   .boards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); margin-top: clamp(32px, 4vw, 56px); }
   .tile { margin: 0; }
   .tile :global(img) { display: block; width: 100%; height: auto; border-radius: 12px; }
@@ -645,7 +652,7 @@ const right = '<svg class="to" viewBox="0 0 16 16" aria-hidden="true"><path d="M
   .vs input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; }
   .vs:has(input:focus-visible) { outline: 2px solid var(--ink); outline-offset: 4px; }
 
-  /* DELIVER */
+  /* THE SCREENS */
   .scrolly { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(32px, 5vw, 80px); margin-top: clamp(32px, 4vw, 56px); }
   .pics { position: sticky; top: max(96px, calc(50svh - 18vw)); align-self: start; }
   .shot { position: relative; border-radius: 14px; overflow: hidden; box-shadow: 0 30px 80px hsl(0 0% 0% / .45); }
@@ -710,7 +717,7 @@ const right = '<svg class="to" viewBox="0 0 16 16" aria-hidden="true"><path d="M
   .next-link:hover { color: var(--hmi); }
   .next-link :global(svg) { width: .5em; height: .5em; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
 
-  /* THE ROUTE STRIP: a small cluster at the foot of the screen while the phases are on */
+  /* THE ROUTE STRIP: a small cluster at the foot of the screen while the chapters are on */
   .strip { position: fixed; z-index: 40; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); width: min(560px, calc(100vw - 24px)); translate: -50% 12px; padding: 10px 16px 8px;
     border-radius: 18px; background: color-mix(in srgb, var(--paper) 78%, transparent); -webkit-backdrop-filter: blur(14px) saturate(1.3); backdrop-filter: blur(14px) saturate(1.3);
     box-shadow: inset 0 0 0 1px var(--line), 0 12px 32px hsl(0 0% 0% / .35); opacity: 0; pointer-events: none;
@@ -718,9 +725,10 @@ const right = '<svg class="to" viewBox="0 0 16 16" aria-hidden="true"><path d="M
   .strip.show { opacity: 1; translate: -50% 0; pointer-events: auto; }
   .strip-road { position: relative; }
   .strip :global(.road.thin) { height: 26px; }
-  .strip :global(.road .now) { display: none; }
-  .strip :global(.road .done path) { stroke: var(--hmi); stroke-width: 2; }
-  .strip .marker { width: 24px; left: calc(var(--p, 0) * 100%); }
+  .strip .lit { position: absolute; inset: 0; clip-path: inset(0 100% 0 0); }
+  .strip .lit :global(.road path) { stroke: var(--hmi); stroke-width: 2; }
+  .strip .track { translate: none; transition: none; will-change: transform; }
+  .strip .marker { width: 24px; }
   .strip ol { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 4px; }
   .strip a { display: grid; place-items: center; min-height: 32px; border-radius: 8px; font-size: 12px; font-weight: 500; color: var(--graphite); transition: color var(--duration-fast) var(--ease-smooth-out); }
   .strip a:hover { color: var(--ink); }
@@ -774,20 +782,37 @@ const right = '<svg class="to" viewBox="0 0 16 16" aria-hidden="true"><path d="M
   const needle = document.querySelector<SVGGElement>('[data-needle]');
   const verdict = document.querySelector<HTMLElement>('[data-verdict]');
   const asks = [...document.querySelectorAll<HTMLElement>('[data-ask]')];
-  // scroll-scrubbed elements: [data-scrub] fade and rise, [data-draw] draw their road or strike-through
-  const scrubs = [...document.querySelectorAll<HTMLElement>('[data-scrub], [data-draw]')];
-  const delays = scrubs.map((el) => Number(el.style.getPropertyValue('--d') || 0));
+  // arrivals: each [data-scrub] and [data-draw] element gets .in once, as it comes into view (or if it is already above
+  // the screen, say after a jump to a chapter), and CSS does the rest
+  const io = new IntersectionObserver((entries) => entries.forEach((e) => {
+    if (e.isIntersecting || e.boundingClientRect.top < 0) { e.target.classList.add('in'); io.unobserve(e.target); }
+  }), { rootMargin: '0px 0px -12% 0px' });
+  document.querySelectorAll('[data-scrub], [data-draw]').forEach((el) => io.observe(el));
   const scrolly = document.querySelector<HTMLElement>('[data-scrolly]');
   const steps = scrolly ? [...scrolly.querySelectorAll<HTMLElement>('[data-step]')] : [];
   const shot = scrolly?.querySelector<HTMLElement>('[data-shot]');
   const marks = scrolly ? [...scrolly.querySelectorAll<HTMLElement>('[data-mark]')] : [];
   let curStep = 0;
-  // the route strip: progress through the four phases, from the first opener to the outcome
+  // the route strip: progress through the four chapters, from the first opener to the outcome. The chapter starts are
+  // measured once (and again on resize), and the car eases toward where the reader is, so it glides however the page moves.
   const strip = document.querySelector<HTMLElement>('[data-route]');
-  const stripRoad = strip?.querySelector<HTMLElement>('.strip-road');
+  const lit = strip?.querySelector<HTMLElement>('[data-route-lit]');
+  const carTrack = strip?.querySelector<HTMLElement>('[data-route-car]');
   const stops = strip ? [...strip.querySelectorAll<HTMLAnchorElement>('[data-route-stop]')] : [];
-  const ends = ['discover', 'define', 'develop', 'deliver', 'outcome'].map((id) => document.getElementById(id)!);
-  const doneRect = strip?.querySelector<SVGRectElement>('clipPath[id$="-done"] rect');
+  const ends = ['problem', 'brief', 'process', 'screens', 'outcome'].map((id) => document.getElementById(id));
+  let starts: number[] = [];
+  const measure = () => { starts = ends.map((el) => (el ? el.getBoundingClientRect().top + scrollY : 0)); };
+  let shownP = 0, targetP = 0, glide = 0;
+  const paint = () => {
+    lit!.style.clipPath = `inset(0 ${((1 - shownP) * 100).toFixed(2)}% 0 0)`;
+    carTrack!.style.transform = `translate3d(${(shownP * 100).toFixed(2)}%, 0, 0)`;
+  };
+  const glideTo = () => {
+    shownP += (targetP - shownP) * (still ? 1 : 0.12);
+    if (Math.abs(targetP - shownP) < 0.0004) shownP = targetP;
+    paint();
+    glide = shownP === targetP ? 0 : requestAnimationFrame(glideTo);
+  };
 
   let raf = 0;
   const frame = () => {
@@ -825,31 +850,25 @@ const right = '<svg class="to" viewBox="0 0 16 16" aria-hidden="true"><path d="M
         marks.forEach((mk, i) => mk.classList.toggle('hot', i === m));
       }
     }
-    if (!still) {
-      // measure every element first, then move them all: one layout pass per frame
-      const tops = scrubs.map((el) => el.getBoundingClientRect().top);
-      scrubs.forEach((el, i) => {
-        const e = clamp((H - tops[i]) / (H * 0.3) - delays[i]);
-        el.style.setProperty('--e', (e * (2 - e)).toFixed(3));
-      });
-    }
-    if (strip && stripRoad && doneRect && ends.every(Boolean)) {
-      // where the middle of the screen is along the four phases: phase i runs from its opener to the next one
-      const mid = H * 0.5, tops = ends.map((el) => el.getBoundingClientRect().top);
+    if (strip && lit && carTrack && starts.length === 5) {
+      // where the middle of the screen is along the chapters: chapter i runs from its opener to the next one
+      const mid = scrollY + H * 0.5;
       let pos = 0;
-      for (let i = 0; i < 4; i++) if (tops[i] < mid) pos = i + clamp((mid - tops[i]) / Math.max(1, tops[i + 1] - tops[i]));
-      const p = pos / 4;
-      stripRoad.style.setProperty('--p', p.toFixed(4));
-      doneRect.setAttribute('width', String(Math.round(p * 1200)));
-      strip.classList.toggle('show', tops[0] < H * 0.7 && tops[4] > H * 0.5);
+      for (let i = 0; i < 4; i++) if (starts[i] < mid) pos = i + clamp((mid - starts[i]) / Math.max(1, starts[i + 1] - starts[i]));
+      targetP = pos / 4;
+      if (!glide) glide = requestAnimationFrame(glideTo);
+      strip.classList.toggle('show', starts[0] < scrollY + H * 0.7 && starts[4] > scrollY + H * 0.5);
       const cur = Math.min(3, Math.floor(pos));
-      stops.forEach((a, i) => { if (i === cur && tops[0] < mid) a.setAttribute('aria-current', 'step'); else a.removeAttribute('aria-current'); });
+      stops.forEach((a, i) => { if (i === cur && starts[0] < mid) a.setAttribute('aria-current', 'step'); else a.removeAttribute('aria-current'); });
     }
   };
   const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
   addEventListener('scroll', kick, { passive: true });
-  addEventListener('resize', kick);
-  addEventListener('load', kick);
+  addEventListener('resize', () => { measure(); kick(); });
+  addEventListener('load', () => { measure(); kick(); });
+  // images below load lazily and can shift the chapter starts a little; measure again once the page settles
+  new ResizeObserver(() => { measure(); kick(); }).observe(document.querySelector('.case')!);
+  measure();
   frame();
 
   // the film plays (muted) once at least half of it is on screen and pauses when it leaves; the reader can pause it
