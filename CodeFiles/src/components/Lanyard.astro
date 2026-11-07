@@ -8,7 +8,7 @@ import { site } from '../site';
 interface Props { size?: number; strap?: number; class?: string }
 const { size = 0.6, strap = 0.5, class: cls } = Astro.props;
 ---
-<div class:list={['lanyard', cls]} data-lanyard data-face={withBase('/media/lanyard-face.webp')} data-size={size} data-strap={strap}
+<div class:list={['lanyard', cls]} data-lanyard data-face={withBase('/media/lanyard-0fc0a3c9.webp')   /* the name carries a hash of the picture, so a new picture is never served from an old cache */} data-size={size} data-strap={strap}
   role="img" aria-label={`${site.name}'s ID card on a lanyard: a black and white photo of him and his handle. Drag it to swing it; click to flip it.`}></div>
 
 <style>
