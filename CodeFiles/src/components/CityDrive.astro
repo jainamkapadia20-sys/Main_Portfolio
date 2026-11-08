@@ -1,0 +1,224 @@
+---
+// The projects as a drive through a city built in Blender (src/fx/citydrive.ts, renders from D:/Main Portfolio/city):
+// the section pins and the page's scroll drives the car down the boulevard past one billboard per project, each
+// poster laid onto its billboard's face. Night for the dark theme, a hazy morning for the light one. Under the scene,
+// the project being passed, with buttons for the previous and next billboard and to open it; clicking a billboard
+// opens it too, in the project card. Reduced motion, no JavaScript, or frames that fail to load: no pin, and the
+// projects show as a plain grid of covers.
+import { getImage } from 'astro:assets';
+import { sortedProjects } from '../lib/projects';
+import { withBase } from '../lib/url';
+import drive from '../data/drive.json';
+
+const projects = await sortedProjects();
+const items = await Promise.all(projects.map(async (p) => ({
+  title: p.data.title,
+  tag: p.data.category,
+  sub: p.data.placeholder ? 'Coming soon' : `${p.data.type}, ${p.data.year}`,
+  slug: p.id,
+  href: withBase(`/work/${p.id}`),
+  img: p.data.cover ? (await getImage({ src: p.data.cover, width: 1600, format: 'webp' })).src : undefined,
+})));
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+<div class="drive" data-drive={JSON.stringify(items)} data-base={withBase('/drive/')} data-manifest={withBase(`/drive/manifest.json?v=${drive.version}`)} style={`--n:${items.length}`}>
+  <div class="stage" data-drive-stage>
+    <p class="loading meta" data-loading aria-hidden="true"><span class="bar"><i data-loading-bar></i></span><span data-loading-text>Building the city…</span></p>
+    <div class="hud" data-hud>
+      <p class="hint meta" data-hint><span class="wheel" aria-hidden="true"></span>Scroll to drive</p>
+      <div class="now" aria-live="polite">
+        <p class="count meta"><span data-hud-n>01</span> / {pad(items.length)}</p>
+        <p class="title" data-hud-title>{items[0]?.title}</p>
+        <p class="sub meta" data-hud-sub>{items[0] ? `${items[0].tag} · ${items[0].sub}` : ''}</p>
+      </div>
+      <div class="ctrl">
+        <button type="button" class="round" data-drive-prev aria-label="Previous project"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" /></svg></button>
+        <button type="button" class="round" data-drive-next aria-label="Next project"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5" /></svg></button>
+        <a class="open" data-open href={items[0]?.href}>Open project<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 11 11 5M6 5h5v5" /></svg></a>
+      </div>
+      <span class="route" aria-hidden="true">{items.map(() => <i></i>)}<b data-route-car></b></span>
+    </div>
+  </div>
+  <ul class="grid" data-drive-grid>
+    {items.map((it, i) => (
+      <li><a href={it.href} data-slug={it.slug}>
+        <span class="pic">{it.img ? <img src={it.img} alt="" loading="lazy" width="1600" height="1000" /> : <span class="ph meta">Coming soon</span>}</span>
+        <span class="meta">{pad(i + 1)} · {it.tag}</span><span class="t">{it.title}</span>
+      </a></li>
+    ))}
+  </ul>
+</div>
+
+<style>
+  /* without JavaScript (or with reduced motion) this is a plain grid; the drive takes over when it can run */
+  .drive { position: relative; }
+  .stage { display: none; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 16px; padding: 24px var(--inset) 64px; }
+  .grid a { display: grid; gap: 8px; }
+  .pic { display: grid; aspect-ratio: 16 / 10; border-radius: 12px; overflow: hidden; background: var(--surface); }
+  .pic img { width: 100%; height: 100%; object-fit: cover; }
+  .ph { place-self: center; }
+  .grid .t { font-size: 1.15rem; font-weight: 600; }
+
+  /* the pin: one stretch of scroll per billboard, plus a run-up and a run-out */
+  .drive.live { height: calc(var(--n) * 70svh + 120svh); }
+  .drive.live .grid { display: none; }
+  .drive.live .stage { display: block; position: sticky; top: 0; height: 100svh; overflow: hidden; background: #070708; isolation: isolate; }
+  /* the top and bottom fade into the page (a gradient, not a mask: a mask would redraw the whole stage every frame) */
+  .stage::before { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: linear-gradient(var(--paper), transparent 7%, transparent 93%, var(--paper)); }
+  .stage :global(.drive-canvas) { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  /* the live traffic, drawn over the frames through the same camera; it fades in once the cars have loaded */
+  .stage :global(.drive-traffic) { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none;
+    opacity: 0; transition: opacity 600ms var(--ease-smooth-out); }
+  .stage :global(.drive-traffic.on) { opacity: 1; }
+  /* the posters sit exactly on the billboards; multiplied in, they take each face's light */
+  .stage :global(.drive-posters) { position: absolute; inset: 0; overflow: hidden; }
+  .stage :global(.drive-poster), .stage :global(.drive-ring) { position: absolute; left: 0; top: 0; width: 800px; height: 500px; transform-origin: 0 0; visibility: hidden; will-change: transform; }
+  .stage :global(.drive-poster) { padding: 0; border: 0; background: none; mix-blend-mode: multiply; cursor: pointer; }
+  .stage :global(.drive-poster canvas) { display: block; width: 100%; height: 100%; }
+  .stage :global(.drive-ring) { pointer-events: none; opacity: 0; box-shadow: inset 0 0 0 10px rgba(255, 255, 255, .92); transition: opacity 200ms var(--ease-smooth-out); }
+  .stage :global(.drive-poster:hover + .drive-ring), .stage :global(.drive-poster:focus-visible + .drive-ring) { opacity: 1; }
+  .stage :global(.drive-poster:focus-visible) { outline: none; }
+  /* film grain and a vignette, so it reads as a shot rather than a render */
+  .stage::after { content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse 85% 75% at 50% 45%, transparent 58%, rgba(0,0,0,.5)),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+    opacity: .45; mix-blend-mode: overlay; }
+  .loading { position: absolute; left: 50%; top: 50%; translate: -50% -50%; z-index: 3; display: grid; justify-items: center; gap: 12px; color: rgba(245,245,247,.75);
+    transition: opacity 500ms var(--ease-smooth-out); }
+  .loading.done { opacity: 0; pointer-events: none; }
+  .bar { width: 160px; height: 2px; background: rgba(255,255,255,.14); overflow: hidden; border-radius: 2px; }
+  .bar i { display: block; height: 100%; background: currentColor; transform-origin: 0 50%; transform: scaleX(var(--p, 0)); transition: transform 300ms var(--ease-smooth-out); }
+
+  .hud { position: absolute; inset: auto 0 0; z-index: 2; display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 16px 24px;
+    padding: 120px var(--inset) clamp(36px, 7svh, 72px); color: #F5F5F7; pointer-events: none;
+    background: linear-gradient(to top, rgba(7,7,8,.82) 18%, transparent); }
+  .hud :is(button, a) { pointer-events: auto; }
+  .now { display: grid; gap: 6px; min-width: 0; }
+  .count { color: rgba(245,245,247,.6); }
+  .count span { color: #F5F5F7; }
+  .title { font-family: var(--font-display); font-weight: var(--display-weight); font-size: clamp(1.8rem, 1rem + 2.6vw, 3.6rem); letter-spacing: -.035em; line-height: 1;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sub { color: rgba(245,245,247,.62); }
+  .now.swap .title, .now.swap .sub { animation: swap 520ms cubic-bezier(.22, 1, .36, 1); }
+  @keyframes swap { from { opacity: 0; translate: 0 14px; filter: blur(4px); } }
+  .ctrl { display: flex; align-items: center; gap: 8px; }
+  .round, .open { display: inline-grid; place-items: center; min-height: 48px; border-radius: 999px; color: #F5F5F7; background: rgba(255,255,255,.1);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.16);
+    transition: background-color var(--duration-fast) var(--ease-smooth-out), scale var(--duration-quick) var(--ease-smooth-out); }
+  .round { width: 48px; }
+  .open { grid-auto-flow: column; gap: 8px; padding: 0 20px; font-weight: 600; background: #F5F5F7; color: #0b0b0d; }
+  .round:hover { background: rgba(255,255,255,.18); }
+  .open:hover { background: #fff; }
+  :is(.round, .open):active { scale: .96; }
+  :is(.round, .open):focus-visible { outline: 2px solid #F5F5F7; outline-offset: 3px; }
+  .round:disabled { opacity: .35; cursor: default; }
+  .ctrl svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .route { grid-column: 1 / -1; position: relative; display: grid; grid-template-columns: repeat(var(--n), 1fr); height: 2px; background: rgba(255,255,255,.12); }
+  .route i { justify-self: center; width: 2px; height: 8px; translate: 0 -3px; background: rgba(255,255,255,.4); }
+  .route b { position: absolute; left: 0; top: 0; height: 2px; width: 100%; background: #F5F5F7; transform-origin: 0 50%; transform: scaleX(var(--p, 0)); }
+  .hint { position: absolute; left: 50%; top: clamp(96px, 14svh, 140px); translate: -50% 0; display: inline-flex; align-items: center; gap: 10px; color: rgba(245,245,247,.75);
+    transition: opacity 500ms var(--ease-smooth-out); }
+  .hint.gone { opacity: 0; }
+  .wheel { width: 14px; height: 22px; border-radius: 8px; box-shadow: inset 0 0 0 1.5px currentColor; position: relative; }
+  .wheel::after { content: ''; position: absolute; left: 50%; top: 5px; width: 2px; height: 5px; margin-left: -1px; border-radius: 2px; background: currentColor; animation: wheel 1.6s ease-in-out infinite; }
+  @keyframes wheel { 0% { opacity: 0; translate: 0 -2px; } 40% { opacity: 1; } 100% { opacity: 0; translate: 0 6px; } }
+  @media (max-width: 640px) {
+    .hud { grid-template-columns: 1fr; }
+    .title { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.04; }
+    .ctrl { justify-content: space-between; }
+    .open { flex: 1; margin-left: 4px; }
+  }
+  /* light theme: the drive is a hazy morning, so the overlay reads dark on light */
+  :global(:root[data-theme="light"]) .drive.live .stage { background: #e6e7e8; }
+  :global(:root[data-theme="light"]) .stage::after { background: radial-gradient(ellipse 85% 75% at 50% 45%, transparent 62%, rgba(0,0,0,.14)); opacity: 1; mix-blend-mode: normal; }
+  :global(:root[data-theme="light"]) .hud { color: #0E0E0E; background: linear-gradient(to top, rgba(244,244,242,.9) 18%, transparent); }
+  :global(:root[data-theme="light"]) :is(.count, .sub, .hint, .loading) { color: rgba(14,14,14,.62); }
+  :global(:root[data-theme="light"]) .count span { color: #0E0E0E; }
+  :global(:root[data-theme="light"]) .bar { background: rgba(0,0,0,.12); }
+  :global(:root[data-theme="light"]) .round { color: #0E0E0E; background: rgba(255,255,255,.62); box-shadow: inset 0 0 0 1px rgba(0,0,0,.14); }
+  :global(:root[data-theme="light"]) .round:hover { background: #fff; }
+  :global(:root[data-theme="light"]) .open { background: #0E0E0E; color: #F4F4F2; }
+  :global(:root[data-theme="light"]) .open:hover { background: #000; }
+  :global(:root[data-theme="light"]) :is(.round, .open):focus-visible { outline-color: #0E0E0E; }
+  :global(:root[data-theme="light"]) .route { background: rgba(0,0,0,.12); }
+  :global(:root[data-theme="light"]) .route i { background: rgba(0,0,0,.35); }
+  :global(:root[data-theme="light"]) .route b { background: #0E0E0E; }
+  :global(:root[data-motion="calm"]) .wheel::after, .hint.gone .wheel::after { animation: none; }
+</style>
+
+<script>
+  import { mountCityDrive, type DriveItem } from '../fx/citydrive';
+  import { calm } from '../lib/motion';
+  import { lenis } from '../lib/scroll';
+  import { onTheme } from '../lib/theme';
+
+  document.querySelectorAll<HTMLElement>('[data-drive]').forEach((root) => {
+    if (calm()) return;   // reduced motion: the grid
+    const items: DriveItem[] = JSON.parse(root.dataset.drive!);
+    root.classList.add('live');
+    const stage = root.querySelector<HTMLElement>('[data-drive-stage]')!;
+    const now = root.querySelector<HTMLElement>('.now')!;
+    const num = root.querySelector<HTMLElement>('[data-hud-n]')!;
+    const title = root.querySelector<HTMLElement>('[data-hud-title]')!;
+    const sub = root.querySelector<HTMLElement>('[data-hud-sub]')!;
+    const open = root.querySelector<HTMLAnchorElement>('[data-open]')!;
+    const prev = root.querySelector<HTMLButtonElement>('[data-drive-prev]')!;
+    const next = root.querySelector<HTMLButtonElement>('[data-drive-next]')!;
+    const hint = root.querySelector<HTMLElement>('[data-hint]')!;
+    const routeCar = root.querySelector<HTMLElement>('[data-route-car]')!;
+    const loading = root.querySelector<HTMLElement>('[data-loading]')!;
+    const bar = root.querySelector<HTMLElement>('[data-loading-bar]')!;
+    let cur = 0;
+    const openProject = (i: number, rect?: DOMRect) => dispatchEvent(new CustomEvent('project:open', { detail: { slug: items[i].slug, rect } }));
+    const show = (i: number) => {
+      cur = i;
+      num.textContent = String(i + 1).padStart(2, '0');
+      title.textContent = items[i].title;
+      sub.textContent = `${items[i].tag} · ${items[i].sub}`;
+      open.href = items[i].href;
+      prev.disabled = i === 0; next.disabled = i === items.length - 1;
+      now.classList.remove('swap'); void now.offsetWidth; now.classList.add('swap');
+    };
+    const flat = () => { root.classList.remove('live'); drive.dispose(); };
+    const drive = mountCityDrive(stage, items, {
+      base: root.dataset.base!, manifest: root.dataset.manifest!,
+      hooks: {
+        onFocus: show,
+        onOpen: (i, rect) => openProject(i, rect),
+        onProgress: (p) => bar.style.setProperty('--p', p.toFixed(3)),
+        onReady: () => loading.classList.add('done'),   // the first frame is up: the rest fills in as you drive
+        onFail: flat,
+      },
+    });
+    onTheme((t) => drive.setTheme(t === 'light' ? 'day' : 'night'));
+
+    const progress = () => {
+      const r = root.getBoundingClientRect();
+      return Math.min(1, Math.max(0, -r.top / Math.max(1, r.height - innerHeight)));
+    };
+    const update = () => {
+      const p = progress();
+      drive.setProgress(p);
+      routeCar.style.setProperty('--p', p.toFixed(4));
+      hint.classList.toggle('gone', p > 0.02);
+    };
+    addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
+
+    // the buttons glide the page to the stop for that billboard
+    const goTo = (i: number) => {
+      const top = root.getBoundingClientRect().top + scrollY;
+      const y = top + drive.progressOf(i) * (root.offsetHeight - innerHeight);
+      if (lenis) lenis.scrollTo(y, { duration: 1.4 }); else scrollTo({ top: y, behavior: 'smooth' });
+    };
+    prev.addEventListener('click', () => goTo(Math.max(0, cur - 1)));
+    next.addEventListener('click', () => goTo(Math.min(items.length - 1, cur + 1)));
+    open.addEventListener('click', (e) => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;   // a new tab: let the link do it
+      e.preventDefault(); openProject(cur, drive.rectOf(cur));
+    });
+  });
+</script>

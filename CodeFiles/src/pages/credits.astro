@@ -1,0 +1,36 @@
+---
+// Credits for work by others on this site. The city on the home page was built in Blender; its cars are 3D models
+// shared under Creative Commons Attribution 4.0, which asks for the author, the source, the licence and what changed.
+// Keep this list in step with the cars in city/build.py (CAR_FILES).
+import Base from '../layouts/Base.astro';
+import Back from '../components/Back.astro';
+
+const cars = [
+  { title: 'Porsche GT3 RS', author: 'Black Snow', href: 'https://sketchfab.com/3d-models/porsche-gt3-rs-e738eae819c34d19a31dd066c45e0f3d' },
+  { title: 'Lamborghini Aventador SVJ SDC (Free)', author: 'SDC PERFORMANCE', href: 'https://sketchfab.com/3d-models/lamborghini-aventador-svj-sdc-free-784e4656aca649cca55d6b18740a19b2' },
+  { title: 'Koenigsegg Agera RS', author: 'RongstadJ', href: 'https://sketchfab.com/3d-models/koenigsegg-agera-rs-a30e098257254fcfa1323f2841e26d13' },
+  { title: 'Honda City 2017', author: 'dewa', href: 'https://sketchfab.com/3d-models/honda-city-2017-75671276d4da476294202a5dc050a99e' },
+  { title: 'BMW M4 F82 Razor 2014', author: 'www.vecarz.com', href: 'https://sketchfab.com/3d-models/bmw-m4-f82-razor-2014-wwwvecarzcom-25d00f20b8cf4828bd934acb31e0aae4' },
+  { title: 'Porsche 964 RWB Race Car', author: 'DRIVER-FIRE', href: 'https://sketchfab.com/3d-models/porsche-964-rwb-race-car-213ed120d6fb4912ba9e097482a2ae10' },
+];
+---
+<Base title="Credits" description="Credits for the 3D car models used in the city drive on Jainam Kapadia's portfolio.">
+  <Back href="/" label="Back" />
+  <section class="wrap top" aria-labelledby="cr-h">
+    <h1 id="cr-h" class="display" data-reveal>Credits</h1>
+    <p class="lead" data-reveal style="--i:1">The city you drive through on the home page was built in Blender. The cars in its traffic, which drive live in your browser, are these models, used under the <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0</a> licence.</p>
+    <ul class="list" data-reveal style="--i:2">
+      {cars.map((c) => <li><a href={c.href}>{c.title}</a><span class="muted">by {c.author}, on Sketchfab</span></li>)}
+    </ul>
+    <p class="note muted" data-reveal style="--i:3">Changes: scaled to real size, joined into single meshes, simplified for the web (fewer polygons, smaller textures), lights made to switch between day and night, and the Aventador repainted white. Everything else in the city (buildings, streets, lamps, billboards, trees) was made for this site.</p>
+  </section>
+</Base>
+
+<style>
+  .top { padding-top: calc(var(--nav-h) + clamp(48px, 8vw, 120px)); padding-bottom: 96px; }
+  .lead { margin-top: 24px; max-width: 52ch; }
+  .list { display: grid; gap: 14px; margin-top: 40px; }
+  .list li { display: grid; gap: 2px; }
+  .list a { font-size: 1.15rem; font-weight: 600; }
+  .note { margin-top: 40px; max-width: 60ch; }
+</style>
