@@ -1,0 +1,57 @@
+---
+// The car as a drag-to-turn turntable made of Blender renders (frames in public/<dir>spin_000.webp ...). Only images
+// ship: the model is built on a personal-licence base mesh, so the mesh itself can't be put on a public site.
+interface Props { dir: string; frames: number; alt: string }
+const { dir, frames, alt } = Astro.props;
+const src = (i: number) => `${dir}spin_${String(i).padStart(3, '0')}.webp`;
+---
+<div class="car-spin" data-spin data-dir={dir} data-frames={frames}
+  role="slider" tabindex="0" aria-label={`${alt}. Drag or use the arrow keys to turn it.`}
+  aria-valuemin="0" aria-valuemax="355" aria-valuenow="0" aria-valuetext="Front three-quarter view">
+  <img src={src(0)} alt="" width="1600" height="900" fetchpriority="high" draggable="false" />
+</div>
+
+<style>
+  .car-spin { position: absolute; inset: 0; background: linear-gradient(#50545a 0 50%, #5f6266 50%); touch-action: pan-y; cursor: grab; user-select: none; }
+  .car-spin:active { cursor: grabbing; }
+  .car-spin:focus-visible { outline: 2px solid #fff; outline-offset: -6px; }
+  img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+  /* narrower than 3:2, cover would crop the car's nose and tail: show the whole frame on the matching studio grey */
+  @media (max-aspect-ratio: 3/2) { img { object-fit: contain; } }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-spin]').forEach((root) => {
+    const img = root.querySelector('img')!;
+    const n = Number(root.dataset.frames);
+    const url = (i: number) => `${root.dataset.dir}spin_${String(i).padStart(3, '0')}.webp`;
+    // fetch every frame once so dragging never waits on the network
+    const cache = Array.from({ length: n }, (_, i) => { const im = new Image(); im.decoding = 'async'; im.src = url(i); return im; });
+    // frame 0 is the front three-quarter; the front view comes at 45°, the rear at 225°
+    const views = ['Front three-quarter view', 'Front view', 'Front three-quarter view', 'Side view', 'Rear three-quarter view', 'Rear view', 'Rear three-quarter view', 'Side view'];
+    let frame = 0;
+    const show = (f: number) => {
+      frame = ((Math.round(f) % n) + n) % n;
+      img.src = cache[frame].src;
+      const deg = Math.round((frame * 360) / n);
+      root.setAttribute('aria-valuenow', String(deg));
+      root.setAttribute('aria-valuetext', views[Math.round(deg / 45) % 8]);
+    };
+
+    // dragging across ~60% of the stage turns the car once
+    let x0 = 0, f0 = 0, id: number | null = null;
+    root.addEventListener('pointerdown', (e) => { id = e.pointerId; x0 = e.clientX; f0 = frame; root.setPointerCapture(id); });
+    root.addEventListener('pointermove', (e) => {
+      if (e.pointerId !== id) return;
+      show(f0 - ((e.clientX - x0) / (root.clientWidth * 0.6)) * n);
+    });
+    const end = (e: PointerEvent) => { if (e.pointerId === id) id = null; };
+    root.addEventListener('pointerup', end);
+    root.addEventListener('pointercancel', end);
+    root.addEventListener('keydown', (e) => {
+      const step = { ArrowLeft: 1, ArrowRight: -1, ArrowUp: -1, ArrowDown: 1, Home: -frame, PageUp: -n / 8, PageDown: n / 8 }[e.key];
+      if (step === undefined) return;
+      e.preventDefault(); show(frame + step);
+    });
+  });
+</script>

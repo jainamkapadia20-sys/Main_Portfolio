@@ -86,7 +86,7 @@ const car = defineCollection({
       transmission: z.string(),
       dimensions: z.string(),
       mods: z.array(z.object({ name: z.string(), note: z.string() })),
-      model3d: z.object({ stock: z.string(), modified: z.string() }),
+      spin: z.string(), // public/ folder holding the turntable renders spin_000.webp ...
       poster: image(),
       posterAlt: z.string(),
       photos: z.array(z.object({ src: image(), alt: z.string() })),

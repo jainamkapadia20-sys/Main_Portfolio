@@ -5,7 +5,7 @@ import { getImage } from 'astro:assets';
 import { getEntry, render } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import Back from '../components/Back.astro';
-import CarModel from '../components/CarModel.astro';
+import CarSpin from '../components/CarSpin.astro';
 import Trail from '../components/Trail.astro';
 import { withBase } from '../lib/url';
 
@@ -18,13 +18,13 @@ const specs = [
   { k: 'Gearbox', v: c.transmission }, { k: 'Size', v: c.dimensions }, { k: 'Colour', v: c.colour },
 ];
 ---
-<Base title={`${c.make} ${c.title}`} description={`My ${c.year} ${c.make} City in ${c.colour}: specs, modifications and a 3D model built from scratch.`}>
+<Base title={`${c.make} ${c.title}`} description={`My ${c.year} ${c.make} City in ${c.colour}: specs, modifications and a 3D model of the car as it is now.`}>
   <Back href="/" label="Back" />
   <section class="showroom" aria-labelledby="car-h">
-    <CarModel versions={[{ label: 'Modified', url: withBase(c.model3d.modified) }, { label: 'Stock', url: withBase(c.model3d.stock) }]} />
+    <CarSpin dir={withBase(c.spin)} frames={72} alt={c.posterAlt} />
     <div class="over">
       <h1 id="car-h" class="display" data-reveal>{c.make} City</h1>
-      <p class="small muted" data-reveal style="--i:1">Drag to turn, pinch to zoom, double-click to reset</p>
+      <p class="small" data-reveal style="--i:1">Drag to turn</p>
     </div>
   </section>
 
@@ -55,7 +55,9 @@ const specs = [
 
 <style>
   .showroom { position: relative; height: 100svh; min-height: 560px; }
-  .over { position: absolute; left: var(--inset); right: var(--inset); bottom: clamp(24px, 4vw, 48px); display: flex; justify-content: space-between; align-items: end; gap: 16px; flex-wrap: wrap; pointer-events: none; }
+  /* the renders' studio is mid grey in both themes, so the title stays white */
+  .over { position: absolute; left: var(--inset); right: var(--inset); bottom: clamp(24px, 4vw, 48px); display: flex; justify-content: space-between; align-items: end; gap: 16px; flex-wrap: wrap; pointer-events: none; color: #fff; }
+  .over p { color: rgb(255 255 255 / .72); }
   .car { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 48px 72px; padding-top: var(--section); align-items: start; }
   .intro { display: grid; gap: 24px; }
   .lead :global(p) { font-size: var(--t-lead); line-height: 1.4; letter-spacing: -.01em; }

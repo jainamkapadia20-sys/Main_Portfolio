@@ -19,9 +19,9 @@ mods:
   - { name: Blacked-out grille, note: Gloss black wing bar with red H badges. }
   - { name: Twin exhaust tips, note: Burnt titanium, left side. }
   - { name: Windshield banner, note: White lettering across the top of the glass. }
-model3d: { stock: /models/honda-city-stock.glb, modified: /models/honda-city.glb }
+spin: /car/spin/
 poster: ../../assets/car/poster-mod.png
-posterAlt: 3D render of a grey 2016 Honda City with a rear wing, smoked taillamps and silver five-spoke wheels
+posterAlt: 3D render of a grey 2016 Honda City with black-tinted windows, a rear wing, smoked taillamps and silver five-spoke wheels
 photos:
   - { src: ../../assets/car/front-highway.jpg, alt: Front three-quarter view of the City on an empty highway at sunset }
   - { src: ../../assets/car/side-trees.jpg, alt: Side view of the City parked in front of trees }
@@ -35,4 +35,4 @@ photos:
 placeholder: false
 ---
 
-The car I keep tinkering with: a 2016 Honda City in Sonic Grey Pearl. The 3D model was built from scratch from a blueprint and my own photos, first as it left the factory, then with every change made since.
+The car I keep tinkering with: a 2016 Honda City in Sonic Grey Pearl. The 3D model starts from a Hum3D base mesh, reworked in Blender against my own photos until it matches the car as it is now: the wheels, wing, lamps, badges and black tint.
